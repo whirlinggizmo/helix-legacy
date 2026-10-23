@@ -4,3 +4,7 @@
   `gamejams-<name>` repo. Today it refuses any directory with something in it (a clone has `.git/`, maybe a README or
   LICENSE), and the game's name comes from the directory's path, which for `.` needs to be the current directory's
   name, not ".". Decide what existing files it tolerates (`.git/`, README/LICENSE/.gitignore: keep or merge?).
+- **Collect3D**: a 3D counterpart of `helix.scene.Collect2D`. Today things collected fly only on the stage: from a 3D
+  world, the burst starts at a View3D's project of the point and flies in 2D to a stage node. Wanted: the burst and the
+  flight in the 3D world (Sprite3Ds, or models), to a 3D target node, with the same callbacks (each arrival, all
+  arrived), running itself and taking itself off when done.
