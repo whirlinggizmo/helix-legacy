@@ -48,3 +48,16 @@
   (e.g. Stage.pick, Textures.load, Splash). Wanted: a pass over the shown API: lead with what it does in one plain
   sentence, then arguments, then what it returns, then the edge cases, in short sentences; an example where a call's
   shape isn't obvious. Write the style into CONVENTIONS, and let a cold-start reader judge a sample before and after.
+  The user's example: Splash's class doc. A sample in the wanted style (what it is, how to use it, what happens, why,
+  the options):
+
+      A splash screen: your logo, centered on the theme's background, before the game starts.
+
+      Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key,
+      clicks or taps, showing `prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you
+      gave) and calls next at the transition's middle; put your title screen on the stage there.
+
+      Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something.
+      A gamepad press doesn't count, because browsers ignore it for that.
+
+      To go on without a press, set maxWait to a number of seconds. The splash runs itself; you don't update it.
