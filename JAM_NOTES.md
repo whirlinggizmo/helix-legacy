@@ -43,3 +43,8 @@
 - **Iris on the splash's logo**: Iris aims already (setPoint, from Closing), but Splash keeps where it drew its logo to
   itself, so there's nowhere to aim it. Wanted: Splash's logo place readable (logoX, logoY and its size, in the stage's
   units, or the logo node), so the splash's transition closes an iris onto its logo.
+- **Doc comments are hard to read**: many are disjointed and unclear (the user, during the jam): long run-on sentences
+  chained with colons, semicolons and parentheses, clauses dropped in out of order, terse nouns where a verb is meant
+  (e.g. Stage.pick, Textures.load, Splash). Wanted: a pass over the shown API: lead with what it does in one plain
+  sentence, then arguments, then what it returns, then the edge cases, in short sentences; an example where a call's
+  shape isn't obvious. Write the style into CONVENTIONS, and let a cold-start reader judge a sample before and after.
