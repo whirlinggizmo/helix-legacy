@@ -529,7 +529,14 @@ class UiTests {
 			&& @:privateAccess volume.fill.color == 0xff00ff00
 			&& knob.radius == 10,
 			"A slider: its track's color and round ends, its fill, its handle's size");
-		check(checkMark.color == 0xff00ff00 && checkMark.width == 20 && checkMark.cornerRadius == 3 / 4, "A toggle: its mark's color, size and corners");
+		var markPoints = checkMark.points, box:Shape2D = @:privateAccess sound.check, right = 0., top = 0.;
+		for (i in 0...Std.int(markPoints.length / 2)) {
+			right = Math.max(right, markPoints[i * 2]);
+			top = Math.min(top, markPoints[i * 2 + 1]);
+		}
+		check(checkMark.color == 0xff00ff00 && Std.string(@:privateAccess sound.square.widthSizing) == "Fixed(20)" && box.cornerRadius == 3 / 2
+			&& right > 20 && top < 0,
+			"A toggle: its box the text's size less 4 (laid out at the next arrangement), its check mark in the accent color, past its top right");
 		check(barTrack.color == 0xff102030 && barTrack.cornerRadius == 3, "A progress bar: its color and corners");
 		check(fieldText.textSize == 24 && caret.height == 28 && caret.color == 0xffff00ff, "A text field: its text's size, the caret's");
 		check(tileEdge.color == 0xff00ff00 && tileEdge.cornerRadius == 5 && @:privateAccess tile.label.textSize == 24 * .8, "A tile: its edge, its caption");

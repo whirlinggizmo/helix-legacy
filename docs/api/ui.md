@@ -581,7 +581,7 @@ var side(default, null):Float
 
 *class* in [`src/helix/ui/Toggle.hx`](../../src/helix/ui/Toggle.hx), `import helix.ui.Toggle;`
 
-A box that's on or off, beside a line of text: switched by a click or by activating it with focus. Ask on, and changed once a frame.
+A box that's on or off, beside a line of text: switched by a click or by activating it with focus, on showing a check mark in the theme's accent color whose long stroke runs a little past the box's top right. Ask on, and changed once a frame.
 
 ```haxe
 var on(get, set):Bool
