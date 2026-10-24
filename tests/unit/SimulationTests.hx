@@ -111,6 +111,38 @@ class SimulationTests {
 		check(input.text == "" && !script.done, "Dropped while text entry is off");
 		script.advance(g.probe);
 		check(script.done, "Done");
+		// A touch: two fingers, the second starting later and lifting earlier; each lands at its from, moves to its to by its end, and lifts
+		// on the tick after; the command ends once both have.
+		var fingers = new Autopilot('{"version":1,"seed":1,"commands":[{"op":"touch","ticks":4,"fingers":['
+			+ '{"from":[0,0],"to":[40,0]},{"from":[100,100],"to":[100,140],"start":2,"end":3}]}]}');
+		function finger(input:helix.input.IInput, id:Int):Null<helix.input.Touch> {
+			for (t in input.touches)
+				if (t.id == id)
+					return t;
+			return null;
+		}
+		var touched = fingers.advance(g.probe);
+		check(finger(touched, 1).down && finger(touched, 1).pressed && finger(touched, 1).x == 0 && finger(touched, 2) == null,
+			"A touch: the first finger lands at its from");
+		touched = fingers.advance(g.probe);
+		touched = fingers.advance(g.probe);
+		check(finger(touched, 1).x == 20 && finger(touched, 2).pressed && finger(touched, 2).y == 100, "halfway; the second lands at its start");
+		touched = fingers.advance(g.probe);
+		check(finger(touched, 1).x == 30 && finger(touched, 2).y == 140 && finger(touched, 2).down, "the second at its to by its end");
+		touched = fingers.advance(g.probe);
+		check(finger(touched, 1).x == 40 && finger(touched, 1).down && finger(touched, 2).released, "the first at its to; the second lifted");
+		touched = fingers.advance(g.probe);
+		check(finger(touched, 1).released && !fingers.done, "the first lifted on the tick after its end");
+		fingers.advance(g.probe);
+		check(fingers.done, "Done once both have lifted");
+		for (bad in [
+			'{"op":"touch","ticks":2,"fingers":[]}',
+			'{"op":"touch","ticks":2,"fingers":[{"from":[1,2]}]}',
+			'{"op":"touch","ticks":2,"fingers":[{"from":[1,2],"to":[3,4],"start":2,"end":1}]}',
+			'{"op":"touch","ticks":2,"fingers":[{"from":[1,2],"to":[3,4],"end":3}]}',
+			'{"op":"touch","fingers":[{"from":[1,2],"to":[3,4]}]}'
+		])
+			rejects(() -> new Autopilot('{"version":1,"seed":1,"commands":[' + bad + ']}'), "An invalid touch rejected: " + bad);
 		for (bad in [
 			'{"op":"drag","from":[1,2],"to":[3,4]}',
 			'{"op":"drag","from":[1],"to":[3,4],"ticks":2}',

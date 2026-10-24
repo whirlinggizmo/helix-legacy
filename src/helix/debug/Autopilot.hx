@@ -23,6 +23,12 @@ import helix.input.InputState;
 	the same either way, as a background with an HDR chain and without). The frame read is the one drawn after the
 	ticks before it: while it waits for that frame to end, awaitingFrame is true and the app runs no tick.
 
+	A `touch` is fingers on the touch screen, as a drag is the pointer, several at once for a gesture or a second thumb:
+	`{"op": "touch", "ticks": n, "fingers": [{"from": [x, y], "to": [x, y]}, {"from": ..., "to": ..., "start": 5, "end": 15}]}`, 1 to 10
+	fingers, their ids 1, 2 ... in the order listed. Each lands at from on its start tick (0 when not given), moves a straight line to reach
+	to on its end tick (ticks when not given; start to end within 0 to ticks), and lifts there on the tick after; the command ends once every
+	finger has lifted. Its points are a drag's (the design's units, or a widget's, found again every tick).
+
 	A `drag` is the pointer held down at one point and moved to another: `{"op": "drag", "from": [x, y], "to": [x, y], "ticks": n}`, the
 	points in the design's units (Screen's; as given without a runner, in a test), pressed at from on its first tick, moved a straight line to
 	reach to after n more, and let go there on the tick after. A `type` is text typed on one tick, as a keyboard's characters arrive (dropped,
@@ -97,7 +103,7 @@ class Autopilot {
 		frame (its tick loop stops when this is true, as it does when done). */
 	public var awaitingFrame(default, null):Bool = false;
 
-	/** Checks a whole script ({version: 1, seed, commands}: press, hold, wait, assert, click, screenshot, sample, drag, type; at most 128) and throws on
+	/** Checks a whole script ({version: 1, seed, commands}: press, hold, wait, assert, click, screenshot, sample, drag, touch, type; at most 128) and throws on
 		anything invalid or unknown. A wait has one limit: "timeout" in ticks, or "seconds" of the clock. A click uses a UI's widget by name,
 		waiting (as a web suite's actions do) until press, the app's (Ui.press, say), finds it shown and usable, within its limit; without press
 		it fails; one with "at" (and "part") clicks the pointer at that point of the widget instead, waiting until it's found. A screenshot command calls screenshot with its name (null for the default name; Screenshots.take, say), or does nothing without
@@ -220,6 +226,22 @@ class Autopilot {
 					point(command.to);
 					if (!integer(command.ticks, 1, 36000))
 						throw "Invalid drag duration";
+				case "touch":
+					fields(command, ["op", "fingers", "ticks"], ["seconds"]);
+					limit(command);
+					if (!integer(command.ticks, 1, 36000))
+						throw "Invalid touch duration";
+					if (!Std.isOfType(command.fingers, Array) || command.fingers.length == 0 || command.fingers.length > 10)
+						throw "A touch needs 1 to 10 fingers";
+					for (finger in (cast command.fingers : Array<Dynamic>)) {
+						fields(finger, ["from", "to"], ["start", "end"]);
+						point(finger.from);
+						point(finger.to);
+						var start:Dynamic = Reflect.hasField(finger, "start") ? finger.start : 0,
+							end:Dynamic = Reflect.hasField(finger, "end") ? finger.end : command.ticks;
+						if (!integer(start, 0, command.ticks) || !integer(end, 0, command.ticks) || start > end)
+							throw "Invalid finger start or end";
+					}
 				case "type":
 					fields(command, ["op", "text"]);
 					if (!Std.isOfType(command.text, String) || command.text.length == 0 || command.text.length > 256)
@@ -424,6 +446,43 @@ class Autopilot {
 							pointer(to[0], to[1], false);
 						else
 							finish = true;
+					}
+				case "touch":
+					setKeys([]);
+					if (elapsed == 0)
+						waitStarted = haxe.Timer.stamp();
+					var fingers:Array<Dynamic> = command.fingers,
+						ticks:Int = command.ticks;
+					// Pressed once every finger's points are found (waited for as a drag's are), then each finger played tick by tick.
+					if (pressedAt < 0) {
+						var missing:Dynamic = null;
+						for (f in fingers)
+							if (missing == null)
+								missing = !resolve(f.from, from, true) ? f.from : !resolve(f.to, to, true) ? f.to : null;
+						if (missing == null)
+							pressedAt = elapsed;
+						else
+							awaitPoint(command, missing);
+					}
+					if (pressedAt >= 0) {
+						var step = elapsed - pressedAt;
+						if (step > ticks + 1)
+							finish = true;
+						else
+							for (i in 0...fingers.length) {
+								var f = fingers[i];
+								var start:Int = Reflect.hasField(f, "start") ? f.start : 0,
+									end:Int = Reflect.hasField(f, "end") ? f.end : ticks;
+								if (step < start || step > end + 1)
+									continue;
+								if (!resolve(f.from, from, true) || !resolve(f.to, to, true))
+									throw 'Autopilot touch at command ' + index + ' lost ' + describe(!resolve(f.from, from, true) ? f.from : f.to);
+								if (step <= end) {
+									var t = end > start ? (step - start) / (end - start) : 1.;
+									state.touchEvent(i + 1, from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t, true);
+								} else
+									state.touchEvent(i + 1, to[0], to[1], false);
+							}
 					}
 				case "type":
 					setKeys([]);

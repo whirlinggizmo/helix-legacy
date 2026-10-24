@@ -325,6 +325,18 @@ class ActionsTests {
 		check(actions.direction("dx", "dy", d) == d && d.x == 1 && d.y == 0, "Straight; into the point given");
 		input.keyEvent(Right, false);
 		step(input);
+		// An autopilot's finger (a touch command) holds a stick as a thumb would: landed, pushed a radius right, read as all the way.
+		var steering = new helix.debug.Autopilot('{"version":1,"seed":1,"commands":[{"op":"touch","ticks":4,"fingers":[{"from":[100,100],"to":[150,100]}]}]}'),
+			scripted = new Actions(steering.input, presentation(None, 800, 600, 1));
+		scripted.bind("moveX", TouchStick(Anywhere, 50, X));
+		var pushes = [
+			for (_ in 0...5) {
+				steering.advance(name -> null);
+				scripted.axis("moveX");
+			}
+		];
+		check(pushes[0] == 0 && pushes[4] == 1 && pushes[2] > 0 && pushes[2] < 1, "A script's finger steers a touch stick: " + pushes);
+		scripted.input = null;
 		check(@:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(y)))
 			.equals(y) && @:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(whole)))
 			.equals(whole) && Actions.describe(x) == "Touch stick X",
