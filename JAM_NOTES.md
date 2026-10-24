@@ -80,3 +80,9 @@
 - **Text2D.measureWidth/measureHeight take a font**: they should measure with the text's own font (`font`, or the
   built-in one when null), no argument: `text.measureHeight()`. Today the caller passes one, and with font null has to
   find the built-in font itself. (Text3D the same, if it measures.)
+- **A rolling ball (Katamari, Marble Madness) has little to stand on**: collision is 2D only (helix.collision); in 3D
+  there's Ray3D against a plane or a height, and picks from a camera's pixel, but no ray or sphere against the world's
+  meshes, no 3D body (velocity, gravity, friction, slopes), no 3D camera follow (CameraFollow2D only), no helper to
+  turn a node by an axis and angle (setQuaternion only, the product by hand), and no reparenting that keeps a node
+  where it is in the world (sticking things to the ball). Consider: Body3D/sphere against meshes or a height field,
+  Node3D.turn(axisX, axisY, axisZ, angle), CameraFollow3D, addChild keeping the world transform.
