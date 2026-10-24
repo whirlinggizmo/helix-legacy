@@ -396,12 +396,14 @@ static inline var COUNT:Int
 static final all(default, null):Array<Key>
 static function named(name:String):Key
 static function getName(key:Key):String
+function toString():String
 ```
 
 - `COUNT`: One past the largest value, for arrays indexed by key.
 - `all`: Every key, in order of value.
 - `named`: The key a name spells, ignoring case ("A", "space", "KeypadEnter", "0"); throws for an unknown name.
 - `getName`: The key's name as named reads it: its own spelling ("Space", "PageUp", "KeypadEnter"), a digit's its digit ("0").
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## MouseButton
 
@@ -413,9 +415,11 @@ Values: `Left`, `Right`, `Middle`.
 
 ```haxe
 static final all(default, null):Array<MouseButton>
+function toString():String
 ```
 
 - `all`: Every button.
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## PadAxis
 
@@ -428,10 +432,12 @@ Values: `LeftX`, `LeftY`, `RightX`, `RightY`, `LeftTrigger`, `RightTrigger`.
 ```haxe
 static inline var COUNT:Int
 static final all(default, null):Array<PadAxis>
+function toString():String
 ```
 
 - `COUNT`: One past the largest value, for arrays indexed by axis.
 - `all`: Every axis.
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## PadButton
 
@@ -444,10 +450,12 @@ Values: `South`, `East`, `West`, `North`, `LeftBumper`, `RightBumper`, `LeftTrig
 ```haxe
 static inline var COUNT:Int
 static final all(default, null):Array<PadButton>
+function toString():String
 ```
 
 - `COUNT`: One past the largest value, for arrays indexed by button.
 - `all`: Every button.
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## PointerGestures
 

@@ -1,6 +1,7 @@
 package helix.input;
 
 /** The mouse buttons HeliX reads, numbered as Sokol numbers them. */
+@:build(helix.macro.EnumNames.build())
 enum abstract MouseButton(Int) to Int {
 	var Left = 0;
 	var Right = 1;

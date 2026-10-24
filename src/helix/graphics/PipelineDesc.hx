@@ -23,6 +23,7 @@ typedef VertexBuffer = {
 
 /** What a pipeline's draws make: triangles, three vertices (or indices) each, or lines, two each. */
 @:noCompletion
+@:build(helix.macro.EnumNames.build())
 enum abstract Primitive(Int) to Int {
 	/** Triangles, three vertices (or indices) each. */
 	var Triangles = 0;
@@ -32,6 +33,7 @@ enum abstract Primitive(Int) to Int {
 }
 
 /** Which faces of a pipeline's triangles aren't drawn. */
+@:build(helix.macro.EnumNames.build())
 @:noCompletion
 enum abstract CullFace(Int) to Int {
 	/** Neither: both sides draw. */

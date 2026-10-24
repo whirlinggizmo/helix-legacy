@@ -1,6 +1,7 @@
 package helix.render3d;
 
 /** What a track moves: its node's position, rotation (a quaternion) or scale. */
+@:build(helix.macro.EnumNames.build())
 enum abstract TrackPath3D(Int) to Int {
 	/** Its position: x, y, z. */
 	var Translation = 0;

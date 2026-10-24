@@ -1,6 +1,7 @@
 package helix.render3d;
 
 /** How a track's keys run between them, glTF's three. */
+@:build(helix.macro.EnumNames.build())
 enum abstract TrackInterpolation3D(Int) to Int {
 	/** A straight line (a rotation's spherical one). */
 	var Linear = 0;

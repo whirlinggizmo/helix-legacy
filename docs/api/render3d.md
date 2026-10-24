@@ -888,6 +888,12 @@ How a Camera3D flattens the world onto its viewport: which of its two projection
 - `Projection3D.Perspective`: Lines converge toward the eye: fovY radians of vertical view, near above 0.
 - `Projection3D.Orthographic`: No perspective: orthographicHeight world units seen top to bottom, the width by the viewport's shape; near may be 0 or less.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## Ray3D
 
 *class* in [`src/helix/render3d/Ray3D.hx`](../../src/helix/render3d/Ray3D.hx), `import helix.render3d.Ray3D;`
@@ -1021,6 +1027,12 @@ How a 3D sprite or text faces.
 - `SpriteFacing3D.Ground`: Flat, its texture's top toward its node's -z, facing its node's +y (the ground's up, unturned): a decal, a shadow blob.
 - `SpriteFacing3D.Free`: As its node is turned: in the node's x-y plane, facing its +z. A sign.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## Text3D
 
 *class* in [`src/helix/render3d/Text3D.hx`](../../src/helix/render3d/Text3D.hx), `import helix.render3d.Text3D;`
@@ -1059,6 +1071,12 @@ How a stage brings lit color, which can run past 1 (bright lights, an HDR enviro
 - `Tonemap.Neutral`: Khronos PBR Neutral: colors unchanged until highlights roll off; glTF viewers' default.
 - `Tonemap.Aces`: ACES filmic (Narkowicz's fit): more contrast, highlights shifting toward white.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## Track3D
 
 *class* in [`src/helix/render3d/Track3D.hx`](../../src/helix/render3d/Track3D.hx), `import helix.render3d.Track3D;`
@@ -1095,6 +1113,12 @@ How a track's keys run between them, glTF's three.
 - `TrackInterpolation3D.Step`: Held until the next key.
 - `TrackInterpolation3D.CubicSpline`: A cubic Hermite spline through the keys, each key its in-tangent, value and out-tangent.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## TrackPath3D
 
 *abstract* in [`src/helix/render3d/TrackPath3D.hx`](../../src/helix/render3d/TrackPath3D.hx), `import helix.render3d.TrackPath3D;`
@@ -1104,6 +1128,12 @@ What a track moves: its node's position, rotation (a quaternion) or scale.
 - `TrackPath3D.Translation`: Its position: x, y, z.
 - `TrackPath3D.Rotation`: Its rotation: a quaternion x, y, z, w.
 - `TrackPath3D.Scale`: Its scale: x, y, z.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## View3D
 

@@ -78,9 +78,11 @@ What a texture's texels are: plain RGBA8, a GPU's compressed format (4x4 blocks 
 
 ```haxe
 function levelBytes(width:Int, height:Int):Int
+function toString():String
 ```
 
 - `levelBytes`: The bytes of a level width x height (of one face, for a cube).
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Textures
 
@@ -111,3 +113,9 @@ How a texture's edges repeat past 0..1.
 - `Wrap.Clamp`: The edge texel carries on.
 - `Wrap.Repeat`: The texture tiles.
 - `Wrap.Mirror`: The texture tiles, every other copy mirrored.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.

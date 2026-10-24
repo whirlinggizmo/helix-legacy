@@ -12,6 +12,12 @@ Which point of a line of text its x names: its left edge, center or right edge.
 - `Align2D.Center`: x is the text's center.
 - `Align2D.Right`: x is the text's right edge.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## AnimationDirection2D
 
 *abstract* in [`src/helix/render2d/AnimationDirection2D.hx`](../../src/helix/render2d/AnimationDirection2D.hx), `import helix.render2d.AnimationDirection2D;`
@@ -22,6 +28,12 @@ Which way a SpriteAnimation2D plays through its frames (Aseprite's tag direction
 - `AnimationDirection2D.Reverse`: Last to first.
 - `AnimationDirection2D.PingPong`: First to last and back, the ends shown once a turn.
 - `AnimationDirection2D.PingPongReverse`: Last to first and back, the ends shown once a turn.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Camera2D
 
@@ -382,6 +394,12 @@ Which shape a Shape2D is.
 - `ShapeForm2D.Line`: A line segment.
 - `ShapeForm2D.Polygon`: A polygon, filled or outlined.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## ShapeShading2D
 
 *abstract* in [`src/helix/render2d/ShapeShading2D.hx`](../../src/helix/render2d/ShapeShading2D.hx), `import helix.render2d.ShapeShading2D;`
@@ -391,6 +409,12 @@ How a filled rectangle is colored.
 - `ShapeShading2D.Flat`: In its color alone.
 - `ShapeShading2D.Across`: From its color at its left edge to its endColor at its right.
 - `ShapeShading2D.Down`: From its color at its top to its endColor at its bottom.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Sprite2D
 

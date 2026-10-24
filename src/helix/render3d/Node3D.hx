@@ -595,6 +595,7 @@ class Node3D extends Node {
 
 /** Which of the kinds drawn through a renderer's sprites a node is (the engine's: Node3D.spriteKind). */
 @:noCompletion
+@:build(helix.macro.EnumNames.build())
 enum abstract SpriteKind3D(Int) {
 	/** None of them. */
 	var None;

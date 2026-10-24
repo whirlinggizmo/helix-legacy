@@ -166,6 +166,12 @@ How a Fade moves between its levels: Decibels, linear in decibels, even to the e
 
 Values: `Decibels`, `Power`.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## PlayState
 
 *abstract* in [`src/helix/audio/PlayState.hx`](../../src/helix/audio/PlayState.hx), `import helix.audio.PlayState;`

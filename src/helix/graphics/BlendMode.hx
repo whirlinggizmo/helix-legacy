@@ -2,6 +2,7 @@ package helix.graphics;
 
 /** How a pipeline's colors meet what the framebuffer has: replacing it, blended over it by their alpha (straight alpha), or added to it
 	(times their alpha: light, fire, glows). */
+@:build(helix.macro.EnumNames.build())
 enum abstract BlendMode(Int) to Int {
 	/** Replaces what's there. */
 	var Opaque = 0;

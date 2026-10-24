@@ -179,6 +179,12 @@ class AudioBusTests {
 		check(refused, "Playing with no service bound throws");
 		var state = helix.audio.PlayState.Playing;
 		check(Std.string(state) == "Playing" && '$state' == "Playing" && helix.audio.PlayState.Complete != state, "A playback's state reads as its name");
+		// HeliX's enum abstracts over Int read as their names where typed (helix.macro.EnumNames), staying numbers.
+		var key = helix.input.Key.Space,
+			align = helix.render2d.Align2D.Center,
+			curve = helix.audio.FadeCurve.Power;
+		check(Std.string(key) == "Space" && '$align' == "Center" && "" + curve == "Power" && (key : Int) == 32,
+			"Key, Align2D, FadeCurve by name, the key still its code");
 
 		var audio = new Recording();
 		var sounds = new AudioResources(null, audio, null);

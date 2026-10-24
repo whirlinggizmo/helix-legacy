@@ -174,6 +174,8 @@ The particle presets' recipes, which Particles2D's and Particles3D's factories (
 
 ```haxe
 function make(size:Float, down:Float, flat:Bool):Emitter
+function toString():String
 ```
 
 - `make`: An emitter of this preset, size big, for a space whose y goes down by the sign of down, flat for a 2D stage.
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.

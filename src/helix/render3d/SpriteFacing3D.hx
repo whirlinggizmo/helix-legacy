@@ -1,6 +1,7 @@
 package helix.render3d;
 
 /** How a 3D sprite or text faces. */
+@:build(helix.macro.EnumNames.build())
 enum abstract SpriteFacing3D(Int) to Int {
 	/** The camera, square to its view: a coin, a glow, a particle. */
 	var Camera = 0;

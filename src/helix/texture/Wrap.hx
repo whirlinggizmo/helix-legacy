@@ -1,6 +1,7 @@
 package helix.texture;
 
 /** How a texture's edges repeat past 0..1. */
+@:build(helix.macro.EnumNames.build())
 enum abstract Wrap(Int) to Int {
 	/** The edge texel carries on. */
 	var Clamp = 0;

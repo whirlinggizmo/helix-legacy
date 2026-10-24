@@ -704,6 +704,7 @@ function face(theme:Theme):Int
 function handle(theme:Theme):Int
 function text(theme:Theme):Int
 static function dim(color:Int):Int
+function toString():String
 ```
 
 - `of`: The state of a part whose widget is enabled or not, held down by the pointer (down), under it (over) and focused: the first that holds of Disabled, Down, Over and Focused, else Normal.
@@ -712,3 +713,4 @@ static function dim(color:Int):Int
 - `handle`: A handle's color in this state (a slider's, a scrollbar's thumb, a color picker's): theme's handleColor, accentColor Over, focusColor Down and Focused (the part the keys drive), handleColor dimmed Disabled.
 - `text`: A widget's text's color in this state: theme's textColor, disabledTextColor Disabled.
 - `dim`: color (0xAARRGGBB) dimmed as a disabled part is: its own color at half its alpha.
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.

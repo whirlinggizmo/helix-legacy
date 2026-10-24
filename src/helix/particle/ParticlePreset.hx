@@ -5,6 +5,7 @@ package helix.particle;
 	world units in 3D), down being the sign of its space's downward y (+1 on a 2D stage, where y grows downward; -1 in 3D, +y up), drawn with
 	the built-in dot (Emitter.getDot). A one-shot (explosion, smoke puff, sparks, dust, confetti) bursts once, where its node first is; the
 	others run steadily. Each is an ordinary Emitter: change what doesn't fit. */
+@:build(helix.macro.EnumNames.build())
 enum abstract ParticlePreset(Int) {
 	/** A burst of light outward, fading from white-yellow to red: a hit, a pop, a small explosion. One-shot. */
 	var Explosion;

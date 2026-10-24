@@ -1,6 +1,7 @@
 package helix.render2d;
 
 /** Which shape a Shape2D is. */
+@:build(helix.macro.EnumNames.build())
 enum abstract ShapeForm2D(Int) {
 	/** A rectangle, filled or outlined, its corners square or rounded. */
 	var Rectangle = 0;

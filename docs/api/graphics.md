@@ -13,6 +13,12 @@ How a sprite or a particle uses its texels' alpha, the same in 2D and 3D (Sprite
 - `AlphaMode.Blend`: Blended by it (in 3D, among the see-through models back to front).
 - `AlphaMode.Add`: Added, times it: light, fire, glows (in 3D, after everything else).
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## BlendMode
 
 *abstract* in [`src/helix/graphics/BlendMode.hx`](../../src/helix/graphics/BlendMode.hx), `import helix.graphics.BlendMode;`
@@ -23,6 +29,12 @@ How a pipeline's colors meet what the framebuffer has: replacing it, blended ove
 - `BlendMode.Alpha`: Blended over what's there by its alpha.
 - `BlendMode.Additive`: Added to what's there, times its alpha.
 
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## ClipFlip
 
 *abstract* in [`src/helix/graphics/ClipFlip.hx`](../../src/helix/graphics/ClipFlip.hx), `import helix.graphics.ClipFlip;`
@@ -32,6 +44,12 @@ What uniform block 0 holds, so an adapter whose render targets are stored upside
 - `ClipFlip.None`: Block 0 isn't touched (or there is none).
 - `ClipFlip.ClipScale`: Block 0 is a vec4 clip scale the adapter writes.
 - `ClipFlip.ViewProjection`: Block 0 starts with a view-projection matrix whose y row the adapter negates.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Color
 
@@ -68,6 +86,12 @@ Which fragments a pipeline's depth test passes, against the depth already there.
 - `DepthTest.Off`: No test: every fragment is drawn.
 - `DepthTest.LessEqual`: Nearer or as near: what's in front (the usual test).
 - `DepthTest.Greater`: Farther: only where something nearer was drawn before (what's hidden behind it).
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Graphics
 

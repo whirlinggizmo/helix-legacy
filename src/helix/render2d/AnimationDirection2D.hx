@@ -1,6 +1,7 @@
 package helix.render2d;
 
 /** Which way a SpriteAnimation2D plays through its frames (Aseprite's tag directions). */
+@:build(helix.macro.EnumNames.build())
 enum abstract AnimationDirection2D(Int) {
 	/** First to last. */
 	var Forward;

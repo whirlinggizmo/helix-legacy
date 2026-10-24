@@ -1,6 +1,7 @@
 package helix.render2d;
 
 /** How a filled rectangle is colored. */
+@:build(helix.macro.EnumNames.build())
 enum abstract ShapeShading2D(Int) {
 	/** In its color alone. */
 	var Flat = 0;

@@ -1,6 +1,7 @@
 package helix.input;
 
 /** Sticks run from -1 to 1 (down and right positive), triggers from 0 to 1. */
+@:build(helix.macro.EnumNames.build())
 enum abstract PadAxis(Int) to Int {
 	var LeftX = 0;
 	var LeftY = 1;

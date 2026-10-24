@@ -176,3 +176,9 @@ When in a frame a behavior runs: the BehaviorPass pass updates every behavior of
 - `Phase.Simulate`: Moves the world: a car, a projectile, an AI acting on its intent. The phase of a behavior that doesn't say.
 - `Phase.Resolve`: Settles what Simulate produced: checkpoints seeing where the car now is, combat applying the hits queued this frame, triggers.
 - `Phase.Late`: Last: follows the settled world (cameras, HUD anchors, effects), changing nothing the others read.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.

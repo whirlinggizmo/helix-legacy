@@ -1,6 +1,7 @@
 package helix.input;
 
 /** A gamepad's buttons, as on an Xbox-style pad, numbered as the W3C standard gamepad numbers them. The triggers are buttons too (pressed when pulled past half way, or by a digital trigger) as well as axes. */
+@:build(helix.macro.EnumNames.build())
 enum abstract PadButton(Int) to Int {
 	var South = 0;
 	var East = 1;

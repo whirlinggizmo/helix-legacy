@@ -2,6 +2,7 @@ package helix.input;
 
 /** Physical keys by place on a US layout, numbered as GLFW numbers them; each input adapter maps its platform's codes to them. Left and
 	right Shift, Control, Alt and Super are one key each. */
+@:build(helix.macro.EnumNames.build())
 enum abstract Key(Int) to Int {
 	var Space = 32;
 	var Apostrophe = 39;

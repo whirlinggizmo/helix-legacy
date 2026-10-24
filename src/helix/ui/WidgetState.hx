@@ -8,6 +8,7 @@ import helix.graphics.Color;
 	and enabled alike: a face in faceColor, hoveredColor under the pointer, pressedColor held and its own color at half alpha disabled (dim); a
 	handle in handleColor, accentColor under the pointer, focusColor held; text in textColor, disabledTextColor disabled. What isn't state, a
 	toggle's mark on, a list's or a tile's selection, is its widget's own and drawn over or beside it. */
+@:build(helix.macro.EnumNames.build())
 enum abstract WidgetState(Int) {
 	/** At rest. */
 	var Normal = 0;

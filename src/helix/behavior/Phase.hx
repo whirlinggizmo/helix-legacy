@@ -4,6 +4,7 @@ package helix.behavior;
 	within a phase in the order they were added (a scene file's order). A class says its phase with `@:phase(Late)` on the class; without
 	it, Simulate, and a subclass has its base's. Fixed and few on purpose: a reader knows what a frame does from the class alone, and
 	every target runs it alike (docs/DECISIONS.md 134). */
+@:build(helix.macro.EnumNames.build())
 enum abstract Phase(Int) to Int {
 	/** First: reads the devices and decides intent (a player's controller, an AI's choice of what to do), moving nothing yet. */
 	var Input = 0;

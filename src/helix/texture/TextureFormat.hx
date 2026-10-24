@@ -3,6 +3,7 @@ package helix.texture;
 /** What a texture's texels are: plain RGBA8, a GPU's compressed format (4x4 blocks of 16 bytes each), which only some GPUs sample
 	(IGraphics.canSample), or half floats, linear light beyond 1 (an environment's cubes). The 8-bit and compressed ones' colors are sRGB values,
 	as the shaders treat them. */
+@:build(helix.macro.EnumNames.build())
 enum abstract TextureFormat(Int) to Int {
 	/** 4 bytes a texel, rows top first. */
 	var Rgba8 = 0;
