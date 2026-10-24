@@ -40,7 +40,6 @@
   start), and holding covered until the game says (a load under the cover) rather than a fixed hold. Wanted: cover(?done)
   and uncover(?done) as halves, run built from them, a covered state to read, and the color (black by default) easy to
   set. Check Closing, Fade and the wipes all work as halves.
-- **Iris on the splash's logo**: Splash keeps where it drew its logo to itself, and Iris closes on the middle of the
-  screen with no way to say where (new(seconds, color) only). Wanted: Splash's logo place readable (logoX, logoY and
-  its size, in the stage's units, or the logo node), and Iris a center (centerX, centerY, the middle by default), so the
-  splash closes an iris onto its logo.
+- **Iris on the splash's logo**: Iris aims already (setPoint, from Closing), but Splash keeps where it drew its logo to
+  itself, so there's nowhere to aim it. Wanted: Splash's logo place readable (logoX, logoY and its size, in the stage's
+  units, or the logo node), so the splash's transition closes an iris onto its logo.
