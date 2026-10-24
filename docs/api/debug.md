@@ -11,6 +11,7 @@ Bounded JSON commands produce normal input, a tick at a time; probes (named valu
 ```haxe
 function new(json:String, ?screenshot:Null<String> -> Void, ?press:String -> Bool, ?sample:(points:Array<Array<Float>>, done:Array<Array<Int>> -> Void, failed:String -> Void) -> Void, ?locate:(target:String, part:String, x:Float, y:Float, out:Array<Float>) -> Bool)
 var done(default, null):Bool
+var failure(default, null):Null<String>
 var tickCount(get, never):Int
 var input(get, never):IInput
 var seed(default, null):Int
@@ -22,13 +23,14 @@ var snapshot(get, never):Dynamic
 
 - `new`: Checks a whole script ({version: 1, seed, commands}: press, hold, wait, assert, click, screenshot, sample, drag, type; at most 128) and throws on anything invalid or unknown. A wait has one limit: "timeout" in ticks, or "seconds" of the clock. A click uses a UI's widget by name, waiting (as a web suite's actions do) until press, the app's (Ui.press, say), finds it shown and usable, within its limit; without press it fails; one with "at" (and "part") clicks the pointer at that point of the widget instead, waiting until it's found. A screenshot command calls screenshot with its name (null for the default name; Screenshots.take, say), or does nothing without one. A sample calls sample with its points (Screenshots.sample, say), which calls done with each point's color as [r, g, b, a], 0 to 255, once the frame has ended, or failed; without sample it fails. A point naming a widget asks locate (Ui.computePoint, say) for the framebuffer pixel at its fractions of the widget's or its part's rectangle (written to out; as given without a runner, in a test), waiting while it answers false; without locate it fails.
 - `done`: Whether every command has finished.
+- `failure`: Why the script failed (an assertion, a wait timing out, an invalid script), or null while it hasn't. A failure is published at once (TestHarness.publish: {failed, autopilot: snapshot}), so the check that launched the program reports it without waiting out its limit, and thrown, as before.
 - `tickCount`: Ticks the commands have run so far.
 - `input`: The input the script plays, the one advance returns: the same object for the whole script, so what reads it (a UI, an Actions map) can be given it before the first tick.
 - `seed`: The script's seed, 1 to 2147483647, for the app's random numbers.
 - `outcomes`: One record a finished command: its index, op, the tick it finished on and the probe's value.
 - `awaitingFrame`: Whether a sample waits for the frame being drawn to end: the input advance returned isn't to be played, and the app runs no tick this frame (its tick loop stops when this is true, as it does when done).
-- `advance`: Once a tick: runs commands until one needs this tick, asking probe for named values, and returns the input to play it with. Throws when a wait times out or an assert fails.
-- `snapshot`: Progress as a record: completed, ticks, the current command index, the outcomes and the samples (by name: points, colors as [r, g, b, a] and tolerance).
+- `advance`: Once a tick: runs commands until one needs this tick, asking probe for named values, and returns the input to play it with. Throws when a wait times out or an assert fails (or probe throws), publishing the failure first (failure); once failed, it throws that again.
+- `snapshot`: Progress as a record: completed, failed (failure), ticks, the current command index, the outcomes and the samples (by name: points, colors as [r, g, b, a] and tolerance).
 
 ## FpsOverlay
 

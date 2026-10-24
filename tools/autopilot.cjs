@@ -2,7 +2,8 @@
 // with the renderer it ran on. First on the GPU (Vulkan on Linux, Metal on macOS, the browser's own choice on Windows), so a driver's bug
 // can show; when the page says the platform can't draw (window.graphicsUnavailable: no WebGL2, a context lost; whichever GPU API the page
 // uses), once more on SwiftShader, the browser's software renderer: CI's machines have no GPU, and a software Vulkan driver gives ANGLE no
-// usable WebGL2. The autopilot compares games, not pixels, so either serves; the output says which ran, and why it fell back.
+// usable WebGL2. The autopilot compares games, not pixels, so either serves; the output says which ran, and why it fell back. A script that
+// fails publishes {failed} (Autopilot.failure): printed as any result, then its message on stderr, exiting 1.
 const [browserPath,url]=require('./cli.cjs').args(__filename,['browser','url']);
 const path=require('path');
 const {chromium}=require(path.join(__dirname,'../build/tools/node_modules/playwright'));
@@ -33,4 +34,5 @@ async function run(args){
  if(outcome.unavailable){const reason=outcome.unavailable;outcome=await run(SOFTWARE);outcome.fallback=reason;
   if(outcome.unavailable)throw new Error(`No graphics, on the GPU or in software: ${outcome.unavailable}`);}
  console.log(JSON.stringify(outcome));
+ if(outcome.result&&outcome.result.failed){console.error(`autopilot failed: ${outcome.result.failed}`);process.exitCode=1;}
 })().catch(e=>{console.error(e.stack||e);process.exit(1);});

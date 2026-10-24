@@ -48,6 +48,11 @@ class Autopilot {
 	/** Whether every command has finished. */
 	public var done(default, null):Bool = false;
 
+	/** Why the script failed (an assertion, a wait timing out, an invalid script), or null while it hasn't. A failure is published at once
+		(TestHarness.publish: {failed, autopilot: snapshot}), so the check that launched the program reports it without waiting out its
+		limit, and thrown, as before. */
+	public var failure(default, null):Null<String>;
+
 	/** Ticks the commands have run so far. */
 	public var tickCount(get, never):Int;
 
@@ -107,6 +112,22 @@ class Autopilot {
 		this.press = press;
 		this.sample = sample;
 		this.locate = locate;
+		try
+			load(json)
+		catch (e:haxe.Exception) {
+			fail(e.message);
+			throw e;
+		}
+		// While it plays, the program's input is the script's (Input), so what reads it (a Ui, a pointer looking at the stage, a splash or a
+		// loading screen) plays it with nothing handed over; the program's own is back once every command has finished.
+		if (Input.instance != null) {
+			programInput = Input.instance;
+			@:privateAccess Input.bind(state);
+		}
+	}
+
+	// Checks the script and takes its seed and commands; throws on anything invalid.
+	function load(json:String):Void {
 		var document:Dynamic = haxe.Json.parse(json);
 		fields(document, ["version", "seed", "commands"]);
 		if (document.version != 1
@@ -207,12 +228,17 @@ class Autopilot {
 					throw "Unknown autopilot command";
 			}
 		}
-		// While it plays, the program's input is the script's (Input), so what reads it (a Ui, a pointer looking at the stage, a splash or a
-		// loading screen) plays it with nothing handed over; the program's own is back once every command has finished.
-		if (Input.instance != null) {
-			programInput = Input.instance;
-			@:privateAccess Input.bind(state);
-		}
+	}
+
+	// The script failed: message kept and published, once; the program's own input back.
+	function fail(message:String):Void {
+		if (failure != null)
+			return;
+		failure = message;
+		if (programInput != null && Input.instance == state)
+			@:privateAccess Input.bind(programInput);
+		if (TestHarness.instance != null)
+			TestHarness.publish({failed: message, autopilot: snapshot});
 	}
 
 	static function fields(value:Dynamic, required:Array<String>, optional:Array<String> = null):Void {
@@ -295,8 +321,20 @@ class Autopilot {
 			state.keyEvent(key, desired.indexOf(key) >= 0);
 	}
 
-	/** Once a tick: runs commands until one needs this tick, asking probe for named values, and returns the input to play it with. Throws when a wait times out or an assert fails. */
+	/** Once a tick: runs commands until one needs this tick, asking probe for named values, and returns the input to play it with. Throws when
+		a wait times out or an assert fails (or probe throws), publishing the failure first (failure); once failed, it throws that again. */
 	public function advance(probe:String->Dynamic):IInput {
+		if (failure != null)
+			throw failure;
+		try
+			return play(probe)
+		catch (e:haxe.Exception) {
+			fail(e.message);
+			throw e;
+		}
+	}
+
+	function play(probe:String->Dynamic):IInput {
 		// A tick is the script's frame too: its tick edges and frame edges both end here; not after a frame awaited, whose input wasn't played.
 		if (!awaitingFrame) {
 			state.consume();
@@ -522,13 +560,14 @@ class Autopilot {
 		}
 	}
 
-	/** Progress as a record: completed, ticks, the current command index, the outcomes and the samples (by name: points, colors as
+	/** Progress as a record: completed, failed (failure), ticks, the current command index, the outcomes and the samples (by name: points, colors as
 		[r, g, b, a] and tolerance). */
 	public var snapshot(get, never):Dynamic;
 
 	function get_snapshot():Dynamic
 		return {
 			completed: done,
+			failed: failure,
 			ticks: ticks,
 			command: index,
 			outcomes: outcomes,

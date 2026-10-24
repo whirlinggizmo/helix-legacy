@@ -261,14 +261,18 @@ def autopilot(name,browser,native):
                 query='&'.join(f'{k}={v}' for k,v in options.items())
                 # The native program's Vulkan driver choice (lavapipe, for SDL_GPU on a private display) isn't Chrome's: there it leaves WebGL2 out.
                 browser_env={k:v for k,v in os.environ.items() if k not in ('VK_DRIVER_FILES','VK_ICD_FILENAMES')}
-                web=json.loads(subprocess.check_output(['node',ROOT/'tools/autopilot.cjs',browser,f'http://127.0.0.1:{server.server_address[1]}/{name}/?{query}'],cwd=ROOT,env=browser_env,text=True, encoding='utf-8'))
+                ran=subprocess.run(['node',ROOT/'tools/autopilot.cjs',browser,f'http://127.0.0.1:{server.server_address[1]}/{name}/?{query}'],cwd=ROOT,env=browser_env,capture_output=True,text=True, encoding='utf-8')
+                if ran.returncode:failed.append(script);print(f'{script}: browser run failed\n{ran.stderr}',flush=True);continue
+                web=json.loads(ran.stdout)
                 result=out/f'{label}-{script}';result.unlink(missing_ok=True)
                 # Its saves in a directory of its own, empty, as the browser's run starts with none: a script that saves (settings) doesn't
                 # reach the next, nor the user's own saves.
                 with tempfile.TemporaryDirectory() as saves:
                     child=dict(env,HELIX_RESULT=str(result),HELIX_SAVES=saves,**{'HELIX_'+k.upper():v for k,v in options.items()})
                     process=subprocess.run([str(executable)],cwd=page(name,native),env=child,capture_output=True,text=True, encoding='utf-8',timeout=300)
-                if process.returncode or not result.is_file():failed.append(script);print(f'{script}: native run failed\n{process.stdout}{process.stderr}',flush=True);continue
+                if process.returncode or not result.is_file():
+                    reason=json.loads(result.read_text(encoding='utf-8')).get('failed') if result.is_file() else None
+                    failed.append(script);print(f'{script}: native run failed'+(f': {reason}' if reason else f'\n{process.stdout}{process.stderr}'),flush=True);continue
                 # What the native graphics said it runs on (SDL_GPU's backend), as SDL chooses it.
                 for line in process.stderr.splitlines():
                     if line.startswith('HeliX SDL_GPU: '):print(f'{script}: {line}',flush=True)

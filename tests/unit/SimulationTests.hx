@@ -396,6 +396,22 @@ class SimulationTests {
 		var timeout = new Autopilot('{"version":1,"seed":1,"commands":[{"op":"wait","probe":"state","equals":"never","timeout":1}]}');
 		timeout.advance(g.probe);
 		rejects(() -> timeout.advance(g.probe), "Unmet wait fails with bounded timeout");
+		// A failure is published at once (the check reports it without waiting out its limit), once, and thrown again if advanced again;
+		// an invalid script's too.
+		var harness = new RecordingHarness(),
+			was = @:privateAccess helix.debug.TestHarness.instance;
+		@:privateAccess helix.debug.TestHarness.instance = harness;
+		var failing = new Autopilot('{"version":1,"seed":1,"commands":[{"op":"assert","probe":"state","equals":"never"}]}');
+		rejects(() -> failing.advance(g.probe), "An unmet assert fails");
+		rejects(() -> failing.advance(g.probe), "A failed script fails again");
+		check(harness.published.length == 1
+			&& StringTools.startsWith(harness.published[0].failed, "Autopilot assertion failed at command 0")
+			&& harness.published[0].autopilot.failed == failing.failure,
+			"The failure published once, with the snapshot");
+		rejects(() -> new Autopilot('{"version":1,"seed":1,"commands":[{"op":"jump"}]}'), "An unknown command rejected");
+		check(harness.published.length == 2
+			&& harness.published[1].failed == "Unknown autopilot command", "An invalid script's failure published");
+		@:privateAccess helix.debug.TestHarness.instance = was;
 		rejects(() -> new Autopilot('{"version":1,"seed":1,"commands":[{"op":"wait","probe":"state","equals":"x"}]}'), "A wait needs a limit");
 		rejects(() -> new Autopilot('{"version":1,"seed":1,"commands":[{"op":"wait","probe":"state","equals":"x","timeout":5,"seconds":1}]}'),
 			"A wait has one limit");
@@ -414,4 +430,14 @@ class SimulationTests {
 		widgetPoints(g);
 		trace(haxe.Json.stringify({checks: checks, passed: true, replay: a.snapshot()}));
 	}
+}
+
+// What's published, kept.
+class RecordingHarness implements helix.debug.ITestHarness {
+	public var published:Array<Dynamic> = [];
+
+	public function new() {}
+
+	public function publish(value:Dynamic):Void
+		published.push(value);
 }
