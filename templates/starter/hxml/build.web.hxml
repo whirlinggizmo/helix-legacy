@@ -1,6 +1,4 @@
 # The browser build for development: haxe hxml/build.web.hxml -> out/web/app.js, with the page beside it (index.html, the library's,
-# written when there's none). hxml/dev.hxml rebuilds it on save.
-hxml/common.hxml
--D helix-backend=webgl2
--debug
+# written when there's none). The dev loop builds the same (hxml/web.hxml) to out/dev/ instead.
+hxml/web.hxml
 -js out/web/app.js

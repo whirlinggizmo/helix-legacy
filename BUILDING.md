@@ -51,10 +51,15 @@ A game anywhere on disk takes HeliX as a haxelib (`haxelib dev helix /path/to/he
 ```
 
 ```hxml
-# hxml/build.web.hxml: the browser build for development -> out/web/app.js, the page beside it
+# hxml/web.hxml: the browser build's settings, without where it's written
 hxml/common.hxml
 -D helix-backend=webgl2
 -debug
+```
+
+```hxml
+# hxml/build.web.hxml: the browser build for development -> out/web/app.js, the page beside it
+hxml/web.hxml
 -js out/web/app.js
 ```
 
@@ -112,16 +117,16 @@ haxelib run helix setup            # the shader tools fetched ahead and listed (
 ```
 
 
-- **`init <directory>`** writes a starter game, `templates/starter/` with the directory's name and title in it: the hello's shape (`Game extends helix.App` setting the window's title and putting a rectangle and a greeting on the stage; `Main` giving it its `AppOptions`, the product named for the directory), its builds in `hxml/` (above: `common.hxml`, `build.web`, `build.native`, `build.dist`, `dev`, `serve.dist`), an empty `assets/` (the README says what goes there, so nothing but the game's files ships), `favicon.svg` (the page's icon, the logo until the game's replaces it), `.gitignore` (`out/`, `.haxelib/`) and a README with the commands, and how to keep the game's libraries to itself (`haxelib newrepo`, then `haxelib git` for HeliX and hotreload-hx: `.haxelib/`, used only by builds run from the game's directory, which `.gitignore` leaves out). It refuses a directory with anything in it. With `--example <name>` it writes one of the library's examples (a directory of a checkout's `examples/`) as a game instead of the hello: the example's `App.hx` (or every file of its `src/`) in `src/`, `Main` starting `App`; the examples' shared assets and the example's own in `assets/`, its autopilot scripts as `assets/autopilot/<name>/` where the example loads them; its `shaders/` and `config.json`. A name it hasn't is refused with the list of those it has.
+- **`init <directory>`** writes a starter game, `templates/starter/` with the directory's name and title in it: the hello's shape (`Game extends helix.App` setting the window's title and putting a rectangle and a greeting on the stage; `Main` giving it its `AppOptions`, the product named for the directory), its builds in `hxml/` (above: `common.hxml`, `web.hxml`, `build.web`, `build.native`, `build.dist`, `dev`, `serve.dist`), an empty `assets/` (the README says what goes there, so nothing but the game's files ships), `favicon.svg` (the page's icon, the logo until the game's replaces it), `.gitignore` (`out/`, `.haxelib/`) and a README with the commands, and how to keep the game's libraries to itself (`haxelib newrepo`, then `haxelib git` for HeliX and hotreload-hx: `.haxelib/`, used only by builds run from the game's directory, which `.gitignore` leaves out). It refuses a directory with anything in it. With `--example <name>` it writes one of the library's examples (a directory of a checkout's `examples/`) as a game instead of the hello: the example's `App.hx` (or every file of its `src/`) in `src/`, `Main` starting `App`; the examples' shared assets and the example's own in `assets/`, its autopilot scripts as `assets/autopilot/<name>/` where the example loads them; its `shaders/` and `config.json`. A name it hasn't is refused with the list of those it has.
 - **`setup [--sdl-gpu]`** makes ready what packing shaders would fetch or build on its first use, for a machine about to go offline or a CI's cache: sokol-shdc, and with `--sdl-gpu` SPIRV-Cross (built by hxcpp, which it checks for first) and glslang. Then it lists each tool, those not asked for as they stand: its version (or the variable naming one of your own), where it is and the room it takes, and the cache's directory.
 
-**The dev loop** is one hxml run in the game's directory, `haxe hxml/dev.hxml`, two macros: hotreload-hx's server (`DevServer.serve`) builds `hxml/build.web.hxml` on save and swaps the code into the page it serves (the assets at `/assets`, where the page fetches them), first stopping a server this game left on the port (`restart`; another project's is left running, and it says whose), and `Watchers.watchShaders` repacks the game's shaders as they change, which the page reloads as an asset. Ctrl+C stops both:
+**The dev loop** is one hxml run in the game's directory, `haxe hxml/dev.hxml`, two macros: hotreload-hx's server (`DevServer.serve`) builds the browser build (`hxml/web.hxml`) on save into `out/dev/`, a directory no other build writes (so `build.web` run meanwhile never writes over the page it serves), and swaps the code into the page it serves (the assets at `/assets`, where the page fetches them), first stopping a server this game left on the port (`restart`; another project's is left running, and it says whose), and `Watchers.watchShaders` repacks the game's shaders as they change, which the page reloads as an asset. Ctrl+C stops both:
 
 ```hxml
 -lib hotreload-hx
 -lib helix
 -D hotreload-port=8064
---macro hotreload.DevServer.serve("hxml/build.web.hxml", {mounts: {"/assets": "assets"}, restart: true})
+--macro hotreload.DevServer.serve(["hxml/web.hxml", "-js", "out/dev/app.js"], {mounts: {"/assets": "assets"}, restart: true})
 --macro helix.tool.Watchers.watchShaders()
 ```
 

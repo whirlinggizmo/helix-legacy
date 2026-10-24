@@ -181,7 +181,7 @@ class Starter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             game = starter(directory, 'my-jam-game')
             names = ('build.web', 'build.native', 'build.dist', 'dev', 'serve.dist')
-            hxml = ['hxml/common.hxml'] + [f'hxml/{name}.hxml' for name in names]
+            hxml = ['hxml/common.hxml', 'hxml/web.hxml'] + [f'hxml/{name}.hxml' for name in names]
             for relative in ['src/Main.hx', 'src/Game.hx', *hxml, 'favicon.svg', '.gitignore', '.vscode/settings.json', 'README.md']:
                 self.assertTrue((game / relative).is_file(), relative)
             self.assertEqual(json.loads((game / '.vscode/settings.json').read_text(encoding='utf-8')), {'haxe.configurations': [['hxml/build.web.hxml']]})
@@ -191,7 +191,7 @@ class Starter(unittest.TestCase):
             self.assertIn('out/my-jam-game-web.zip', (game / 'hxml/build.dist.hxml').read_text(encoding='utf-8'))
             self.assertEqual((game / '.gitignore').read_text(encoding='utf-8'), 'out/\n.haxelib/\n')
             readme = (game / 'README.md').read_text(encoding='utf-8')
-            for relative in hxml[1:]:
+            for relative in hxml[2:]:
                 self.assertIn(f'haxe {relative}', readme)
             # The browser build, its page beside it, written by the build; one there is the game's, and kept.
             done(haxe(game, 'hxml/build.web.hxml'))

@@ -1,8 +1,9 @@
-# The dev loop: haxe hxml/dev.hxml, then open http://localhost:8064/. hotreload-hx's server rebuilds hxml/build.web.hxml on save and
-# swaps the code into the running page, assets/ served at /assets (a server this game left on the port stopped first); the game's
-# shaders/<name>.glsl are packed into assets/shaders/<name>.hxshader as they change, which the page reloads. Ctrl+C stops both.
+# The dev loop: haxe hxml/dev.hxml, then open http://localhost:8064/. hotreload-hx's server rebuilds the browser build (hxml/web.hxml)
+# on save into out/dev/, which no other build writes, and swaps the code into the running page, assets/ served at /assets (a server this
+# game left on the port stopped first); the game's shaders/<name>.glsl are packed into assets/shaders/<name>.hxshader as they change,
+# which the page reloads. Ctrl+C stops both.
 -lib hotreload-hx
 -lib helix
 -D hotreload-port=8064
---macro hotreload.DevServer.serve("hxml/build.web.hxml", {mounts: {"/assets": "assets"}, restart: true})
+--macro hotreload.DevServer.serve(["hxml/web.hxml", "-js", "out/dev/app.js"], {mounts: {"/assets": "assets"}, restart: true})
 --macro helix.tool.Watchers.watchShaders()

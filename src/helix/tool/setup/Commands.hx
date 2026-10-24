@@ -12,7 +12,7 @@ What a game on -lib helix does before it has an hxml, or outside one. Its builds
 macros in helix.tool: Build's steps (shaders packed, the page, assets, the zip), Watchers, WebServer (BUILDING.md).
 
   init DIRECTORY                 a starter game in DIRECTORY (empty or not yet there): src/Main.hx and src/Game.hx (a window title, a rectangle
-                              and a greeting), hxml/ (common.hxml; build.web, build.native and build.dist; dev, the dev loop; and
+                              and a greeting), hxml/ (common.hxml and web.hxml; build.web, build.native and build.dist; dev, the dev loop; and
                               serve.dist), assets/, favicon.svg (the page's icon, to replace), .gitignore and a README
   init DIRECTORY --example NAME  the library's example NAME as a game in DIRECTORY, the starter around it: its App in src/, the examples'
                               assets and its own in assets/, its shaders/ and config.json; an unknown NAME lists the examples

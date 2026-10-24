@@ -12,14 +12,15 @@ The builds are in `hxml/`, each run from this directory:
 
 ```console
 haxe hxml/dev.hxml                # the dev loop: open http://localhost:8064/, edit, save; the page takes the new code as it runs (a change to init after a refresh), and shaders/<name>.glsl as they change
-haxe hxml/build.web.hxml          # the browser build alone, out/web/, without assets/ (the dev loop serves them beside it)
+haxe hxml/build.web.hxml          # the browser build alone, out/web/, without assets/ (the dev loop builds its own, in out/dev/)
 haxe hxml/build.dist.hxml         # the release build for hosting: out/dist/, zipped as out/{name}-web.zip (itch.io)
 haxe hxml/serve.dist.hxml         # out/dist/ served at http://localhost:8095/, to try before uploading
 haxe hxml/build.native.hxml       # the native build (hxcpp), out/native/Main; it reads assets/ beside itself: copy (or link) the directory to out/native/assets
 ```
 
 `assets/` holds the game's files, each loaded by its path from there (`Textures.load("player.png", false, ...)`, `Audio.loadClip("coin.wav", ...)`);
-the release build copies it beside the page. `common.hxml` holds what every build shares; the build steps are macros in `helix.tool` (`Build`, `Watchers`, `WebServer`). `favicon.svg` is the page's icon: put
+the release build copies it beside the page. `common.hxml` holds what every build shares, `web.hxml` the browser build's settings (the
+dev loop and `build.web` each add where it's written); the build steps are macros in `helix.tool` (`Build`, `Watchers`, `WebServer`). `favicon.svg` is the page's icon: put
 the game's own there. A shader of the game's own goes in `shaders/<name>.glsl` (make the directory): every build packs it into `assets/shaders/<name>.hxshader`,
 the dev loop again as it changes, and the game loads it with `new Shaders().load("shaders/<name>.hxshader", ...)`; HeliX's
 `docs/SHADERS.md` says how one is written. The shader compiler is fetched the first time a shader is packed; `haxelib run helix setup` fetches it ahead,

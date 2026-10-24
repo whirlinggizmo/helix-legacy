@@ -1,0 +1,5 @@
+# The browser build's settings, without where it's written: hxml/build.web.hxml writes it to out/web/, and the dev loop (hxml/dev.hxml)
+# to out/dev/, so a build run while the dev loop runs never writes over the page it serves.
+hxml/common.hxml
+-D helix-backend=webgl2
+-debug
