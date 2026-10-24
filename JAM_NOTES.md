@@ -86,3 +86,13 @@
   turn a node by an axis and angle (setQuaternion only, the product by hand), and no reparenting that keeps a node
   where it is in the world (sticking things to the ball). Consider: Body3D/sphere against meshes or a height field,
   Node3D.turn(axisX, axisY, axisZ, angle), CameraFollow3D, addChild keeping the world transform.
+- **Move HeliX's hotreload-hx pin to 5a7023f** (`dependencies.json`, now 58ed877). What it brings: hxml edits
+  (a -lib or -cp added) built with while the server runs; `sidecars` (commands started and stopped with the server,
+  e.g. an HTTPS proxy); a project-local `.haxelib/` no longer counted as the game's code, so HeliX's plain statics
+  aren't restarted on every reload and its sources aren't watched; `hotreload: ready` once watching; one message style
+  (`hotreload: <topic>: <state> (<details>)`); the first build's temp config out of the project root. Nothing in HeliX
+  parses the old wording (checked 2026-10-24). After the bump: run the dev loop, the starter's tool tests and CI. Then
+  see whether the statics note above still holds, since the restarted HeliX statics may have been part of it.
+- **Check the starter's `watch.hotreload.hxml` against hotreload-hx's new options** (`--help`): whether `sidecars`
+  belongs in it (commented out, an HTTPS proxy for testing on a phone over the LAN), whether a script waiting on the
+  server should match `hotreload: ready`, and that the README's dev loop description matches the new messages.
