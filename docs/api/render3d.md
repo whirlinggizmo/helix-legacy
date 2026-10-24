@@ -461,7 +461,7 @@ function writeTo(bytes:haxe.io.Bytes, ?offset:Int = 0):Void
 
 *class* in [`src/helix/render3d/Material3D.hx`](../../src/helix/render3d/Material3D.hx), `import helix.render3d.Material3D;`
 
-How a model's surface looks: glTF's metallic-roughness model. A base color (0xAARRGGBB, its color sRGB-encoded as the convention's colors are; its alpha below 255 makes the surface see-through), an optional base color texture (sRGB) multiplying it, how metallic (0..1) and how rough (0..1) it is, an optional normal map (linear, tangent space, green up) and its strength, light it gives off (emissive), and whether lights shade it at all. Shared by any number of models: models alike in mesh and material draw together.
+How a model's surface looks: glTF's metallic-roughness model. A base color (0xAARRGGBB, its color sRGB-encoded as the convention's colors are; its alpha below 255 makes the surface see-through), an optional base color texture (sRGB) multiplying it, how metallic (0..1) and how rough (0..1) it is, an optional normal map (tangent space, green up) and its strength, light it gives off (emissive), and whether lights shade it at all. Shared by any number of models: models alike in mesh and material draw together.
 
 ```haxe
 function new()
@@ -488,7 +488,7 @@ var blended(get, set):Bool
 - `metallic`: How metallic, 0..1. Clamped to 0..1 (NaN is 0).
 - `roughness`: How rough, 0..1. Clamped to 0..1 (NaN is 0).
 - `lit`: Whether lights shade it; unlit, it shows its color as it is.
-- `normalTexture`: The normal map (linear, tangent space, green up), or null for none. Load it linear (not sRGB), with mipmaps.
+- `normalTexture`: The normal map (tangent space, green up), or null for none. Its colors are directions, read as they are, not decoded from sRGB. Load it smooth, with mipmaps (Textures.load's linear true).
 - `normalScale`: How strongly the normal map bends the surface: 1 as it is, 0 flat. 0 or more (under 0, or NaN, is 0).
 - `emissive`: The light it gives off, 0xAARRGGBB (sRGB, alpha ignored); black for none.
 - `emissiveStrength`: How bright its emissive light is: the color times this.

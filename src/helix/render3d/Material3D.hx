@@ -7,7 +7,7 @@ import helix.texture.Texture2D;
 
 /** How a model's surface looks: glTF's metallic-roughness model. A base color (0xAARRGGBB, its color sRGB-encoded as the convention's colors
 	are; its alpha below 255 makes the surface see-through), an optional base color texture (sRGB) multiplying it, how metallic (0..1) and how
-	rough (0..1) it is, an optional normal map (linear, tangent space, green up) and its strength, light it gives off (emissive), and
+	rough (0..1) it is, an optional normal map (tangent space, green up) and its strength, light it gives off (emissive), and
 	whether lights shade it at all. Shared by any number of models: models alike in mesh and material draw
 	together. */
 class Material3D {
@@ -50,7 +50,8 @@ class Material3D {
 	/** Whether lights shade it; unlit, it shows its color as it is. */
 	public var lit:Bool = true;
 
-	/** The normal map (linear, tangent space, green up), or null for none. Load it linear (not sRGB), with mipmaps. */
+	/** The normal map (tangent space, green up), or null for none. Its colors are directions, read as they are, not decoded from sRGB.
+		Load it smooth, with mipmaps (Textures.load's linear true). */
 	public var normalTexture:Null<Texture2D>;
 
 	/** How strongly the normal map bends the surface: 1 as it is, 0 flat. 0 or more (under 0, or NaN, is 0). */
