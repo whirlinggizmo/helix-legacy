@@ -306,6 +306,7 @@ class App extends helix.App {
 		checker = Texture2D.fromRgba(10, 10, squares);
 		for (i in 0...4) {
 			var sprite = new Sprite2D(i == 2 ? creature : i == 3 ? checker : null);
+			sprite.setPivot(.5, .5);
 			sprite.setSize(i == 3 ? 140 : 112, i == 3 ? 140 : 112);
 			rowSprites.push(sprite);
 			scene.addChild(sprite);

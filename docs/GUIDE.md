@@ -66,7 +66,8 @@ Stage.addChild(label);
 label.text = "Score: 1";                              // change it any time
 
 Textures.load("player.png", false, texture -> {      // false: sharp (pixel art); true: smooth
-	var player = new Sprite2D(texture);              // centered on its position (setPivot to change)
+	var player = new Sprite2D(texture);
+	player.setPivot(.5, .5);                         // turned and placed about its middle (2D starts at the top left)
 	player.setPosition(400, 300);
 	player.rotation = Math.PI / 4;
 	player.setScale(2, 2);
@@ -77,6 +78,8 @@ Textures.load("player.png", false, texture -> {      // false: sharp (pixel art)
 
 - Files load from `assets/` by their path in it (`assets/player.png` is `"player.png"`). Loads finish later: the callback runs when
   it's there, so keep a `Null<...>` field and check it before use.
+- **Where a node's position is:** its pivot, `setPivot(x, y)` in fractions of its size. 2D starts at the top left (text, rectangles,
+  sprites), as Flash placed things; a circle is centered on its position; 3D sprites and text start centered.
 - **Draw order is add order:** a node added later is drawn over. `addChild` of one already there moves it to the top.
 - **Groups:** a `Node2D` holds others; move, scale, fade (`alpha`), hide (`visible = false`), freeze (`paused`), make unclickable (`pickable = false`) or remove the group and its children follow. Something that should differ from its parent goes beside it under a group instead. A clickable area that isn't drawn is a `Node2D` with a `hitArea` (`HitArea2D.rectangle(x, y, width, height)`).
 - **Layers:** make empty `Node2D` layers first (ground, things, HUD) and add into them, so what loads late doesn't land over everything.

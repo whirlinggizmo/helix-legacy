@@ -173,6 +173,7 @@ class TiledTileLayer2D extends Node2D {
 		}
 		if (sprite == null) {
 			sprite = new Sprite2D(null);
+			sprite.setPivot(.5, .5);
 			sprite.sampling = Sampling.NEAREST;
 			sprites[cell] = sprite;
 			addChild(sprite);

@@ -66,6 +66,7 @@ class App extends helix.App {
 		frame.setPosition(-120, 75);
 		world.addChild(frame);
 		sprite = new Sprite2D(null);
+		sprite.setPivot(.5, .5);
 		sprite.setSize(64, 64);
 		sprite.setPosition(0, 110);
 		world.addChild(sprite);

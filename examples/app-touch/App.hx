@@ -44,6 +44,8 @@ class App extends helix.App {
 
 	override public function init():Void {
 		Window.title = "HeliX touch";
+		logo.setPivot(.5, .5);
+		coin.setPivot(.5, .5);
 		Window.requestSize(900, 700);
 		Stage.color = 0xff161921;
 		logo.setSize(240, 240);

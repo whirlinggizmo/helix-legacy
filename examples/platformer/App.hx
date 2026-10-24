@@ -85,6 +85,7 @@ class App extends helix.App {
 
 	override public function init():Void {
 		Window.title = "HeliX platformer";
+		body.setPivot(.5, .5);
 		Window.requestSize(960, 600);
 		Stage.color = 0xff1d2230;
 		world.addChild(tileLayer);
@@ -113,6 +114,7 @@ class App extends helix.App {
 			spin.play("gear");
 			for (_ in 0...total) {
 				var gear = new Sprite2D(null);
+				gear.setPivot(.5, .5);
 				gear.setScale(TEXEL * .8, TEXEL * .8);
 				gearSprites.push(gear);
 				gearLayer.addChild(gear);
@@ -134,7 +136,6 @@ class App extends helix.App {
 					var tile = new Sprite2D(texture);
 					tile.setRegion(under ? 62 : 2, 2, 16, 16);
 					tile.setSize(1, 1);
-					tile.setPivot(0, 0);
 					tile.setPosition(column, row);
 					tileLayer.addChild(tile);
 				}

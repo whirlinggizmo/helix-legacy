@@ -29,7 +29,6 @@ class Tile extends Widget {
 		edge.pickable = false;
 		edge.visible = false;
 		picture = new Sprite2D(texture);
-		picture.setPivot(0, 0);
 		picture.pickable = false;
 		label = new Text2D(caption, theme.textSize * .8, theme.textColor, theme.font);
 		label.setPivot(.5, 0);

@@ -263,6 +263,8 @@ class Play extends Page {
 		super("Play", 0xff10281c, "Playing", "Escape: pause");
 		logo.setSize(120, 120);
 		tiles.setSize(120, 120);
+		logo.setPivot(.5, .5);
+		tiles.setPivot(.5, .5);
 		addChild(logo);
 		addChild(tiles);
 		loader.texture("sprites/logo/wg-logo-white-alpha.png", true, texture -> logo.texture = texture);

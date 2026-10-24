@@ -50,6 +50,8 @@ class App extends helix.App {
 
 	override public function init():Void {
 		Window.title = "HeliX sprite-sheet";
+		for (sprite in [blob, gear, bigGear])
+			sprite.setPivot(.5, .5);
 		Window.requestSize(960, 600);
 		Stage.color = 0xff1d2230;
 		blob.setScale(SCALE, SCALE);

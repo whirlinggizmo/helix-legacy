@@ -78,6 +78,7 @@ class Decals2D extends Node2D {
 		var mark = pool.next();
 		if (mark == null) {
 			mark = new Sprite2D(texture);
+			mark.setPivot(.5, .5);
 			mark.pickable = false;
 		} else {
 			mark.setRegion(0, 0, 0, 0);

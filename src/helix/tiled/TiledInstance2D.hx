@@ -140,7 +140,6 @@ class TiledInstance2D {
 			case Image:
 				var image = new Sprite2D(layer.texture);
 				image.sampling = Sampling.NEAREST;
-				image.setPivot(0, 0);
 				image;
 			case Group:
 				var group = new Node2D();
@@ -159,6 +158,7 @@ class TiledInstance2D {
 	// A tile object's sprite: its tile, sized as the object, turned about its bottom-left corner as Tiled does, flipped in place.
 	function tileObject(object:TiledObject2D):Sprite2D {
 		var sprite = new Sprite2D(null);
+		sprite.setPivot(.5, .5);
 		sprite.sampling = Sampling.NEAREST;
 		sprite.visible = object.visible;
 		var tileset = map.findTileset(object.gid);

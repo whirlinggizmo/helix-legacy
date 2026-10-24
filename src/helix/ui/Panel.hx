@@ -125,7 +125,6 @@ class Panel extends Widget {
 			return false;
 		frame = new Sprite2D(texture);
 		frame.tint = tint;
-		frame.setPivot(0, 0);
 		frame.setNineSlice(left, top, right, bottom);
 		// In the background's place, first: under its widgets.
 		root.removeChild(background);

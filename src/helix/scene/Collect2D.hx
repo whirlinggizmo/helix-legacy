@@ -58,6 +58,7 @@ class Collect2D {
 		var spreadX = [], spreadY = [], leaves = [], landed = [];
 		for (i in 0...count) {
 			var sprite = new Sprite2D(texture, tint);
+			sprite.setPivot(.5, .5);
 			if (size > 0)
 				sprite.setSize(size, size);
 			sprite.setPosition(x, y);

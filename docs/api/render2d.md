@@ -420,7 +420,7 @@ function toString():String
 
 *class* in [`src/helix/render2d/Sprite2D.hx`](../../src/helix/render2d/Sprite2D.hx), `import helix.render2d.Sprite2D;`
 
-A sprite: a texture (or a region of it, or a SpriteSheet2D's frame) drawn as a rectangle, its region's size in texels unless sized, its pivot at its position (its center by default), tinted (0xAARRGGBB). Its scale scales it and its rotation turns it, about its pivot; a nine-slice frame keeps its corners' size as it's sized (setNineSlice). It may draw through an effect (effect).
+A sprite: a texture (or a region of it, or a SpriteSheet2D's frame) drawn as a rectangle, its region's size in texels unless sized, its pivot at its position (its top left by default, as every 2D kind's but a circle's), tinted (0xAARRGGBB). Its scale scales it and its rotation turns it, about its pivot; a nine-slice frame keeps its corners' size as it's sized (setNineSlice). It may draw through an effect (effect).
 
 ```haxe
 function new(texture:Null<Texture2D>, ?tint:Int = 0xffffffff)
@@ -462,7 +462,7 @@ var nineSlice(get, never):Bool
 - `width`: The width it draws at, in its own units: as sized, else its region's in texels.
 - `height`: The height it draws at, in its own units: as sized, else its region's in texels.
 - `setSize`: Sizes it, in its own units; a width or height of 0 or less goes back to its region's size.
-- `setPivot`: Sets the point at its position, which it turns and scales about, as a fraction of its size: 0, 0 its top-left, 1, 1 its bottom-right (0.5, 0.5, its center, by default).
+- `setPivot`: Sets the point at its position, which it turns and scales about, as a fraction of its size: 0, 0 its top-left, 1, 1 its bottom-right (0, 0 to start, as every 2D kind; setPivot(.5, .5) for a sprite that turns about its middle).
 - `pivotX`: Its pivot's x fraction.
 - `pivotY`: Its pivot's y fraction.
 - `setNineSlice`: Draws it as a nine-slice frame (Batch2D.nineSlice): its region's corners left, top, right and bottom texels in from its edges keep their size as it's sized, its edges and middle stretch. All 0 (the start) draws it stretched whole. False, changing nothing, for an inset below 0.

@@ -132,6 +132,7 @@ class App extends helix.App {
 		var white = haxe.io.Bytes.alloc(4);
 		white.fill(0, 4, 255);
 		selection = new Sprite2D(helix.texture.Texture2D.fromRgba(1, 1, white), 0xffffe066);
+		selection.setPivot(.5, .5);
 		var ring = new helix.shader.SpriteRing();
 		ring.inner = .8;
 		ring.outer = .92;
@@ -144,13 +145,14 @@ class App extends helix.App {
 		Stage.addChild(selection);
 		for (i in 0...NAMES.length) {
 			var sprite = new Sprite2D(null);
+			sprite.setPivot(.5, .5);
 			sprite.name = NAMES[i];
 			sprite.setSize(128, 128);
 			sprites.push(sprite);
 			Stage.addChild(sprite);
 		}
 		// Placed each frame, in what's visible.
-		sprites[2].setPivot(0, 0);
+		sprites[2].setPivot(0, 0); // its top left at its place, unlike the others
 		sprites[2].setSize(96, 96);
 		sprites[4].setSize(96, 96);
 		// The creature and its palette, made here: its red channel an index (alpha 0 where there's nothing), the palette a row a variant.

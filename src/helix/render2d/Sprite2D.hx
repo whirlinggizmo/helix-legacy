@@ -5,7 +5,7 @@ import helix.font.Font;
 import helix.math.Bounds2D;
 
 /** A sprite: a texture (or a region of it, or a SpriteSheet2D's frame) drawn as a rectangle, its region's size in texels unless sized, its pivot at its position (its
-	center by default), tinted (0xAARRGGBB). Its scale scales it and its rotation turns it, about its pivot; a nine-slice frame keeps its
+	top left by default, as every 2D kind's but a circle's), tinted (0xAARRGGBB). Its scale scales it and its rotation turns it, about its pivot; a nine-slice frame keeps its
 	corners' size as it's sized (setNineSlice). It may draw through an effect (effect). */
 @:allow(helix.render2d.Renderer2D)
 class Sprite2D extends Node2D {
@@ -116,17 +116,17 @@ class Sprite2D extends Node2D {
 	}
 
 	/** Sets the point at its position, which it turns and scales about, as a fraction of its size: 0, 0 its top-left, 1, 1 its bottom-right
-		(0.5, 0.5, its center, by default). */
+		(0, 0 to start, as every 2D kind; setPivot(.5, .5) for a sprite that turns about its middle). */
 	public function setPivot(x:Float, y:Float):Void {
 		pivotX = x;
 		pivotY = y;
 	}
 
 	/** Its pivot's x fraction. */
-	public var pivotX(default, null):Float = .5;
+	public var pivotX(default, null):Float = 0.;
 
 	/** Its pivot's y fraction. */
-	public var pivotY(default, null):Float = .5;
+	public var pivotY(default, null):Float = 0.;
 
 	/** Draws it as a nine-slice frame (Batch2D.nineSlice): its region's corners left, top, right and bottom texels in from its edges keep their
 		size as it's sized, its edges and middle stretch. All 0 (the start) draws it stretched whole. False, changing nothing, for an inset
