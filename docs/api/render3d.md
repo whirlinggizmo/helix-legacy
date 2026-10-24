@@ -1049,6 +1049,8 @@ function setPivot(x:Float, y:Float):Void
 var pivotX(default, null):Float
 var pivotY(default, null):Float
 var facing:SpriteFacing3D
+function measureWidth():Float
+function measureHeight():Float
 ```
 
 - `new`: value, size world units tall (a size of 0 or less is 0.5), in color, in font (null: the stage's built-in one).
@@ -1060,6 +1062,8 @@ var facing:SpriteFacing3D
 - `pivotX`: Its pivot's x fraction.
 - `pivotY`: Its pivot's y fraction.
 - `facing`: How it faces.
+- `measureWidth`: Its width in its own units, in its font (the built-in one when it has none), as Text2D measures.
+- `measureHeight`: Its height in its own units: its size (one line, ascent to descent), as Text2D measures.
 
 ## Tonemap
 

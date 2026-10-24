@@ -57,6 +57,14 @@ class Text3D extends Node3D {
 	/** How it faces. */
 	public var facing:SpriteFacing3D = Camera;
 
+	/** Its width in its own units, in its font (the built-in one when it has none), as Text2D measures. */
+	public function measureWidth():Float
+		return (font != null ? font : helix.render2d.Stage.font).measure(text, size);
+
+	/** Its height in its own units: its size (one line, ascent to descent), as Text2D measures. */
+	public function measureHeight():Float
+		return size;
+
 	override function get_spriteKind():Node3D.SpriteKind3D
 		return Flat;
 

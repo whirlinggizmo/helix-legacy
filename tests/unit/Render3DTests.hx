@@ -48,6 +48,12 @@ class Render3DTests {
 		row.addChild(b);
 		check(row.addChildAt(c, 0) && row.getChild(0) == c && row.getChild(1) == a && row.getChildIndex(b) == 2, "addChildAt in 3D");
 		check(row.removeChildAt(1) == a && a.parent == null && row.childCount == 2 && row.contains(b) && !row.contains(a), "removeChildAt and contains in 3D");
+		// Text3D measures as Text2D does, in its font.
+		var font = helix.font.Font.builtIn(new Render2DTests.CountingGraphics()),
+			label3D = new helix.render3d.Text3D("Hello", .5, 0xffffffff, font),
+			label2D = new helix.render2d.Text2D("Hello", .5, 0xffffffff, font);
+		check(label3D.measureWidth() > 0 && label3D.measureWidth() == label2D.measureWidth() && label3D.measureHeight() == .5,
+			"Text3D's width and height, as Text2D's");
 		var m = new Mat4();
 		check(near(m.get(0), 1) && near(m.get(5), 1) && near(m.get(1), 0), "A new matrix is the identity");
 		check(!m.makePerspective(0, 1, .1, 10) && !m.makePerspective(1, 1, 1, .5) && near(m.get(0), 1), "A bad perspective is refused and changes nothing");
