@@ -78,6 +78,9 @@ class App extends helix.App {
 
 	// The background to start, and the autopilot's window (its browser page's size), so its samples compare across targets.
 	static inline var BACKGROUND = 0xff14161c;
+	// The room the panels keep clear, in design units: the help line's at the top, the status's and the bar's at the bottom.
+	static inline var PANELS_TOP = 72;
+	static inline var PANELS_BOTTOM = 104;
 	static inline var PILOT_WIDTH = 800;
 	static inline var PILOT_HEIGHT = 600;
 
@@ -92,6 +95,8 @@ class App extends helix.App {
 	// The screens' panels and widgets.
 	var main:Panel;
 	var settings:Panel;
+	// Settings' body (all but its heading and Back), scrolled when the room is shorter than it.
+	var settingsBody:ScrollArea;
 	var controls:Panel;
 	var levels:Panel;
 	var play:Button;
@@ -220,28 +225,31 @@ class App extends helix.App {
 		var backgroundLabel = ui.label("Background");
 		background = ui.colorPicker(BACKGROUND, false, "background");
 		back = ui.button("Back", "backFromSettings");
-		// The volumes, a line under them, then the rest.
-		for (w in [heading, master, music, effects, ui.separator(), muteMusic])
-			settings.add(w);
+		// The heading, then the body in a scroll area (the volumes, a line under them, then the rest), then Back.
+		settings.add(heading);
+		settingsBody = ui.scrollArea(1, "settingsBody");
+		settings.add(settingsBody);
+		for (w in [master, music, effects, ui.separator(), muteMusic])
+			settingsBody.add(w);
 		// The name's field and the quality's dropdown in a row, the field taking the room the dropdown (as wide as its widest item) leaves.
 		var nameRow = Layout2D.row();
 		nameRow.gap = ui.theme.gap;
 		nameRow.setAlign(Start, Center);
 		name.layout.widthSizing = Grow(1);
 		for (w in [name, qualityLabel, quality]) {
-			settings.adopt(w);
+			settingsBody.adopt(w);
 			nameRow.add(w.layout);
 		}
-		settings.content.add(nameRow);
+		settingsBody.content.add(nameRow);
 		// The picker beside its label, in a row, narrower than the theme's width.
 		var backgroundRow = Layout2D.row();
 		backgroundRow.gap = ui.theme.gap * 2;
 		for (w in [backgroundLabel, background]) {
-			settings.adopt(w);
+			settingsBody.adopt(w);
 			backgroundRow.add(w.layout);
 		}
 		background.layout.setSizing(Fixed(240), Fit);
-		settings.content.add(backgroundRow);
+		settingsBody.content.add(backgroundRow);
 		settings.add(back);
 
 		controls = ui.panel("controls");
@@ -299,11 +307,18 @@ class App extends helix.App {
 		bar = ui.progress(0);
 		corner = ui.label("");
 		corner.color = 0xff9aa2b8;
-		// The design: the panels centered, the bar along the bottom, the status in the corner.
+		// The design: the panels centered in the room between the help line at the top and the status at the bottom, the bar along the
+		// bottom, the focus in the corner.
 		layout = Layout2D.stack();
 		layout.setSizing(Grow(1), Grow(1));
-		for (panel in [main, settings, controls, levels])
+		var panels = Layout2D.stack();
+		panels.setSizing(Grow(1), Grow(1));
+		panels.setPadding(0, PANELS_TOP, 0, PANELS_BOTTOM);
+		layout.add(panels);
+		for (panel in [main, settings, controls, levels]) {
 			panel.layout.setAnchor(Center, Center);
+			panels.add(panel.layout);
+		}
 		main.layout.setSizing(Fixed(360), Fit);
 		settings.layout.setSizing(Fixed(480), Fit);
 		controls.layout.setSizing(Fixed(640), Fit);
@@ -311,7 +326,7 @@ class App extends helix.App {
 		bar.layout.setSizing(Fixed(400), Fixed(10));
 		bar.layout.setAnchor(Center, End, 0, -24);
 		corner.layout.setAnchor(End, End, -16, -48);
-		for (w in [main, settings, controls, levels, bar, corner])
+		for (w in [bar, corner])
 			layout.add(w.layout);
 		show("main");
 
@@ -441,6 +456,11 @@ class App extends helix.App {
 			vh = Screen.visibleHeight;
 		for (row in rows)
 			row.bindings.text = actions.capturing && rebinding == row.action ? "Press a key or button..." : describe(row.action);
+		// Settings' body as tall as its widgets, or as the room leaves it (then it scrolls): the room less the rest of the panel, from the
+		// last arrangement (a frame behind as the window changes).
+		var room = vh - PANELS_TOP - PANELS_BOTTOM,
+			rest = settings.layout.height - settingsBody.layout.height;
+		settingsBody.layout.heightSizing = Fixed(Math.max(80, Math.min(settingsBody.content.height, room - rest)));
 		Layout2D.arrange(layout, vx, vy, vw, vh, ui.font);
 		// While a rebind waits for its press, the screen waits too: the press is the binding's, not the menu's.
 		if (!actions.capturing && !waiting) {
