@@ -76,3 +76,6 @@
   the text. Centering it on a point means `y - text.measureHeight(font) / 2`, which needs the font in hand (null means
   the batch's built-in one). Text3D has setPivot(x, y) for both axes. Wanted: a vertical choice (top, middle, bottom,
   maybe baseline) on Text2D, or a pivot like Text3D's, one way for both kinds; the widgets' labels checked against it.
+- **Text2D.measureWidth/measureHeight take a font**: they should measure with the text's own font (`font`, or the
+  built-in one when null), no argument: `text.measureHeight()`. Today the caller passes one, and with font null has to
+  find the built-in font itself. (Text3D the same, if it measures.)
