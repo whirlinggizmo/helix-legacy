@@ -30,3 +30,8 @@
   wrong. A bare Bool at the call site says neither. Fix the doc; replace the Bool with what it chooses (the
   `Sampling` enum Texture2D already has, or a named option), so a call reads `Textures.load(path, Smooth, ...)`; check
   every texture load's doc says the same.
+- **Loading and Splash name screens**: `helix.scene.Loading` is the built-in loading screen and `Splash` the splash
+  screen, but the names read as a state (Loading) and a thing that isn't one (Splash), and Loading sits beside Loader,
+  the asset counter it shows, one letter apart. Rename to LoadingScreen and SplashScreen (CONVENTIONS: classes named
+  for their kind), every caller, the guide, DISPLAY_MODEL; consider helix.scene.screen for them, as the transitions
+  have helix.scene.transition.
