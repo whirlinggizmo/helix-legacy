@@ -153,6 +153,12 @@ class Node2D extends Node {
 		return true;
 	}
 
+	/** Takes its child at index (in drawing order) from its children and returns it, or null past the end, changing nothing. */
+	public function removeChildAt(index:Int):Null<Node2D> {
+		var child = getChild(index);
+		return child != null && removeChild(child) ? child : null;
+	}
+
 	/** Takes child from its children. False when it isn't one. */
 	public function removeChild(child:Node2D):Bool {
 		if (!unlink(child))

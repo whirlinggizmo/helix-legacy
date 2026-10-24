@@ -692,6 +692,7 @@ var hitArea:Null<HitArea3D>
 function addChild(child:Node3D):Bool
 function addChildAt(child:Node3D, index:Int):Bool
 function addChildInPlace(child:Node3D):Bool
+function removeChildAt(index:Int):Null<Node3D>
 function removeChild(child:Node3D):Bool
 var parent(get, set):Null<Node3D>
 function getChild(index:Int):Null<Node3D>
@@ -728,6 +729,7 @@ var worldMatrix(get, never):Mat4
 - `addChild`: Makes child its last child, taking it from any parent it had, keeping child's local transform: it moves with this node as it sat under its old parent (a hat onto a head joint). addChildInPlace keeps its world transform instead. False, changing nothing, for itself or one of its own ancestors.
 - `addChildAt`: Makes child its child at index in drawing order (0 is drawn first, under the others; those from index on move up one), taking it from any parent it had and keeping its local transform, as addChild does; an index past the end, or -1, makes it the last. A child of this node already moves to index. False, changing nothing, for itself or one of its own ancestors.
 - `addChildInPlace`: Puts child under this node without it moving: its world transform is kept and its local one recomputed from this node's (a dropped sword picked up by a hand). addChild keeps the child's local transform instead (a hat onto a head joint). A shear the two transforms make together is lost. False, changing nothing, for itself or one of its own ancestors, or a zero scale on this or above it.
+- `removeChildAt`: Takes its child at index (in drawing order) from its children and returns it, or null past the end, changing nothing.
 - `removeChild`: Takes child from its children. False when it isn't one.
 - `parent`: Its parent, or null at a tree's top. Assigning a node makes this its last child as that node's addChild does, keeping this one's local transform (addChildInPlace keeps the world one); assigning null takes it from its parent as the parent's removeChild does. A node under itself or one of its own descendants is refused, leaving the tree as it was.
 - `getChild`: Its child at index, in drawing order; null past the end.

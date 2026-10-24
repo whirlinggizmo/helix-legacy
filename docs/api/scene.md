@@ -116,6 +116,8 @@ var paused:Bool
 var pickable:Bool
 var childCount(get, never):Int
 function getChild(index:Int):Null<Node>
+function contains(node:Null<Node>):Bool
+function getChildIndex(child:Node):Int
 ```
 
 - `name`: Its name: a model file's node name, or what the game gave it; "" for none.
@@ -125,6 +127,8 @@ function getChild(index:Int):Null<Node>
 - `pickable`: Whether it and everything under it can be picked: off, a pick passes through them all to what's behind. What a node is hit by is what it draws, or its hitArea when it has one. On to start, but for text.
 - `childCount`: How many children it has.
 - `getChild`: Its child at index, in drawing order; null past the end.
+- `contains`: Whether node is this one or anywhere below it: `if (ball.contains(Stage.pick(x, y)))`, a pick's node (the deepest hit) inside a group. By the node itself, not its name (find); null is in nothing.
+- `getChildIndex`: child's index among its children, in drawing order (0 is drawn first), or -1 when it isn't one of them.
 
 ## Pointer
 

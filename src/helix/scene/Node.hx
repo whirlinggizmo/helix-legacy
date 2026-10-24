@@ -55,6 +55,22 @@ class Node {
 	public function getChild(index:Int):Null<Node>
 		return index >= 0 && index < children.length ? children[index] : null;
 
+	/** Whether node is this one or anywhere below it: `if (ball.contains(Stage.pick(x, y)))`, a pick's node (the deepest hit) inside a
+		group. By the node itself, not its name (find); null is in nothing. */
+	public function contains(node:Null<Node>):Bool {
+		var at = node;
+		while (at != null) {
+			if (at == this)
+				return true;
+			at = at.parentNode;
+		}
+		return false;
+	}
+
+	/** child's index among its children, in drawing order (0 is drawn first), or -1 when it isn't one of them. */
+	public function getChildIndex(child:Node):Int
+		return children.indexOf(child);
+
 	// Whether child can be made its child: false for itself or one of its own ancestors.
 	function canLink(child:Node):Bool {
 		var at:Null<Node> = this;

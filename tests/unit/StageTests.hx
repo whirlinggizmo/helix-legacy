@@ -41,7 +41,10 @@ class StageTests {
 			"Found below the stage's children, as its kind or any 2D node");
 		check(stage.find("score", Shape2D) == null
 			&& stage.find("nothing", helix.render2d.Node2D) == null, "Of another kind, or not there: null");
-		stage.removeChild(group);
+		check(stage.contains(label) && stage.contains(front) && !stage.contains(new helix.render2d.Node2D()) && !stage.contains(null),
+			"On the stage at any depth; not one off it");
+		check(stage.getChildIndex(front) == 1 && stage.getChildIndex(label) == -1, "The stage's index of a child; -1 for one deeper");
+		check(stage.removeChildAt(0) == group && stage.childCount == 2 && stage.removeChildAt(9) == null, "removeChildAt on the stage");
 		stage.color = 0xff14161c;
 		stage.draw(0);
 		check(gpu.framesEnded == 2 && gpu.clearColor == 0xff14161c, "Cleared to the stage's color");

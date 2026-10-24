@@ -225,6 +225,7 @@ function getChild(index:Int):Null<Node2D>
 function addChild(child:Node2D):Bool
 function addChildAt(child:Node2D, index:Int):Bool
 function addChildInPlace(child:Node2D):Bool
+function removeChildAt(index:Int):Null<Node2D>
 function removeChild(child:Node2D):Bool
 function computeBounds(?relativeTo:Node2D, ?out:Bounds2D):Null<Bounds2D>
 var clipping(get, never):Bool
@@ -254,6 +255,7 @@ function toLocalY(x:Float, y:Float):Float
 - `addChild`: Makes child its last child (drawn over the others), taking it from any parent it had, keeping child's local transform: it moves with this node as it sat under its old parent (a hat onto a head joint). addChildInPlace keeps its world transform instead. False, changing nothing, for itself or one of its own ancestors.
 - `addChildAt`: Makes child its child at index in drawing order (0 is drawn first, under the others; those from index on move up one), taking it from any parent it had and keeping its local transform, as addChild does; an index past the end, or -1, makes it the last. A child of this node already moves to index. False, changing nothing, for itself or one of its own ancestors.
 - `addChildInPlace`: Puts child under this node without it moving: its world transform is kept and its local one recomputed from this node's (a dropped sword picked up by a hand). addChild keeps the child's local transform instead (a hat onto a head joint). A shear the two transforms make together is lost. False, changing nothing, for itself or one of its own ancestors, or this scaled to nothing.
+- `removeChildAt`: Takes its child at index (in drawing order) from its children and returns it, or null past the end, changing nothing.
 - `removeChild`: Takes child from its children. False when it isn't one.
 - `computeBounds`: The box around it and everything under it as they are now, into out (a new one when not given), or null for nothing drawn: in its tree's world (the stage's units on the stage; inside a View2D's content, the world its camera looks at), or in relativeTo's own units when given (Flash's getBounds), as relativeTo's children are placed, to fit a panel around a group. Each sprite, shape, text, drawing and sized view counts by its own box, placed by the transforms as they are now (a draw needn't have run). A disabled or hidden node and what's under it are left out, as an emitter is; a text without a font of its own is measured in the stage's (Stage.font), and left out where there's no stage. Null too for a relativeTo scaled to nothing. relativeTo may be anywhere in the same tree, this node included. `computeBounds(scratch)` is the world into scratch: Haxe skips relativeTo for a Bounds2D. Given out, it allocates nothing.
 - `clipping`: Whether its children are clipped (setClip).
@@ -588,6 +590,9 @@ static var postProcess(get, set):Null<PostProcess>
 static function addChild(node:Node2D):Void
 static function addChildAt(node:Node2D, index:Int):Void
 static function getChild(index:Int):Null<Node2D>
+static function contains(node:Null<Node>):Bool
+static function getChildIndex(node:Node2D):Int
+static function removeChildAt(index:Int):Null<Node2D>
 static function removeChild(node:Node2D):Bool
 static var camera(get, never):Camera2D
 static var font(get, never):Font
@@ -605,6 +610,9 @@ static function pick(x:Float, y:Float, ?hit:Any):Null<Node>
 - `addChild`: Puts node on the stage over what's there (its last child), taking it from any parent it had; a child of the stage already moves to the top, as Flash's addChild does (Node2D.addChild).
 - `addChildAt`: Puts node on the stage at index in drawing order (0 is drawn first, under the rest), as Node2D.addChildAt does: a level made after the HUD put under it. An index past the end, or -1, puts it over everything, as addChild.
 - `getChild`: Its child at index, in drawing order; null past the end.
+- `contains`: Whether node is on the stage: one of its children or anywhere below one. Null is on nothing.
+- `getChildIndex`: node's index among the stage's children, in drawing order (0 is drawn first), or -1 when it isn't one of them.
+- `removeChildAt`: Takes the stage's child at index (in drawing order) off it and returns it, or null past the end, changing nothing.
 - `removeChild`: Takes node off the stage. False, changing nothing, for a node that isn't one of its children.
 - `camera`: The camera the stage is drawn through: the presentation's design units (Screen), refitted at each draw.
 - `font`: The font a text without its own is drawn in: the stage batch's (the built-in one), there from the stage's first use, so text can be measured and laid out before the first frame.

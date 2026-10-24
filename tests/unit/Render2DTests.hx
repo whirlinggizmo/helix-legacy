@@ -461,6 +461,16 @@ class Render2DTests {
 			"Its own child moved to the front");
 		check(row.addChildAt(b, 99) && row.getChild(2) == b && row.addChildAt(a, -1) && row.getChild(2) == a, "Past the end, or -1: the last");
 		check(!a.addChildAt(row, 0) && row.parent == null, "An ancestor refused");
+		check(row.contains(row) && row.contains(b) && !b.contains(row) && !row.contains(new Node2D()) && !row.contains(null),
+			"contains: itself and below, not above, not elsewhere, not null");
+		check(row.getChildIndex(b) == 1 && row.getChildIndex(a) == 2 && row.getChildIndex(row) == -1, "Each child's index; -1 for a non-child");
+		check(row.removeChildAt(0) == c
+			&& c.parent == null
+			&& row.childCount == 2
+			&& row.removeChildAt(5) == null
+			&& row.childCount == 2,
+			"removeChildAt takes and returns the child there; past the end, nothing");
+		row.addChildAt(c, 0);
 		// find: by name and kind, null of another kind.
 		var text = new Text2D("Hi", 10, 0xffffffff);
 		text.name = "greeting";

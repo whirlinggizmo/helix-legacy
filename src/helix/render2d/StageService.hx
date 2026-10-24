@@ -75,6 +75,18 @@ class StageService {
 	public function getChild(index:Int):Null<Node2D>
 		return tree.root.getChild(index);
 
+	/** Whether node is on the stage: one of its children or anywhere below one. Null is on nothing. */
+	public function contains(node:Null<helix.scene.Node>):Bool
+		return node != null && node != tree.root && tree.root.contains(node);
+
+	/** node's index among the stage's children, in drawing order (0 is drawn first), or -1 when it isn't one of them. */
+	public function getChildIndex(node:Node2D):Int
+		return tree.root.getChildIndex(node);
+
+	/** Takes the stage's child at index (in drawing order) off it and returns it, or null past the end, changing nothing. */
+	public function removeChildAt(index:Int):Null<Node2D>
+		return tree.root.removeChildAt(index);
+
 	/** The first node named name on the stage (depth first, in drawing order), as kind, or null when there's none or it isn't a kind:
 		`var score = Stage.find("score", Text2D);` (Node.find). */
 	public function find<T:Node2D>(name:String, kind:Class<T>):Null<T>
