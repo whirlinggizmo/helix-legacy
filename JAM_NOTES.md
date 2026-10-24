@@ -72,3 +72,7 @@
   held in one `@:hot static`, App forwarding init/update to it; then nothing else needs marking. Consider: the starter
   (and GUIDE) showing it, or saying plainly "keep state in the game object's fields, not statics"; or the engine
   keeping a game object for you (App holding it). Check what the runner already keeps (hotApp migrates the App object).
+- **Text2D has no vertical alignment**: `align` (Align2D: Left, Center, Right) places x only; y is always the top of
+  the text. Centering it on a point means `y - text.measureHeight(font) / 2`, which needs the font in hand (null means
+  the batch's built-in one). Text3D has setPivot(x, y) for both axes. Wanted: a vertical choice (top, middle, bottom,
+  maybe baseline) on Text2D, or a pivot like Text3D's, one way for both kinds; the widgets' labels checked against it.
