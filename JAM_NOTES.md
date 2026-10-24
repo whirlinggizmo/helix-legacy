@@ -67,3 +67,8 @@
   from sRGB and reads the normal map's bytes as directions. Say that: load it with Textures.load(path, true, ...) for
   smooth sampling; the map's colors are directions, not sRGB colors, and HeliX reads them so. Same fix as Loader.texture's
   doc; the Sampling enum for the Bool would end the confusion.
+- **Statics and hot reload**: a static survives a reload only if marked `@:hot`, so a game keeping its state in statics
+  lost it on each save, or had to mark everything. The user's way out: App a thin wrapper, the game a class of its own
+  held in one `@:hot static`, App forwarding init/update to it; then nothing else needs marking. Consider: the starter
+  (and GUIDE) showing it, or saying plainly "keep state in the game object's fields, not statics"; or the engine
+  keeping a game object for you (App holding it). Check what the runner already keeps (hotApp migrates the App object).
