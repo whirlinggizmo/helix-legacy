@@ -19,7 +19,7 @@ import helix.scene.Pointer;
 	- The ring around the focused widget shows only when keys or a pad moved focus, not the pointer (as the web's :focus-visible); after keys or
 	  a pad, something always has focus (the first widget, if nothing did).
 	- A key or button already held when a screen begins (reset) does nothing until it's let go: a fire key held into a menu doesn't press its
-	  first button.
+	  first button. One pressed after reset works at once.
 	- While a widget has the keys (capturingKeys), a game should leave arrows and Enter be, or they drive the game and the menu at once.
 	- A widget may open a popup (Popup: a dropdown's list), drawn over every widget and the ring and clipped by none of their clips, placed by
 	  its anchor in the visible area (below it, or above when there's no room below and more above; kept on screen across). While it's open
@@ -47,7 +47,16 @@ class Ui {
 	@:allow(helix.ui)
 	var showFocus = false;
 	var keys = false;
-	var guarded = false;
+	// What was held at reset, each ignored until it's let go.
+	var guardEnter = false;
+	var guardSpace = false;
+	var guardEscape = false;
+	var guardSouth = false;
+	var guardEast = false;
+	var guardPointer = false;
+	// The input it last asked for typed text on (IInput.textEntry): the program's can change under it (an autopilot playing).
+	var textInput:Null<IInput>;
+	var givenInput:Null<IInput>;
 	var back = false;
 	var lastX = -1.;
 	var lastY = -1.;
@@ -58,13 +67,14 @@ class Ui {
 	var scrim:Shape2D;
 
 	/** A UI on the stage (Stage, docs/DISPLAY_MODEL.md), in theme's look (a new Theme when not given): drawn through the stage's camera,
-		with a pointer of its own looking at the stage (updated by update), read from Input. Given parent, camera, pointer and input, it's
+		with a pointer of its own looking at the stage (updated by update), read from Input as it is at each update (an autopilot made after
+		it is read too). Given parent, camera, pointer and input, it's
 		under parent instead (a UI in a View2D's tree, a test), drawn through camera, which pointer must look at (the app updates that
 		pointer before update), read from input. */
 	public function new(?theme:Theme, ?parent:Node2D, ?camera:Camera2D, ?pointer:Pointer, ?input:IInput) {
-		this.input = input != null ? input : helix.input.Input.instance;
+		givenInput = input;
 		if (pointer == null) {
-			pointer = new Pointer(this.input);
+			pointer = new Pointer(input);
 			ownsPointer = true;
 		}
 		this.camera = camera != null ? camera : helix.render2d.Stage.camera;
@@ -116,8 +126,11 @@ class Ui {
 	/** The camera it's drawn through. */
 	public var camera(default, null):Camera2D;
 
-	/** The input it reads. */
-	public var input(default, null):IInput;
+	/** The input it reads: the one it was given, or else the program's (Input) as it is now. */
+	public var input(get, never):IInput;
+
+	function get_input():IInput
+		return givenInput != null ? givenInput : helix.input.Input.instance;
 
 	/** A line of text. */
 	public function label(text:String, ?name:String):Label
@@ -305,12 +318,18 @@ class Ui {
 		popup = null;
 	}
 
-	/** A new screen begins: no focus, no popup open, and keys and buttons held now do nothing until they're let go. */
+	/** A new screen begins: no focus, no popup open, and the keys and buttons held now do nothing until they're let go. Anything pressed
+		after this works at once. */
 	public function reset():Void {
 		closePopup();
 		@:bypassAccessor focused = null;
 		showFocus = false;
-		guarded = true;
+		guardEnter = input.isDown(Key.Enter);
+		guardSpace = input.isDown(Key.Space);
+		guardEscape = input.isDown(Key.Escape);
+		guardSouth = input.isPadDown(PadButton.South);
+		guardEast = input.isPadDown(PadButton.East);
+		guardPointer = input.pointerDown;
 		syncTextEntry();
 	}
 
@@ -320,8 +339,13 @@ class Ui {
 	public function update():Void {
 		if (ownsPointer)
 			pointer.update();
-		if (guarded && !anyHeld())
-			guarded = false;
+		// What was held at reset is usable again once it's let go.
+		guardEnter = guardEnter && input.isDown(Key.Enter);
+		guardSpace = guardSpace && input.isDown(Key.Space);
+		guardEscape = guardEscape && input.isDown(Key.Escape);
+		guardSouth = guardSouth && input.isPadDown(PadButton.South);
+		guardEast = guardEast && input.isPadDown(PadButton.East);
+		guardPointer = guardPointer && input.pointerDown;
 		// The pointer moving or pressing hides the ring and hands back the keys.
 		var x = input.pointerX, y = input.pointerY;
 		if ((x != lastX || y != lastY) && x >= 0 || input.pointerFramePressed) {
@@ -388,14 +412,14 @@ class Ui {
 			@:bypassAccessor focused = first();
 			showFocus = focused != null;
 		}
-		var activated = !guarded
-			&& focused != null
-			&& (input.isFramePressed(Key.Enter) || !focused.takesText() && input.isFramePressed(Key.Space) || pad(PadButton.South));
+		var activated = focused != null
+			&& (input.isFramePressed(Key.Enter) && !guardEnter || !focused.takesText() && input.isFramePressed(Key.Space) && !guardSpace
+				|| pad(PadButton.South) && !guardSouth);
 		if (activated) {
 			keys = true;
 			showFocus = true;
 		}
-		back = !guarded && (input.isFramePressed(Key.Escape) || pad(PadButton.East));
+		back = input.isFramePressed(Key.Escape) && !guardEscape || pad(PadButton.East) && !guardEast;
 		// Escape or East closes a popup rather than going back.
 		var escapedPopup = back && popup != null;
 		if (back && popup != null) {
@@ -403,13 +427,15 @@ class Ui {
 			back = false;
 		}
 		for (w in widgets) {
+			// usable: by keys and by name; pointing: by the pointer too, unless it was held at reset.
 			var target = w.target(),
-				usable = w.enabled && w.interactive && w.visible && !guarded;
+				usable = w.enabled && w.interactive && w.visible,
+				pointing = usable && !guardPointer;
 			var hovered = target != null && pointer.isHovered(target),
 				held = target != null && pointer.isDown(target),
-				clicked = usable && target != null && pointer.isClicked(target);
+				clicked = pointing && target != null && pointer.isClicked(target);
 			// The pointer pressing a widget gives it focus, unshown.
-			if (usable && target != null && pointer.isPressed(target) && w.focusable)
+			if (pointing && target != null && pointer.isPressed(target) && w.focusable)
 				@:bypassAccessor focused = w;
 			if (w == pressing && usable) {
 				clicked = true;
@@ -417,7 +443,7 @@ class Ui {
 			}
 			var steps = w == stepped && usable;
 			w.readTheme(theme);
-			w.update(hovered && usable, held && usable, clicked, w == focused, activated && w == focused && usable, steps ? stepX : 0, steps ? stepY : 0);
+			w.update(hovered && pointing, held && pointing, clicked, w == focused, activated && w == focused && usable, steps ? stepX : 0, steps ? stepY : 0);
 		}
 		pressing = null;
 		claimKeys(navigated, activated, escapedPopup);
@@ -496,10 +522,16 @@ class Ui {
 
 	// Typed text is asked for (IInput.textEntry) while the focused widget takes it, a text field, and let go when none does.
 	function syncTextEntry():Void {
-		var want = focused != null && focused.takesText();
+		var want = focused != null && focused.takesText(), now = input;
+		if (now != textInput) {
+			if (textEntry && textInput != null)
+				textInput.textEntry = false;
+			textEntry = false;
+			textInput = now;
+		}
 		if (want != textEntry) {
 			textEntry = want;
-			input.textEntry = want;
+			now.textEntry = want;
 		}
 	}
 
@@ -512,11 +544,6 @@ class Ui {
 		}
 		return false;
 	}
-
-	// Whether anything that activates or goes back is held.
-	function anyHeld():Bool
-		return input.isDown(Key.Enter) || input.isDown(Key.Space) || input.isDown(Key.Escape) || input.isPadDown(PadButton.South)
-			|| input.isPadDown(PadButton.East) || input.pointerDown;
 
 	function first():Null<Widget> {
 		for (w in widgets)

@@ -595,7 +595,7 @@ var changed(default, null):Bool
 
 *class* in [`src/helix/ui/Ui.hx`](../../src/helix/ui/Ui.hx), `import helix.ui.Ui;`
 
-A screen's widgets on the stage, used by the pointer, keys and pads alike: made here, placed by their layouts (Layout2D.arrange), asked what happened. update() once a frame, after the pointer's: - Arrows and a pad's D-pad move focus to the nearest widget that way on screen (by the layouts' last arrangement: a grid of tiles moves in two dimensions), or, with none that way, in the order widgets were made: Down and Right to the next, Up and Left to the one before, wrapping; Left and Right only when the focused widget doesn't use them (a slider), Up and Down only when it doesn't (a list; a color picker uses all four while one of its parts is driven by them). Tab and Shift+Tab always go in that order. Enter, Space or a pad's South activates it; Escape or East is back (backPressed). - The ring around the focused widget shows only when keys or a pad moved focus, not the pointer (as the web's :focus-visible); after keys or a pad, something always has focus (the first widget, if nothing did). - A key or button already held when a screen begins (reset) does nothing until it's let go: a fire key held into a menu doesn't press its first button. - While a widget has the keys (capturingKeys), a game should leave arrows and Enter be, or they drive the game and the menu at once. - A widget may open a popup (Popup: a dropdown's list), drawn over every widget and the ring and clipped by none of their clips, placed by its anchor in the visible area (below it, or above when there's no room below and more above; kept on screen across). While it's open (popup) it has the pointer and the keys: the widgets under it see no pointer, a press off it closes it and does nothing else until it's let go (not even reaching a world under the UI: the pointer is captured), Escape or East closes it instead of going back (backPressed stays false), Tab doesn't move focus, and its owner keeps focus and takes the arrows, Enter, Space and South (capturingKeys is true). The widgets' nodes are under one node (root) on the stage, in the order made, the ring above them and the open popup above it: what's added to the stage after it draws over it.
+A screen's widgets on the stage, used by the pointer, keys and pads alike: made here, placed by their layouts (Layout2D.arrange), asked what happened. update() once a frame, after the pointer's: - Arrows and a pad's D-pad move focus to the nearest widget that way on screen (by the layouts' last arrangement: a grid of tiles moves in two dimensions), or, with none that way, in the order widgets were made: Down and Right to the next, Up and Left to the one before, wrapping; Left and Right only when the focused widget doesn't use them (a slider), Up and Down only when it doesn't (a list; a color picker uses all four while one of its parts is driven by them). Tab and Shift+Tab always go in that order. Enter, Space or a pad's South activates it; Escape or East is back (backPressed). - The ring around the focused widget shows only when keys or a pad moved focus, not the pointer (as the web's :focus-visible); after keys or a pad, something always has focus (the first widget, if nothing did). - A key or button already held when a screen begins (reset) does nothing until it's let go: a fire key held into a menu doesn't press its first button. One pressed after reset works at once. - While a widget has the keys (capturingKeys), a game should leave arrows and Enter be, or they drive the game and the menu at once. - A widget may open a popup (Popup: a dropdown's list), drawn over every widget and the ring and clipped by none of their clips, placed by its anchor in the visible area (below it, or above when there's no room below and more above; kept on screen across). While it's open (popup) it has the pointer and the keys: the widgets under it see no pointer, a press off it closes it and does nothing else until it's let go (not even reaching a world under the UI: the pointer is captured), Escape or East closes it instead of going back (backPressed stays false), Tab doesn't move focus, and its owner keeps focus and takes the arrows, Enter, Space and South (capturingKeys is true). The widgets' nodes are under one node (root) on the stage, in the order made, the ring above them and the open popup above it: what's added to the stage after it draws over it.
 
 ```haxe
 function new(?theme:Theme, ?parent:Node2D, ?camera:Camera2D, ?pointer:Pointer, ?input:IInput)
@@ -603,7 +603,7 @@ var theme(default, set):Theme
 var root(default, null):Node2D
 var font(get, set):Null<Font>
 var camera(default, null):Camera2D
-var input(default, null):IInput
+var input(get, never):IInput
 function label(text:String, ?name:String):Label
 function panel(?name:String):Panel
 function button(text:String, ?name:String):Button
@@ -631,12 +631,12 @@ function reset():Void
 function update():Void
 ```
 
-- `new`: A UI on the stage (Stage, docs/DISPLAY_MODEL.md), in theme's look (a new Theme when not given): drawn through the stage's camera, with a pointer of its own looking at the stage (updated by update), read from Input. Given parent, camera, pointer and input, it's under parent instead (a UI in a View2D's tree, a test), drawn through camera, which pointer must look at (the app updates that pointer before update), read from input.
+- `new`: A UI on the stage (Stage, docs/DISPLAY_MODEL.md), in theme's look (a new Theme when not given): drawn through the stage's camera, with a pointer of its own looking at the stage (updated by update), read from Input as it is at each update (an autopilot made after it is read too). Given parent, camera, pointer and input, it's under parent instead (a UI in a View2D's tree, a test), drawn through camera, which pointer must look at (the app updates that pointer before update), read from input.
 - `theme`: Its look, read by every widget (and the focus ring) at each update: a value changed, or another theme assigned (a settings screen switching themes), shows from the next update with no widget made again; a size that moves the layout once the layout is next arranged. Null is a new Theme.
 - `root`: The node its widgets are under.
 - `font`: The font text is drawn in without the theme's: the one assigned, else the stage's (the built-in one, there from the first frame).
 - `camera`: The camera it's drawn through.
-- `input`: The input it reads.
+- `input`: The input it reads: the one it was given, or else the program's (Input) as it is now.
 - `label`: A line of text.
 - `panel`: A background holding a column of widgets (add their layouts to its content).
 - `button`: A button reading text: clicked by the pointer, or activated with focus.
@@ -660,7 +660,7 @@ function update():Void
 - `backPressed`: Whether Escape or a pad's East was pressed this frame (not held over from before reset).
 - `popup`: The open popup (a dropdown's list), or null.
 - `closePopup`: Closes the open popup, if one is: its owner sees it closed at its next update, as when a press off it or Escape closes it.
-- `reset`: A new screen begins: no focus, no popup open, and keys and buttons held now do nothing until they're let go.
+- `reset`: A new screen begins: no focus, no popup open, and the keys and buttons held now do nothing until they're let go. Anything pressed after this works at once.
 - `update`: Once a frame, after the pointer's update (its own pointer's, which it updates first) and before reading the widgets or the game's own keys: moves focus, activates, brings each widget up to date, and claims the keys it used (IInput.claim: a focused text field every key pressed), so the game reading after doesn't act on them too.
 
 ## Widget

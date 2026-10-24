@@ -45,7 +45,46 @@ class UiTests {
 		separators(font);
 		points(font);
 		flags(font);
+		following(font);
 		Sys.println(haxe.Json.stringify({passed: true, checks: checks}));
+	}
+
+	// A UI given no input reads the program's (Input) as it is at each update: one bound after it was made (an autopilot's) is the one it
+	// reads, typed text asked of it, not of the one before.
+	static function following(font:Font):Void {
+		var was = helix.input.Input.instance;
+		var first = new helix.input.InputState(),
+			second = new helix.input.InputState(),
+			stage = new helix.render2d.Renderer2D(),
+			camera = new helix.render2d.Camera2D();
+		camera.setViewport(800, 600);
+		camera.pixels(1);
+		helix.input.Input.instance = first;
+		var pointer = new helix.scene.Pointer();
+		pointer.addRenderer2D(stage, camera);
+		var ui = new helix.ui.Ui(null, stage.root, camera, pointer),
+			play = ui.button("Play"),
+			name = ui.textField("", "name", 8);
+		var layout = holding(sized(Fixed(300), Fit, Column), [play.layout, name.layout]);
+		helix.input.Input.instance = second;
+		function frame(?key:helix.input.Key):Void {
+			second.endFrame();
+			if (key != null) {
+				second.keyEvent(key, true);
+				second.keyEvent(key, false);
+			}
+			Layout2D.arrange(layout, 0, 0, 800, 600, font);
+			pointer.update();
+			ui.update();
+		}
+		check(ui.input == second, "Its input is the program's now, not when it was made");
+		ui.focused = play;
+		frame(Enter);
+		check(play.clicked, "Enter on the input bound after it was made");
+		ui.focused = name;
+		frame();
+		check(second.textEntry && !first.textEntry, "Typed text asked of the program's input now");
+		helix.input.Input.instance = was;
 	}
 
 	// A panel's enabled and interactive reach the widgets in it: disabled, none is focused or clicked; not interactive, none takes the pointer
@@ -798,12 +837,14 @@ class UiTests {
 		panel.layout.setAnchor(Center, Center);
 		var layout = holding(sized(Grow(1), Grow(1)), [panel.layout]);
 		var batch = new helix.render2d.Batch2D(new CountingGraphics());
-		function frame(?keys:Array<helix.input.Key>, ?x:Float, ?y:Float, ?down:Bool, wheel = 0.):Void {
+		// keys pressed and let go within the frame, or kept down with hold (as an autopilot holds a key for a tick or more).
+		function frame(?keys:Array<helix.input.Key>, ?x:Float, ?y:Float, ?down:Bool, wheel = 0., hold = false):Void {
 			input.endFrame();
 			if (keys != null)
 				for (k in keys) {
 					input.keyEvent(k, true);
-					input.keyEvent(k, false);
+					if (!hold)
+						input.keyEvent(k, false);
 				}
 			if (x != null)
 				input.pointerEvent(x, y, down == true);
@@ -878,6 +919,32 @@ class UiTests {
 		check(play.clicked, "Pressed afresh, it does");
 		frame([Escape]);
 		check(ui.backPressed, "Escape is back");
+		// A new screen with nothing held: a key pressed on its first frame works, and so does a drag begun on it (an autopilot's next tick).
+		ui.reset();
+		ui.focused = play;
+		frame([Enter], null, null, null, 0, true);
+		check(play.clicked, "A key pressed on a new screen's first frame, and held, works");
+		input.keyEvent(Enter, false);
+		ui.reset();
+		volume.value = 5;
+		frame(sx, sy, true);
+		frame(volume.layout.x + volume.layout.width + 50, sy, true);
+		check(volume.value == 10, "A drag begun on a new screen's first frame moves the slider");
+		frame(sx, sy, false);
+		// Something held into a new screen is kept from it until let go, nothing else: the pointer held, a key still works.
+		volume.value = 5;
+		input.pointerEvent(sx, sy, true);
+		ui.reset();
+		ui.focused = play;
+		frame([Enter], volume.layout.x + volume.layout.width + 50, sy, true);
+		check(play.clicked && volume.value == 5 && !volume.changed,
+			"The held pointer moves nothing; Enter, pressed after, works: "
+			+ play.clicked
+			+ " "
+			+ volume.value
+			+ " "
+			+ ui.focused);
+		frame(sx, sy, false);
 		// Used by name, as a test or an autopilot does: at the next update, when shown and usable.
 		check(ui.press("Play") && !play.clicked, "Pressed by name; it takes at the next update");
 		frame();
