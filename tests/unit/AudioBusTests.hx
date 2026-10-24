@@ -177,6 +177,8 @@ class AudioBusTests {
 		} catch (_:Dynamic)
 			true;
 		check(refused, "Playing with no service bound throws");
+		var state = helix.audio.PlayState.Playing;
+		check(Std.string(state) == "Playing" && '$state' == "Playing" && helix.audio.PlayState.Complete != state, "A playback's state reads as its name");
 
 		var audio = new Recording();
 		var sounds = new AudioResources(null, audio, null);

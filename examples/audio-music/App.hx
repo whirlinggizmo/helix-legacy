@@ -84,14 +84,6 @@ class App extends helix.App {
 		music.pan = pan;
 	}
 
-	static function stateName(state:helix.audio.PlayState):String
-		return switch (state) {
-			case Playing: "playing";
-			case Paused: "paused";
-			case Stopped: "stopped";
-			case Complete: "complete";
-		};
-
 	override public function update(dt:Float):Void {
 		if (Input.isFramePressed(Key.Space) && click != null)
 			Audio.play(click);
