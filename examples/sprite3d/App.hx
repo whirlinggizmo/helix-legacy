@@ -58,7 +58,7 @@ class App extends helix.App {
 	var camera = new Camera3D();
 	var hud = new Drawing2D();
 	// The coins collected, at the top right, and the flight that brings them.
-	var counter = new helix.render2d.Text2D("coins 0", 20, 0xffffd25a, Right);
+	var counter = new helix.render2d.Text2D("coins 0", 20, 0xffffd25a);
 	var coins = 0;
 	var flight:Null<helix.scene.Collect2D>;
 	// The decals a drag leaves on the ground, and where the last went (NaN: none this drag).
@@ -191,6 +191,7 @@ class App extends helix.App {
 		view = new View3D(level, camera);
 		Stage.addChild(view);
 		Stage.addChild(hud);
+		counter.setPivot(1, 0);
 		counter.setPosition(0, 0);
 		Stage.addChild(counter);
 		Stage.addChild(fps);

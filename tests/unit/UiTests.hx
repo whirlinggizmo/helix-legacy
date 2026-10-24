@@ -692,7 +692,8 @@ class UiTests {
 		// Nodes placed by their pivots, sprites and rectangles sized; a text fitted to its measure.
 		var panel = Shape2D.rectangle(1, 1),
 			dot = Shape2D.circle(5),
-			label = new Text2D("PLAY", 20, -1, Center);
+			label = new Text2D("PLAY", 20, -1);
+		label.setPivot(.5, 0);
 		var panelLayout = Layout2D.of(panel),
 			dotLayout = Layout2D.of(dot),
 			labelLayout = Layout2D.of(label);

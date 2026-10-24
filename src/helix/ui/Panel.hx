@@ -32,7 +32,7 @@ class Panel extends Widget {
 		bandFace = Shape2D.rectangle(1, 1, theme.faceColor);
 		bandFace.setPivot(0, 0);
 		bandFace.pickable = false;
-		bandText = new Text2D("", theme.textSize, theme.textColor, Left, theme.font);
+		bandText = new Text2D("", theme.textSize, theme.textColor, theme.font);
 		bandText.pickable = false;
 		band.addChild(bandFace);
 		band.visible = false;

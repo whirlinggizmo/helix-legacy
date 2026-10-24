@@ -652,10 +652,13 @@ static function pick(x:Float, y:Float, ?hit:Any):Null<Node>
 
 *class* in [`src/helix/render2d/Text2D.hx`](../../src/helix/render2d/Text2D.hx), `import helix.render2d.Text2D;`
 
-A line of text in the 2D world: its value, size units tall (ascent to descent), in a color (0xAARRGGBB) and a font (null: the drawing batch's built-in one); its position is the top of the text and, by align, its left edge, center or right edge. Wrapped to a width, it is a block of lines (setWrapWidth). Not pickable until pickable is set: a label lets the pointer through to what it's on. Batch2D.drawText draws text without a node; Font.measure measures it.
+A line of text in the 2D world: its value, size units tall (ascent to descent), in a color (0xAARRGGBB) and a font (null: the built-in one). Its position is its pivot, as a sprite's is: setPivot(.5, .5) centers it there, (1, 0) puts its top right there; its top left to start. Wrapped to a width, it is a block of lines (setWrapWidth) whose lines line up by align. Not pickable until pickable is set: a label lets the pointer through to what it's on. Batch2D.drawText draws text without a node; Font.measure measures it.
 
 ```haxe
-function new(value:String, ?size:Float = 16., ?color:Int = 0xffffffff, ?align:Align2D = Left, ?font:Font)
+function new(value:String, ?size:Float = 16., ?color:Int = 0xffffffff, ?font:Font)
+function setPivot(x:Float, y:Float):Void
+var pivotX(default, null):Float
+var pivotY(default, null):Float
 var text:String
 var textSize(get, set):Float
 var color:Int
@@ -664,21 +667,24 @@ var font:Null<Font>
 var wrapWidth(default, null):Float
 var lineHeight(default, null):Float
 function setWrapWidth(width:Float, ?lineHeight:Float = 1.25):Bool
-function measureWidth(font:Font):Float
-function measureHeight(font:Font):Float
+function measureWidth():Float
+function measureHeight():Float
 ```
 
-- `new`: value, size units tall (0 or less, or NaN, is 1e-6), in color, aligned on its position by align, in font (null: the batch's built-in one).
+- `new`: value, size units tall (0 or less, or NaN, is 1e-6), in color, in font (null: the built-in one), its top left at its position.
+- `setPivot`: Puts its pivot, the point of it at its position, at x, y fractions of its measured box (measureWidth by measureHeight): 0, 0 its top left, .5, .5 its center, 1, 1 its bottom right. A pivot follows the text as it changes: a centered score stays centered.
+- `pivotX`: Its pivot's x fraction: 0 to start.
+- `pivotY`: Its pivot's y fraction: 0 to start.
 - `text`: Its text.
 - `textSize`: Its size, units tall (ascent to descent). At least 1e-6 (0 or less, or NaN, is 1e-6).
 - `color`: Its color, 0xAARRGGBB.
-- `align`: Which point of it its position's x is: its left edge, center or right edge.
-- `font`: Its font, or null for the drawing batch's built-in one.
+- `align`: How a wrapped block's lines line up with each other: their left edges, centers or right edges. One line has nothing to line up with; its pivot places it. Left to start.
+- `font`: Its font, or null for the built-in one.
 - `wrapWidth`: Its wrap width in its own units: 0 for one line.
 - `lineHeight`: Its wrapped lines apart, times its size.
 - `setWrapWidth`: Wraps it to width in its own units (Font.wrap), its lines lineHeight times its size apart; 0 for one line. False, changing nothing, for a width below 0 or a line height of 0 or less.
-- `measureWidth`: Its width in its own units as drawn in font (its own, if it has one): its wrap width, or its one line's.
-- `measureHeight`: Its height in its own units as drawn in font (its own, if it has one): its size, or its wrapped lines'.
+- `measureWidth`: Its width in its own units, in its font (the built-in one when it has none): its wrap width, or its one line's.
+- `measureHeight`: Its height in its own units, in its font (the built-in one when it has none): its size, or its wrapped lines'.
 
 ## View
 

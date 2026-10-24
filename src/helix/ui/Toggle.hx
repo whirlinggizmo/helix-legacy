@@ -27,7 +27,7 @@ class Toggle extends Widget {
 		mark = Shape2D.rectangle(1, 1, theme.accentColor);
 		mark.setPivot(0, 0);
 		mark.pickable = false;
-		label = new Text2D(text, theme.textSize, theme.textColor, Left, theme.font);
+		label = new Text2D(text, theme.textSize, theme.textColor, theme.font);
 		for (n in [face, check, mark, label])
 			root.addChild(n);
 		var tick = Layout2D.of(mark), square = Layout2D.of(check);

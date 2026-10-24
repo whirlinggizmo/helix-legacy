@@ -16,7 +16,8 @@ class Button extends Widget {
 		var theme = ui.theme;
 		face = Shape2D.rectangle(1, 1, theme.faceColor);
 		face.setPivot(0, 0);
-		label = new Text2D(text, theme.textSize, theme.textColor, Center, theme.font);
+		label = new Text2D(text, theme.textSize, theme.textColor, theme.font);
+		label.setPivot(.5, 0);
 		root.addChild(face);
 		root.addChild(label);
 		layout = Layout2D.stack(face);

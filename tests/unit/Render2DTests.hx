@@ -1114,6 +1114,24 @@ class Render2DTests {
 		batch.begin(camera);
 		stage.draw(batch, camera);
 		batch.end();
-		check(stage.pick(camera, 260, 50) == note && note.measureHeight(font) > 40, "A wrapped text picked by its whole block, lines below the first");
+		check(stage.pick(camera, 260, 50) == note && note.heightIn(font) > 40, "A wrapped text picked by its whole block, lines below the first");
+		// A pivot places a text as it does a sprite: centered on its position, or by a corner; picked and bounded where it's drawn.
+		var title = new Text2D("Title", 20, 0xffffffff, font);
+		title.pickable = true;
+		title.setPosition(400, 300);
+		var w = title.measureWidth(), box = new helix.math.Bounds2D();
+		check(w > 0 && title.measureHeight() == 20, "Measured in its own font, none passed");
+		title.setPivot(.5, .5);
+		stage.add(title);
+		@:privateAccess title.measureOwn(font, box);
+		check(near(box.minX, -w / 2) && near(box.maxX, w / 2) && near(box.minY, -10) && near(box.maxY, 10), "Pivot .5, .5: its box centered on it");
+		batch.begin(camera);
+		stage.draw(batch, camera);
+		batch.end();
+		check(stage.pick(camera, 400 - w / 2 + 1, 291) == title
+			&& stage.pick(camera, 400 + w / 2 + 2, 300) != title, "Picked where it's drawn");
+		title.setPivot(1, 1);
+		@:privateAccess title.measureOwn(font, box);
+		check(near(box.minX, -w) && near(box.maxX, 0) && near(box.minY, -20) && near(box.maxY, 0), "Pivot 1, 1: its bottom right on it");
 	}
 }

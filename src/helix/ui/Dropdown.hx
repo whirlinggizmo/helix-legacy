@@ -54,7 +54,7 @@ class Dropdown extends Widget {
 		face.setPivot(0, 0);
 		root.addChild(face);
 		textWindow = new Node2D();
-		shownText = new Text2D("", theme.textSize, theme.textColor, Left, theme.font);
+		shownText = new Text2D("", theme.textSize, theme.textColor, theme.font);
 		shownText.pickable = false;
 		textWindow.addChild(shownText);
 		root.addChild(textWindow);

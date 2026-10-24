@@ -8,7 +8,7 @@ class Label extends Widget {
 	function new(ui:Ui, name:String, text:String) {
 		super(ui, name);
 		var theme = ui.theme;
-		node = new Text2D(text, theme.textSize, theme.textColor, Left, theme.font);
+		node = new Text2D(text, theme.textSize, theme.textColor, theme.font);
 		root.addChild(node);
 		layout = Layout2D.of(node);
 		readTheme(theme);

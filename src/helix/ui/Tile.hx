@@ -31,7 +31,8 @@ class Tile extends Widget {
 		picture = new Sprite2D(texture);
 		picture.setPivot(0, 0);
 		picture.pickable = false;
-		label = new Text2D(caption, theme.textSize * .8, theme.textColor, Center, theme.font);
+		label = new Text2D(caption, theme.textSize * .8, theme.textColor, theme.font);
+		label.setPivot(.5, 0);
 		label.pickable = false;
 		for (n in [edge, face, picture, label])
 			root.addChild(n);

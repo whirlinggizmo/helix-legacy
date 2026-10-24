@@ -147,7 +147,8 @@ class ColorPicker extends Widget {
 		hueKnob = new Handle(root, theme);
 		alphaKnob = new Handle(root, theme);
 		alphaKnob.visible = hasAlpha;
-		caption = new Text2D("HEX", theme.textSize * .6, theme.disabledTextColor, Center, theme.font);
+		caption = new Text2D("HEX", theme.textSize * .6, theme.disabledTextColor, theme.font);
+		caption.setPivot(.5, 0);
 		root.addChild(caption);
 		// A column: the square; a padded strip of the swatch beside the bars; a row of the field (its caption under it) and the format button
 		// (attach). Their sizes, padding and gaps readTheme's.

@@ -36,14 +36,15 @@ class Slider extends Widget {
 		var theme = ui.theme;
 		face = Shape2D.rectangle(1, 1, 0);
 		face.setPivot(0, 0);
-		label = new Text2D(text, theme.textSize, theme.textColor, Left, theme.font);
+		label = new Text2D(text, theme.textSize, theme.textColor, theme.font);
 		track = Shape2D.rectangle(1, 1, theme.faceColor);
 		track.setPivot(0, 0);
 		track.pickable = false;
 		fill = Shape2D.rectangle(1, 1, theme.accentColor);
 		fill.setPivot(0, 0);
 		fill.pickable = false;
-		readout = new Text2D("", theme.textSize, theme.textColor, Right, theme.font);
+		readout = new Text2D("", theme.textSize, theme.textColor, theme.font);
+		readout.setPivot(1, 0);
 		readout.visible = false;
 		for (n in [face, track, fill, label, readout])
 			root.addChild(n);

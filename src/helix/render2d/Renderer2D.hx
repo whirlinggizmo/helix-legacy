@@ -234,10 +234,16 @@ class Renderer2D {
 						batch.polygon(shape.pointList, shape.color, shape.triangles);
 			}
 		} else if (text != null) {
+			// The box's top left from the pivot; a wrapped block's lines lined up in it by align.
+			var font = text.font != null ? text.font : batch.font,
+				w = text.widthIn(font),
+				x = text.left(w),
+				y = text.top(text.heightIn(font));
 			if (text.wrapWidth > 0)
-				batch.drawTextWrapped(text.text, 0, 0, text.textSize, text.wrapWidth, text.color, text.align, text.lineHeight, text.font);
+				batch.drawTextWrapped(text.text, text.align == Center ? x + w / 2 : text.align == Right ? x + w : x, y, text.textSize, text.wrapWidth,
+					text.color, text.align, text.lineHeight, text.font);
 			else
-				batch.drawText(text.text, 0, 0, text.textSize, text.color, text.align, text.font);
+				batch.drawText(text.text, x, y, text.textSize, text.color, Left, text.font);
 		}
 	}
 
@@ -338,9 +344,11 @@ class Renderer2D {
 			var font = text.font != null ? text.font : lastFont;
 			if (font == null)
 				return false;
-			var w = text.measureWidth(font),
-				left = text.align == Center ? -w / 2 : text.align == Right ? -w : 0;
-			return x >= left && x <= left + w && y >= 0 && y <= text.measureHeight(font);
+			var w = text.widthIn(font),
+				h = text.heightIn(font),
+				left = text.left(w),
+				top = text.top(h);
+			return x >= left && x <= left + w && y >= top && y <= top + h;
 		}
 		if (shape == null)
 			return false;
@@ -397,9 +405,8 @@ class Renderer2D {
 			var text:Text2D = cast node,
 				f = text.font != null ? text.font : font;
 			if (f != null) {
-				var w = text.measureWidth(f),
-					left = text.align == Center ? -w / 2 : text.align == Right ? -w : 0;
-				out.push(rounded(left, 0, w, text.measureHeight(f), 0));
+				var w = text.widthIn(f), h = text.heightIn(f);
+				out.push(rounded(text.left(w), text.top(h), w, h, 0));
 			}
 		} else if (Std.isOfType(node, Drawing2D)) {
 			var drawing:Drawing2D = cast node;

@@ -49,7 +49,6 @@ class Game extends helix.App {
 ## Things on screen
 
 ```haxe
-import helix.render2d.Align2D;
 import helix.render2d.Node2D;
 import helix.render2d.Shape2D;
 import helix.render2d.Sprite2D;
@@ -60,7 +59,8 @@ var box = Shape2D.rectangle(120, 40, 0xff66bfff);   // also Shape2D.circle(r, co
 box.setPosition(40, 40);
 Stage.addChild(box);
 
-var label = new Text2D("Score: 0", 24, 0xffffffff, Align2D.Center);
+var label = new Text2D("Score: 0", 24, 0xffffffff);
+label.setPivot(.5, .5);                               // centered on its position, as a sprite (top left to start)
 label.setPosition(400, 30);
 Stage.addChild(label);
 label.text = "Score: 1";                              // change it any time

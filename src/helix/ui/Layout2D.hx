@@ -331,8 +331,8 @@ class Layout2D {
 				shape = Std.downcast(node, Shape2D),
 				sprite = Std.downcast(node, Sprite2D);
 			if (text != null) {
-				cw = text.measureWidth(font);
-				ch = text.measureHeight(font);
+				cw = text.widthIn(font);
+				ch = text.heightIn(font);
 			} else if (shape != null && shape.form == Circle)
 				cw = ch = shape.radius * 2;
 			else if (shape != null) {
@@ -374,14 +374,15 @@ class Layout2D {
 	// Places its node, then its children in its room, top down.
 	function place(font:Font):Void {
 		if (node != null) {
-			// Its position is its pivot's: a text's by its alignment, a circle's its center; a sprite or rectangle sized to it.
+			// Its position is its pivot's: a circle's its center; a text, a sprite or a rectangle by its pivot, the latter two sized to it.
 			var text = Std.downcast(node, Text2D),
 				shape = Std.downcast(node, Shape2D),
 				sprite = Std.downcast(node, Sprite2D);
 			var px = 0., py = 0.;
-			if (text != null)
-				px = text.align == Center ? w / 2 : text.align == Right ? w : 0;
-			else if (shape != null && shape.form == Circle) {
+			if (text != null) {
+				px = text.pivotX * w;
+				py = text.pivotY * h;
+			} else if (shape != null && shape.form == Circle) {
 				px = w / 2;
 				py = h / 2;
 			} else if (shape != null) {
