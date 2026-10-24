@@ -92,7 +92,7 @@ class Loader {
 		return Assets.ensure(path, both.loaded, both.failed);
 	}
 
-	/** A texture through Textures (linear: not sRGB, for data such as normal maps). */
+	/** A texture through Textures (linear: smooth, with mipmaps; otherwise nearest, for pixel art). */
 	public function texture(path:String, linear:Bool, loaded:Texture2D->Void, ?failed:String->Void):IRequest {
 		var both = counted(path, loaded, failed);
 		return Textures.load(path, linear, both.loaded, both.failed);
