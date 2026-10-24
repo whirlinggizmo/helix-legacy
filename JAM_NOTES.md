@@ -19,3 +19,8 @@
   (`root.find("greeting", Text2D)`, null when it isn't one), or a type parameter taken from the variable
   (`var g:Text2D = root.find("greeting")`), unchecked, which a wrong kind breaks later instead of there. Prefer the
   checked one; it fits the stage's find too.
+- **Loader's methods read like properties**: `helix.scene.Loader`'s asset, texture, clip, stream, environment and model
+  start loads but are named as things (`loader.texture(...)`), against CONVENTIONS (methods named for what they do)
+  and the services (`Textures.load`, `Audio.loadClip`). Rename: loadAsset, loadTexture, loadClip, loadStream,
+  loadEnvironment, loadModel, with every caller (examples, guide, the scene file's loading). `wrap` too: say what it
+  wraps.
