@@ -65,14 +65,14 @@ class Car extends Behavior {
 		heading = Trig.atan2(2 * (node.quaternionX * node.quaternionZ + node.quaternionW * node.quaternionY),
 			1 - 2 * (node.quaternionX * node.quaternionX + node.quaternionY * node.quaternionY));
 		for (name in ["wheel-front-left", "wheel-front-right"]) {
-			var wheel = node.find(name);
+			var wheel = node.find(name, Node3D);
 			if (wheel != null) {
 				front.push(wheel);
 				wheels.push(wheel);
 			}
 		}
 		for (name in ["wheel-back-left", "wheel-back-right"]) {
-			var wheel = node.find(name);
+			var wheel = node.find(name, Node3D);
 			if (wheel != null)
 				wheels.push(wheel);
 		}

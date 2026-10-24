@@ -690,11 +690,11 @@ function new()
 var environment:Null<Environment3D>
 var hitArea:Null<HitArea3D>
 function addChild(child:Node3D):Bool
+function addChildAt(child:Node3D, index:Int):Bool
 function addChildInPlace(child:Node3D):Bool
 function removeChild(child:Node3D):Bool
 var parent(get, set):Null<Node3D>
 function getChild(index:Int):Null<Node3D>
-function find(name:String):Null<Node3D>
 function collectModels(skinned:Array<Model3D>, rigid:Array<Model3D>):Void
 function findAttachment(model:Model3D, skeleton:Node3D):Null<Attachment3D>
 function computeWorld(?out:Mat4):Mat4
@@ -726,11 +726,11 @@ var worldMatrix(get, never):Mat4
 - `environment`: The light of the place under it (Environment3D: ambient light, environment map, background), or null: a level's root carries its level's (a scene file's "environment" section). A View3D lights its tree by its own environment if it has one, else by the first one in its tree (the root's, depth first); others are logged once and not used yet (the nearest ancestor's, docs/ROADMAP.md).
 - `hitArea`: The shape it's picked by in place of what it draws, in its own units, never drawn; null (the default) for what it draws. A group with one is picked by it; its children are picked as ever, the nearest hit winning.
 - `addChild`: Makes child its last child, taking it from any parent it had, keeping child's local transform: it moves with this node as it sat under its old parent (a hat onto a head joint). addChildInPlace keeps its world transform instead. False, changing nothing, for itself or one of its own ancestors.
+- `addChildAt`: Makes child its child at index in drawing order (0 is drawn first, under the others; those from index on move up one), taking it from any parent it had and keeping its local transform, as addChild does; an index past the end, or -1, makes it the last. A child of this node already moves to index. False, changing nothing, for itself or one of its own ancestors.
 - `addChildInPlace`: Puts child under this node without it moving: its world transform is kept and its local one recomputed from this node's (a dropped sword picked up by a hand). addChild keeps the child's local transform instead (a hat onto a head joint). A shear the two transforms make together is lost. False, changing nothing, for itself or one of its own ancestors, or a zero scale on this or above it.
 - `removeChild`: Takes child from its children. False when it isn't one.
 - `parent`: Its parent, or null at a tree's top. Assigning a node makes this its last child as that node's addChild does, keeping this one's local transform (addChildInPlace keeps the world one); assigning null takes it from its parent as the parent's removeChild does. A node under itself or one of its own descendants is refused, leaving the tree as it was.
 - `getChild`: Its child at index, in drawing order; null past the end.
-- `find`: The first node named name below it (depth first, in drawing order), or null: for picking out a part of a loaded model (its wheels, a lamp), once, and keeping the node. Never a path.
 - `collectModels`: The models at or under it, sorted: the skinned ones (bound to a skeleton by bindSkeleton) into skinned, the rigid ones into rigid, a rigid model's own children going with it (a sword's gem). A part file's own copy of an armature (an exporter's) is passed over, as only models are taken: with findAttachment, how a game dresses a character from files of their own (the examples' Outfit).
 - `findAttachment`: Where a rigid model under it (a part file's root, instantiated) attaches to skeleton: the piece to hang, the node just under model's nearest ancestor below this named as a joint skeleton has (an importer may split one mesh into several models, so the piece may be above model, and its siblings go with it), and that joint, which the piece keeps its offset from. A file whose models sit under no joint gives the node just under this as the piece and null as the joint, for a socket the game chooses. Null when model isn't under this.
 - `computeWorld`: Its world matrix as it is now, into out (a new one when not given), returned: its own transform and every one above it, worked out afresh without touching what a stage keeps (a camera's view is found so, wherever it is). Given out, it allocates nothing.

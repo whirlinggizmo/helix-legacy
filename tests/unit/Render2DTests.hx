@@ -449,6 +449,27 @@ class Render2DTests {
 		var w = @:privateAccess Node2D.worldOf(held);
 		check(near(w[4], 7) && near(w[5], 9) && near(w[0], 1) && near(w[3], 1), "An attached node keeps its world place");
 		check(!held.addChildInPlace(holder) && holder.parent == null, "attach refuses an ancestor as add does");
+		// addChildAt: a place in the drawing order, past the end the last; a child already there moves; an ancestor refused.
+		var row = new Node2D(),
+			a = new Node2D(),
+			b = new Node2D(),
+			c = new Node2D();
+		row.addChild(a);
+		row.addChild(b);
+		check(row.addChildAt(c, 1) && row.getChild(0) == a && row.getChild(1) == c && row.getChild(2) == b, "Put between");
+		check(row.addChildAt(b, 0) && row.getChild(0) == b && row.getChild(1) == a && row.getChild(2) == c && row.childCount == 3,
+			"Its own child moved to the front");
+		check(row.addChildAt(b, 99) && row.getChild(2) == b && row.addChildAt(a, -1) && row.getChild(2) == a, "Past the end, or -1: the last");
+		check(!a.addChildAt(row, 0) && row.parent == null, "An ancestor refused");
+		// find: by name and kind, null of another kind.
+		var text = new Text2D("Hi", 10, 0xffffffff);
+		text.name = "greeting";
+		c.addChild(text);
+		check(row.find("greeting", Text2D) == text
+			&& row.find("greeting", Node2D) == text
+			&& row.find("greeting", Shape2D) == null
+			&& row.find("missing", Node2D) == null,
+			"find by kind: its own, any node, another kind (null), none");
 		held.parent = null;
 		held.setPosition(1, 0);
 		held.parent = holder;

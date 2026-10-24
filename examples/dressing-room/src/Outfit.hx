@@ -143,7 +143,7 @@ class Outfit {
 
 	// The skeleton's joint (or root) named name, or null.
 	function joint(name:String):Null<Node3D>
-		return name == "" ? null : skeleton.name == name ? skeleton : skeleton.find(name);
+		return name == "" ? null : skeleton.name == name ? skeleton : skeleton.find(name, Node3D);
 
 	function fail(slot:String, message:String):Void {
 		takeOff(slot);

@@ -103,18 +103,20 @@ class Node2D extends Node {
 	override public function getChild(index:Int):Null<Node2D>
 		return cast super.getChild(index);
 
-	/** The first node named name below it (depth first, in drawing order), or null: found once and kept, never a path. */
-	override public function find(name:String):Null<Node2D>
-		return cast super.find(name);
-
 	/** Makes child its last child (drawn over the others), taking it from any parent it had, keeping child's local transform: it moves
 		with this node as it sat under its old parent (a hat onto a head joint). addChildInPlace keeps its world transform instead. False,
 		changing nothing, for itself or one of its own ancestors. */
-	public function addChild(child:Node2D):Bool {
+	public function addChild(child:Node2D):Bool
+		return addChildAt(child, -1);
+
+	/** Makes child its child at index in drawing order (0 is drawn first, under the others; those from index on move up one), taking it
+		from any parent it had and keeping its local transform, as addChild does; an index past the end, or -1, makes it the last. A child
+		of this node already moves to index. False, changing nothing, for itself or one of its own ancestors. */
+	public function addChildAt(child:Node2D, index:Int):Bool {
 		var from = child.parent;
-		if (!link(child))
+		if (!link(child, index))
 			return false;
-		if (from != null)
+		if (from != null && from != this)
 			from.changed();
 		changed();
 		child.localDirty = true;

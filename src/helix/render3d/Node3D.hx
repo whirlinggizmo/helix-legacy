@@ -93,11 +93,17 @@ class Node3D extends Node {
 	/** Makes child its last child, taking it from any parent it had, keeping child's local transform: it moves with this node as it sat
 		under its old parent (a hat onto a head joint). addChildInPlace keeps its world transform instead. False, changing nothing, for
 		itself or one of its own ancestors. */
-	public function addChild(child:Node3D):Bool {
+	public function addChild(child:Node3D):Bool
+		return addChildAt(child, -1);
+
+	/** Makes child its child at index in drawing order (0 is drawn first, under the others; those from index on move up one), taking it
+		from any parent it had and keeping its local transform, as addChild does; an index past the end, or -1, makes it the last. A child
+		of this node already moves to index. False, changing nothing, for itself or one of its own ancestors. */
+	public function addChildAt(child:Node3D, index:Int):Bool {
 		var from = child.parent;
-		if (!link(child))
+		if (!link(child, index))
 			return false;
-		if (from != null)
+		if (from != null && from != this)
 			from.changed();
 		changed();
 		child.localDirty = true;
@@ -166,11 +172,6 @@ class Node3D extends Node {
 	override public function getChild(index:Int):Null<Node3D>
 		return cast super.getChild(index);
 
-	/** The first node named name below it (depth first, in drawing order), or null: for picking out a part of a loaded model (its wheels, a
-		lamp), once, and keeping the node. Never a path. */
-	override public function find(name:String):Null<Node3D>
-		return cast super.find(name);
-
 	/** The models at or under it, sorted: the skinned ones (bound to a skeleton by bindSkeleton) into skinned, the rigid ones into rigid, a
 		rigid model's own children going with it (a sword's gem). A part file's own copy of an armature (an exporter's) is passed over, as only
 		models are taken: with findAttachment, how a game dresses a character from files of their own (the examples' Outfit). */
@@ -206,7 +207,7 @@ class Node3D extends Node {
 	}
 
 	static function jointOf(skeleton:Node3D, name:String):Null<Node3D>
-		return name == "" ? null : skeleton.name == name ? skeleton : skeleton.find(name);
+		return name == "" ? null : skeleton.name == name ? skeleton : skeleton.find(name, Node3D);
 
 	/** Its world matrix as it is now, into out (a new one when not given), returned: its own transform and every one above it, worked out
 		afresh without touching what a stage keeps (a camera's view is found so, wherever it is). Given out, it allocates nothing. */

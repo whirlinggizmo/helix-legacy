@@ -208,15 +208,15 @@ class Render3DTests {
 		// A glTF file read whole: the toy car (examples/assets/models/toy_car.glb).
 		var file = @:privateAccess new helix.render3d.ModelFile3D(helix.render3d.Gltf.read(sys.io.File.getBytes("examples/assets/models/toy_car.glb")));
 		var car = file.instantiate("car");
-		var wheel = Std.downcast(car.find("wheel_rl"), Model3D),
-			beam = Std.downcast(car.find("headlight_l_beam"), SpotLight3D),
-			cabin = Std.downcast(car.find("cabin"), Model3D);
+		var wheel = car.find("wheel_rl", Model3D),
+			beam = car.find("headlight_l_beam", SpotLight3D),
+			cabin = car.find("cabin", Model3D);
 		check(wheel != null && wheel.mesh.indexCount > 0, "A model file's models are found by name");
 		check(beam != null && near(beam.outerCone, .5), "KHR_lights_punctual becomes lights of their kinds");
 		check(cabin != null && cabin.material.blended && file.warnings.length == 0, "alphaMode BLEND, and nothing the file uses is unread");
 		check(@:privateAccess file.images().length == 1, "One embedded image, the paint's");
 		var again = file.instantiate();
-		check(Std.downcast(again.find("wheel_rl"), Model3D).mesh == wheel.mesh && again.find("headlight_l_beam") != beam,
+		check(again.find("wheel_rl", Model3D).mesh == wheel.mesh && again.find("headlight_l_beam", Node3D) != beam,
 			"Copies share meshes and materials, not lights");
 		check(!new Node3D().setMatrix([1, 0, 0, 0])
 			&& near(Mesh3D.fromArrays([0, 0, 0, 1, 0, 0, 0, 1, 0], null, null, null, null).vertices.getFloat(Lit3DProgram.normalOffset + 8), 1),
@@ -279,7 +279,7 @@ class Render3DTests {
 		check(apart.missingBuffers.length == 1 && apart.missingBuffers[0].uri == "tri.bin", "A buffer in a file of its own waits for it");
 		apart.setBuffer(0, data);
 		var triangle = @:privateAccess new helix.render3d.ModelFile3D(apart);
-		check(triangle.instantiate().find("tri") != null, "With its buffer set, the model builds");
+		check(triangle.instantiate().find("tri", Node3D) != null, "With its buffer set, the model builds");
 		var sources = @:privateAccess triangle.images();
 		check(sources.length == 1
 			&& sources[0].source.match(File("Textures/colormap.png")), "An image file beside the model is named by its uri");
@@ -327,9 +327,9 @@ class Render3DTests {
 			scenes: [{nodes: [0, 1, 2]}]
 		}))));
 		var set = rig.instantiate("set"),
-			eye = Std.downcast(set.find("eye"), Camera3D),
-			flat = Std.downcast(set.find("flat"), Camera3D),
-			body = Std.downcast(set.find("body"), Model3D);
+			eye = set.find("eye", Camera3D),
+			flat = set.find("flat", Camera3D),
+			body = set.find("body", Model3D);
 		check(eye != null && near(eye.fovY, .9) && near(eye.near, .2) && near(eye.far, 50) && eye.projection == Perspective,
 			"A perspective camera node is a Camera3D with the file's yfov, znear and zfar");
 		check(near(eye.x, 1) && near(eye.y, 2) && near(eye.z, 3) && near(eye.eyeX, 1) && near(eye.forwardZ, -1) && near(eye.upY, 1),
@@ -337,14 +337,14 @@ class Render3DTests {
 		check(flat != null && flat.projection == Orthographic && near(flat.orthographicHeight, 6) && near(flat.near, .1) && near(flat.far, 20),
 			"An orthographic camera's height is twice its ymag");
 		check(near(flat.eyeZ, 0) && near(flat.forwardZ, -1), "A camera node without a transform is at the origin, not Camera3D's starting place");
-		var bodyCamera = Std.downcast(set.find("body_camera"), Camera3D);
+		var bodyCamera = set.find("body_camera", Camera3D);
 		check(body != null && body.mesh.indexCount == 3 && bodyCamera != null && bodyCamera.parent == body,
 			"A node with a mesh and a camera is the model, the camera its child named after it");
 		check(near(bodyCamera.fovY, 1) && near(bodyCamera.near, 1) && near(bodyCamera.far, 1000), "An absent zfar leaves Camera3D's default far");
 		var setAgain = rig.instantiate();
-		check(setAgain.find("eye") != eye
-			&& Std.downcast(setAgain.find("eye"), Camera3D) != null
-			&& setAgain.find("body_camera") != bodyCamera,
+		check(setAgain.find("eye", Node3D) != eye
+			&& setAgain.find("eye", Camera3D) != null
+			&& setAgain.find("body_camera", Node3D) != bodyCamera,
 			"Copies have cameras of their own");
 		shadows();
 		flags();

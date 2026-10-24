@@ -14,13 +14,19 @@ class Node {
 	/** Its name: a model file's node name, or what the game gave it; "" for none. */
 	public var name:String = "";
 
-	/** The first node named name below it (depth first, in drawing order), or null: for picking out a part of a loaded model (its wheels, a
-		lamp), once, and keeping the node. Never a path. */
-	public function find(name:String):Null<Node> {
+	/** The first node named name below it (depth first, in drawing order), as kind, or null when there's none or it isn't a kind:
+		`var greeting = root.find("greeting", Text2D);`, `var wheel = car.find("wheel_rl", Model3D);`, or the tree's own class (Node2D,
+		Node3D) for any node. Never a path. For picking out a part of a loaded model or a scene once and keeping it, not for every frame. */
+	public function find<T:Node>(name:String, kind:Class<T>):Null<T> {
+		var found = findNamed(name);
+		return found != null ? Std.downcast(found, kind) : null;
+	}
+
+	function findNamed(name:String):Null<Node> {
 		for (child in children) {
 			if (child.name == name)
 				return child;
-			var found = child.find(name);
+			var found = child.findNamed(name);
 			if (found != null)
 				return found;
 		}
@@ -60,14 +66,18 @@ class Node {
 		return true;
 	}
 
-	// Makes child its last child, taking it from any parent it had; false for itself or one of its own ancestors. The subclasses' addChild, typed.
-	function link(child:Node):Bool {
+	// Makes child its child at index in drawing order (past the end, or -1: its last), counted once child is out of any parent it had;
+	// false for itself or one of its own ancestors. The subclasses' addChild and addChildAt, typed.
+	function link(child:Node, index = -1):Bool {
 		if (!canLink(child))
 			return false;
 		if (child.parentNode != null)
 			child.parentNode.children.remove(child);
 		child.parentNode = this;
-		children.push(child);
+		if (index < 0 || index >= children.length)
+			children.push(child);
+		else
+			children.insert(index, child);
 		return true;
 	}
 

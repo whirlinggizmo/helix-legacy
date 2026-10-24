@@ -66,6 +66,20 @@ class StageService {
 	public function addChild(node:Node2D):Void
 		tree.add(node);
 
+	/** Puts node on the stage at index in drawing order (0 is drawn first, under the rest), as Node2D.addChildAt does: a level made after
+		the HUD put under it. An index past the end, or -1, puts it over everything, as addChild. */
+	public function addChildAt(node:Node2D, index:Int):Void
+		tree.root.addChildAt(node, index);
+
+	/** Its child at index, in drawing order; null past the end. */
+	public function getChild(index:Int):Null<Node2D>
+		return tree.root.getChild(index);
+
+	/** The first node named name on the stage (depth first, in drawing order), as kind, or null when there's none or it isn't a kind:
+		`var score = Stage.find("score", Text2D);` (Node.find). */
+	public function find<T:Node2D>(name:String, kind:Class<T>):Null<T>
+		return tree.root.find(name, kind);
+
 	/** Takes node off the stage. False, changing nothing, for a node that isn't one of its children. */
 	public function removeChild(node:Node2D):Bool
 		return tree.remove(node);

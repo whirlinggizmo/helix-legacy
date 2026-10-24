@@ -562,8 +562,8 @@ class SceneInstanceTests {
 		var foot = instance.node("gun/CharacterArmature/Root/Foot.L");
 		check(foot != null
 			&& foot.x == 5
-			&& foot.find("marker") != null
-			&& instance.pathOf(foot.find("marker")) == "gun/CharacterArmature/Root/Foot.L/marker",
+			&& foot.find("marker", Node3D) != null
+			&& instance.pathOf(foot.find("marker", Node3D)) == "gun/CharacterArmature/Root/Foot.L/marker",
 			"An override moves a file's node and adds a child under it");
 		check(logged(["gun.scene3d", "gun/nope/path", "names no node"]) && log.length == 0, "A path naming no node is logged");
 		pass.update(0);

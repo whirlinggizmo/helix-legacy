@@ -95,17 +95,17 @@ class AnimationTests {
 		check(body.warnings.length == 0, "Skins read without warnings: " + body.warnings.join("; "));
 		var a = body.instantiate("a"), b = body.instantiate("b");
 		// A node with a mesh is one model, its primitives its parts.
-		var modelA = Std.downcast(a.find("Casual_Body"), Model3D),
-			modelB = Std.downcast(b.find("Casual_Body"), Model3D);
+		var modelA = a.find("Casual_Body", Model3D),
+			modelB = b.find("Casual_Body", Model3D);
 		check(modelA != null && modelB != null && modelA.partCount > 0, "The file's skinned node is a model");
 		if (modelA == null || modelB == null)
 			return;
 		check(modelA.jointCount == 62 && modelA.skin.getJointName(0) != "", "Each copy's skinned model bound to its 62 joints");
-		check(modelA.getJoint(0) != modelB.getJoint(0)
-			&& modelA.getJoint(5) == a.find(modelA.skin.getJointName(5)), "Each copy follows its own skeleton");
+		check(modelA.getJoint(0) != modelB.getJoint(0) && modelA.getJoint(5) == a.find(modelA.skin.getJointName(5), Node3D),
+			"Each copy follows its own skeleton");
 		// Gear from another file binds to a skeleton by name; one asking for a joint the skeleton hasn't is refused.
 		var skeleton = animations.instantiate("character");
-		check(modelB.bindSkeleton(skeleton) && modelB.getJoint(3) == skeleton.find(modelB.skin.getJointName(3)),
+		check(modelB.bindSkeleton(skeleton) && modelB.getJoint(3) == skeleton.find(modelB.skin.getJointName(3), Node3D),
 			"A part binds to another file's skeleton by joint name");
 		var partial = new Skin3D(["Hips", "NoSuchBone"]);
 		check(!modelB.bindSkeleton(skeleton, partial) && modelB.jointCount == 62, "A missing joint is refused, the binding kept");

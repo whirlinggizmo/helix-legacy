@@ -110,7 +110,7 @@ What every node shares, in a 3D tree (Node3D) or a 2D one: a name, the flags (vi
 
 ```haxe
 var name:String
-function find(name:String):Null<Node>
+function find(name:String, kind:Class<T>):Null<T>
 var visible:Bool
 var paused:Bool
 var pickable:Bool
@@ -119,7 +119,7 @@ function getChild(index:Int):Null<Node>
 ```
 
 - `name`: Its name: a model file's node name, or what the game gave it; "" for none.
-- `find`: The first node named name below it (depth first, in drawing order), or null: for picking out a part of a loaded model (its wheels, a lamp), once, and keeping the node. Never a path.
+- `find`: The first node named name below it (depth first, in drawing order), as kind, or null when there's none or it isn't a kind: `var greeting = root.find("greeting", Text2D);`, `var wheel = car.find("wheel_rl", Model3D);`, or the tree's own class (Node2D, Node3D) for any node. Never a path. For picking out a part of a loaded model or a scene once and keeping it, not for every frame.
 - `visible`: Whether it and everything under it are shown: off, none of it is drawn or picked (a light doesn't shine or cast), though it all still runs (behaviors, emitters) and stays placed. A child's own visible is kept, so showing it again brings each back as set. On to start.
 - `paused`: Whether it and everything under it are frozen: on, still drawn and picked, but their behaviors don't update and what moves by itself (emitters, decals fading, animated tiles) holds still (a level frozen under a pause menu, docs/DISPLAY_MODEL.md). Off to start.
 - `pickable`: Whether it and everything under it can be picked: off, a pick passes through them all to what's behind. What a node is hit by is what it draws, or its hitArea when it has one. On to start, but for text.

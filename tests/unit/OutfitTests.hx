@@ -92,13 +92,14 @@ class OutfitTests {
 		// Held at a socket.
 		outfit.choose("hand", "Sword", "Middle1.R");
 		var sword = outfit.getNodes("hand");
-		check(sword.length == 1 && sword[0].parent == character.find("Middle1.R"), "A held part hangs from its joint");
+		check(sword.length == 1 && sword[0].parent == character.find("Middle1.R", Node3D), "A held part hangs from its joint");
 		var offset = sword[0].matrix.join(",");
 		outfit.choose("hand", "Sword");
 		var hung = outfit.getNodes("hand");
-		check(hung.length == 1 && hung[0].parent == character.find("Middle1.R") && hung[0].matrix.join(",") == offset,
+		check(hung.length == 1 && hung[0].parent == character.find("Middle1.R", Node3D) && hung[0].matrix.join(",") == offset,
 			"Without a socket, a rigid part hangs from the joint its file hangs it from, at the file's offset");
-		check(hung[0].find("Root") == null && hung[0].find("Middle1.R") == null, "and the file's own copy of the skeleton doesn't come with it");
+		check(hung[0].find("Root", Node3D) == null && hung[0].find("Middle1.R", Node3D) == null,
+			"and the file's own copy of the skeleton doesn't come with it");
 		outfit.choose("hand", "Sword", "Nope");
 		check(outfit.getWorn("hand") == null && outfit.getError("hand") != null && sword[0].parent == null,
 			"A socket the skeleton lacks empties the slot, saying why");

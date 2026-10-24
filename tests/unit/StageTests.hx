@@ -28,7 +28,20 @@ class StageTests {
 		stage.addChild(front);
 		check(stage.childCount == 2, "Children added");
 		stage.addChild(back);
-		check(stage.childCount == 2 && @:privateAccess stage.tree.root.getChild(1) == back, "A child added again: moved to the top, as Flash's addChild does");
+		check(stage.childCount == 2 && stage.getChild(1) == back && stage.getChild(0) == front && stage.getChild(2) == null,
+			"A child added again: moved to the top, as Flash's addChild does");
+		// Found by name and kind, anywhere on the stage; put under the rest by addChildAt.
+		var label = new helix.render2d.Text2D("Score", 12, 0xffffffff),
+			group = new helix.render2d.Node2D();
+		label.name = "score";
+		group.addChild(label);
+		stage.addChildAt(group, 0);
+		check(stage.getChild(0) == group && stage.getChild(1) == front && stage.childCount == 3, "addChildAt(0): drawn under the rest");
+		check(stage.find("score", helix.render2d.Text2D) == label && stage.find("score", helix.render2d.Node2D) == label,
+			"Found below the stage's children, as its kind or any 2D node");
+		check(stage.find("score", Shape2D) == null
+			&& stage.find("nothing", helix.render2d.Node2D) == null, "Of another kind, or not there: null");
+		stage.removeChild(group);
 		stage.color = 0xff14161c;
 		stage.draw(0);
 		check(gpu.framesEnded == 2 && gpu.clearColor == 0xff14161c, "Cleared to the stage's color");

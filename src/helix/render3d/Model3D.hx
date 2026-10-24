@@ -182,7 +182,7 @@ class Model3D extends Node3D {
 		var found = [];
 		for (j in 0...chosen.jointCount) {
 			var name = chosen.getJointName(j);
-			var node = skeleton.name == name ? skeleton : skeleton.find(name);
+			var node = skeleton.name == name ? skeleton : skeleton.find(name, Node3D);
 			if (node == null)
 				return false;
 			found.push(node);

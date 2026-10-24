@@ -80,9 +80,9 @@ class App extends helix.App {
 		car = file.instantiate("car");
 		car.setScale(1.5, 1.5, 1.5);
 		for (name in ["wheel-front-left", "wheel-front-right", "wheel-back-left", "wheel-back-right"])
-			wheels.push(car.find(name));
+			wheels.push(car.find(name, Node3D));
 		for (name in ["headlight-left", "headlight-right"])
-			headlights.push(cast(car.find(name), SpotLight3D));
+			headlights.push(car.find(name, SpotLight3D));
 		level.addChild(car);
 		// Behind the car and above it, looking ahead, in its own units: a child, so the car carries it.
 		rideCamera.setView(0, 1.8, -4.5, 0, .4, 2);

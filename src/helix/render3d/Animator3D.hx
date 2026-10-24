@@ -182,7 +182,7 @@ class Animator3D {
 		nodes = [];
 		for (i in 0...clip.trackCount) {
 			var name = clip.getTrack(i).target;
-			var node = root.name == name ? root : root.find(name);
+			var node = root.name == name ? root : root.find(name, Node3D);
 			if (node == null)
 				return null;
 			nodes.push(node);
