@@ -35,6 +35,19 @@ class Render3DTests {
 	}
 
 	static function main():Void {
+		// Children in 3D as in 2D: the same child methods on Node3D as on Node2D, and addChildAt and removeChildAt placing and taking them.
+		var methods3D = Type.getInstanceFields(Node3D);
+		for (name in Type.getInstanceFields(helix.render2d.Node2D))
+			if (~/child|find|contains/i.match(name) && !["findNamed", "children"].contains(name))
+				check(methods3D.contains(name), 'Node3D has $name, as Node2D does');
+		var row = new Node3D(),
+			a = new Node3D(),
+			b = new Node3D(),
+			c = new Node3D();
+		row.addChild(a);
+		row.addChild(b);
+		check(row.addChildAt(c, 0) && row.getChild(0) == c && row.getChild(1) == a && row.getChildIndex(b) == 2, "addChildAt in 3D");
+		check(row.removeChildAt(1) == a && a.parent == null && row.childCount == 2 && row.contains(b) && !row.contains(a), "removeChildAt and contains in 3D");
 		var m = new Mat4();
 		check(near(m.get(0), 1) && near(m.get(5), 1) && near(m.get(1), 0), "A new matrix is the identity");
 		check(!m.makePerspective(0, 1, .1, 10) && !m.makePerspective(1, 1, 1, .5) && near(m.get(0), 1), "A bad perspective is refused and changes nothing");
