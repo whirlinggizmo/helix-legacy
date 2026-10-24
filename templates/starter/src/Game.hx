@@ -24,6 +24,10 @@ class Game extends helix.App {
 		Stage.addChild(fullscreen);
 	}
 
+	// After a hot reload in the dev loop: this object, its fields kept, now runs the new code, and init doesn't run again. Build here
+	// what an edit added to init. Keep the game's state in fields, as here: a plain static starts over at each reload.
+	override public function afterReload():Void {}
+
 	override public function update(dt:Float):Void {
 		// Once a frame, before the stage is drawn: the game's logic, dt seconds since the last frame.
 	}

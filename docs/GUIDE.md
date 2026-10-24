@@ -6,7 +6,9 @@ lists it; the reference prints each type's `import` line.
 
 Start with `haxelib run helix init my-game` (README.md, "Try it"): `src/Game.hx` is the game, `haxe hxml/dev.hxml` runs it at
 http://localhost:8064/ and takes your changes as you save, keeping the running game: what's on the stage, the fields' values (a new
-field starts from its initializer). `init` ran when the page started, so a change to it shows after a refresh.
+field starts from its initializer). `init` ran when the page started, so a change to it shows after a refresh, or override
+`afterReload`, which runs after each reload, to build what an edit added. Keep the game's state in `Game`'s fields: a plain static starts
+over at each reload (one marked `@:hot` is kept).
 
 ## The shape of a game
 
@@ -305,6 +307,7 @@ viewport to your design size (800 x 600 here), and tick the fullscreen button if
 - **Something's missing on screen:** it's under something added later (layers), off the design area, or its load failed (the console
   says; pass a `failed` callback to see it: `Textures.load(path, false, loaded, message -> trace(message))`).
 - **"Type not found":** import it by the line its reference page gives.
-- **A change didn't take in the dev loop:** a change to `init` shows after a refresh (it ran when the page started). A function passed
+- **A change didn't take in the dev loop:** a change to `init` shows after a refresh (it ran when the page started), or build it in
+  `afterReload`. A static lost its value: a plain one starts over at each reload; keep it in a field, or mark it `@:hot`. A function passed
   by name keeps its old code; pass a lambda. A field's initializer runs once, for a new field too: a changed one shows after a refresh,
   or set it again in code.

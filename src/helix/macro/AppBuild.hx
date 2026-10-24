@@ -15,6 +15,9 @@ import haxe.macro.Expr;
 	  because a `@:hot` static in the library's App would make the library reloaded code, and because hotreload-hx's global build, which
 	  turns `@:hot` into what a reload needs, runs after a parent's `@:autoBuild` and before a class's own `@:build` (checked with Haxe
 	  4.3.7), so fields this macro adds are seen as written.
+	- In a hot build (`-D hotreload`), `@:beforeHotReload static function hotBeforeReload()` and `@:afterHotReload static function
+	  hotAfterReload()`, hotreload-hx's hooks, calling the app's beforeReload and afterReload, so a game overrides those methods rather than
+	  writing static hooks that find its object.
 	- `hotAppRouter()`, giving App the AppRouter over those statics, and `hotStart(identity, router)`, running the profile of the
 	  backend the build names with `-D helix-backend=` (BACKENDS); a build naming none, or one not in the list, fails here, naming the
 	  choices, and an `sdl3-gpu` build without `helix_sdl3_gpu` (the define the programs carry SDL_GPU's dialects under; `-lib helix`
@@ -43,7 +46,16 @@ class AppBuild {
 		return backend == "webgl2";
 
 	/** The fields the macro writes, which a subclass can't declare itself. */
-	public static final WRITTEN = ["hotApp", "hotInit", "hotUpdate", "hotCleanup", "hotAppRouter", "hotStart"];
+	public static final WRITTEN = [
+		"hotApp",
+		"hotInit",
+		"hotUpdate",
+		"hotCleanup",
+		"hotBeforeReload",
+		"hotAfterReload",
+		"hotAppRouter",
+		"hotStart"
+	];
 
 	#if macro
 	/** The subclass's fields with the hot statics and the backend's start added (the class doc above). */
@@ -97,6 +109,18 @@ class AppBuild {
 			override function hotStart(identity:helix.host.Identity, router:helix.hotreload.AppRouter):Void
 				$start;
 		}).fields;
+		if (Context.defined("hotreload"))
+			made = made.concat((macro class {
+				/** hotreload-hx's hook before a reload: the app's beforeReload. Written by helix.macro.AppBuild. */
+				@:beforeHotReload static function hotBeforeReload():Void
+					if (hotApp != null)
+						hotApp.runBeforeReload();
+
+				/** hotreload-hx's hook after a reload: the app's afterReload. Written by helix.macro.AppBuild. */
+				@:afterHotReload static function hotAfterReload():Void
+					if (hotApp != null)
+						hotApp.runAfterReload();
+			}).fields);
 		for (field in made)
 			field.pos = pos;
 		return fields.concat(made);

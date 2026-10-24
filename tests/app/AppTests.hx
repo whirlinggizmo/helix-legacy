@@ -21,6 +21,15 @@ class Game extends helix.App {
 
 	override public function cleanup():Void
 		cleanups++;
+
+	public var befores = 0;
+	public var afters = 0;
+
+	override public function beforeReload():Void
+		befores++;
+
+	override public function afterReload():Void
+		afters++;
 }
 
 /** helix.App built with a backend named (-D helix-backend=webgl2, run on Node by tests/tools/app_test.py, which also checks the builds
@@ -40,7 +49,8 @@ class AppTests {
 	// A Game without its constructor (which would start the profile), its counters at 0 (createEmptyInstance runs no initializer on JS).
 	static function empty():Game {
 		var game:Game = Type.createEmptyInstance(Game);
-		game.inits = game.updates = game.cleanups = 0;
+		game.inits = game.updates = game.cleanups = game.befores = game.afters = 0;
+		game.running = false;
 		game.lastDt = 0;
 		return game;
 	}
@@ -73,6 +83,20 @@ class AppTests {
 		var statics = Type.getClassFields(Game);
 		for (name in AppBuild.WRITTEN.slice(0, 4))
 			check(statics.contains(name), 'The build wrote $name');
+
+		// The reload hooks (what the build's hotBeforeReload and hotAfterReload call in a hot build): only between init and cleanup.
+		var hooked = empty();
+		hooked.options = game.options;
+		hooked.runBeforeReload();
+		hooked.runAfterReload();
+		check(hooked.befores == 0 && hooked.afters == 0, "No reload hook before init");
+		hooked.runInit();
+		hooked.runBeforeReload();
+		hooked.runAfterReload();
+		check(hooked.befores == 1 && hooked.afters == 1, "Both hooks after init");
+		hooked.runCleanup();
+		hooked.runAfterReload();
+		check(hooked.afters == 1, "No reload hook after cleanup");
 
 		// The backend table.
 		check(AppBuild.BACKENDS.join(",") == "webgl2,sokol-gl,sdl3-gl,sdl3-gpu", "The four backends, the browser's first");
