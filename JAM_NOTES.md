@@ -24,3 +24,9 @@
   and the services (`Textures.load`, `Audio.loadClip`). Rename: loadAsset, loadTexture, loadClip, loadStream,
   loadEnvironment, loadModel, with every caller (examples, guide, the scene file's loading). `wrap` too: say what it
   wraps.
+- **Textures.load's bare `true`, and Loader.texture's doc**: in `Textures.load(path, linear, ...)` linear is the
+  filter (smooth with mipmaps; false is nearest, for pixel art), so the scenes example's `true` for the logo is right.
+  But `Loader.texture`'s doc says linear means "not sRGB, for data such as normal maps": wrong, and the reason it looked
+  wrong. A bare Bool at the call site says neither. Fix the doc; replace the Bool with what it chooses (the
+  `Sampling` enum Texture2D already has, or a named option), so a call reads `Textures.load(path, Smooth, ...)`; check
+  every texture load's doc says the same.
