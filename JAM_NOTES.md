@@ -48,7 +48,8 @@
   (e.g. Stage.pick, Textures.load, Splash). Wanted: a pass over the shown API: lead with what it does in one plain
   sentence, then arguments, then what it returns, then the edge cases, in short sentences; an example where a call's
   shape isn't obvious. Write the style into CONVENTIONS, and let a cold-start reader judge a sample before and after.
-  The user's example: Splash's class doc. A sample in the wanted style (what it is, how to use it, what happens, why,
+  The user's example of what not to do: Splash's class doc as it is (src/helix/scene/Splash.hx). Below, a rewrite of it in the
+  wanted style, the sample to follow (what it is, how to use it, what happens, why,
   the options):
 
       A splash screen: your logo, centered on the theme's background, before the game starts.
