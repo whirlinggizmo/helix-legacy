@@ -7,7 +7,7 @@ import helix.audio.StreamOpenResult;
 
 /** IAudio in a browser over Web Audio: clips become AudioBuffers, streams are media elements routed through the audio graph, each voice a
 	source through a gain and a stereo panner, its volume and pan changes ramped by setTargetAtTime (RAMP) and its pitch the source's playback
-	rate. The page's first key or pointer press unlocks audio (browsers let it start only in a user gesture); the page losing focus or being
+	rate. The page's first key, click or tap unlocks audio (browsers let it start only in a user gesture); the page losing focus or being
 	hidden suspends it. */
 @:noCompletion
 class WebAudioAdapter implements IAudio {
@@ -23,10 +23,15 @@ class WebAudioAdapter implements IAudio {
 	var nextClip = 1;
 	var nextPlayback = 1;
 
-	/** Listens for the page's gestures and visibility; no AudioContext until a gesture unlocks audio. */
+	/** The events that unlock audio. A key or a mouse button counts as it goes down, but a finger only as it lifts (pointerup, touchend,
+		click): on a phone, a tap's pointerdown isn't a gesture the browser lets audio start in. */
+	static final GESTURES = ["keydown", "pointerdown", "pointerup", "touchend", "click"];
+
+	/** Listens for the page's gestures (as they reach the window, before the page's own handlers) and its visibility; no AudioContext until a
+		gesture unlocks audio. */
 	public function new() {
-		js.Browser.window.addEventListener("keydown", _ -> unlock());
-		js.Browser.window.addEventListener("pointerdown", _ -> unlock());
+		for (name in GESTURES)
+			js.Browser.window.addEventListener(name, _ -> unlock(), true);
 		js.Browser.window.addEventListener("blur", _ -> suspend());
 		js.Browser.document.addEventListener("visibilitychange", _ -> if (js.Browser.document.hidden) suspend());
 	}
@@ -35,7 +40,8 @@ class WebAudioAdapter implements IAudio {
 	public function unlock():Void {
 		if (context == null)
 			context = js.Syntax.code("new (window.AudioContext || window.webkitAudioContext)()");
-		context.resume();
+		// Outside a gesture the browser keeps it suspended and may refuse: the next gesture tries again.
+		js.Syntax.code("{0}.resume().catch(function() {})", context);
 	}
 
 	/** Suspends a running AudioContext, as when the page is hidden; the next gesture resumes it. */
