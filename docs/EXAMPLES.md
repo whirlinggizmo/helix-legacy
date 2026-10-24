@@ -14,6 +14,7 @@ The catalog follows the earlier C frameworks' example names. Each example matche
 | `app-window` | window size, position, fullscreen and displays (properties, `can` and `request`) |
 | `app-gamepad` | four pads in the W3C standard layout |
 | `app-touch` | two-finger pan, pinch and twist; images and mipmaps |
+| `touch-stick` | floating touch sticks (`Binding.TouchStick`, `TouchStick2D`) in three layouts chosen by buttons: one on the whole screen (taken over by a landing thumb, handed to one still down), two on the halves (move and aim), one in a region, two in regions with the middle free; the buttons not taken by a stick (`touchStickBlocked`), idle hints; the arrows and a pad steering the same dot through `Actions.direction` |
 | `audio-music` | streamed music and decoded clips, with play state; the music bus faded, a crossfade to a second track, pitch and pan, and natively with `HELIX_ASSET_HOST` the music played as it downloads |
 | `asset-fetch` | assets from a host, the cache, and asking whether a host answers |
 | `asset-force-fetch` | ensure with a source and past the cache |
