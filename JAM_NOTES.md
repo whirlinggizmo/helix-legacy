@@ -35,3 +35,8 @@
   the asset counter it shows, one letter apart. Rename to LoadingScreen and SplashScreen (CONVENTIONS: classes named
   for their kind), every caller, the guide, DISPLAY_MODEL; consider helix.scene.screen for them, as the transitions
   have helix.scene.transition.
+- **Transitions need finer control**: a Transition only runs whole (run: cover, atMiddle, uncover; swap). Missing:
+  cover and stay (fade to black at the end, game over, before quitting), uncover alone (fade in from black at the
+  start), and holding covered until the game says (a load under the cover) rather than a fixed hold. Wanted: cover(?done)
+  and uncover(?done) as halves, run built from them, a covered state to read, and the color (black by default) easy to
+  set. Check Closing, Fade and the wipes all work as halves.
