@@ -11,3 +11,6 @@
 - **A log module**: HeliX has none; games and the engine use `trace`. Wanted: levels (debug, info, warn, error),
   a tag per source, a filter, output to the browser console (as console.warn/error) and natively to stderr, and
   development builds keeping more than release. Look at how wgrender-c logged first.
+- **No way to find a child on the stage**: `Stage` has addChild, removeChild and childCount, but neither `find(name)` nor
+  `getChild(index)`, which every node has (`Node.find`, depth first). Wanted: Stage.find and Stage.getChild, as a
+  Node2D's, over the stage's own root (and check View2D's and View3D's trees have the same).
