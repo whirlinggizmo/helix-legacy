@@ -61,3 +61,9 @@
       A gamepad press doesn't count, because browsers ignore it for that.
 
       To go on without a press, set maxWait to a number of seconds. The splash runs itself; you don't update it.
+- **Material3D's normal map doc mixes up two "linear"s**: `normalTexture` says "Load it linear (not sRGB), with
+  mipmaps", and the class doc calls the map "linear". But a load can't choose a color space: Textures.load's linear is
+  the filter (smooth with mipmaps), and a texture is uploaded as its bytes; the shader decodes the base color texture
+  from sRGB and reads the normal map's bytes as directions. Say that: load it with Textures.load(path, true, ...) for
+  smooth sampling; the map's colors are directions, not sRGB colors, and HeliX reads them so. Same fix as Loader.texture's
+  doc; the Sampling enum for the Bool would end the confusion.
