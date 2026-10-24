@@ -14,3 +14,8 @@
 - **No way to find a child on the stage**: `Stage` has addChild, removeChild and childCount, but neither `find(name)` nor
   `getChild(index)`, which every node has (`Node.find`, depth first). Wanted: Stage.find and Stage.getChild, as a
   Node2D's, over the stage's own root (and check View2D's and View3D's trees have the same).
+- **find needs a downcast**: `Std.downcast(root.find("greeting"), Text2D)` is awkward. Haxe 4 has no `find<Text2D>(...)`
+  at a call site (no explicit type parameters on calls). Options: `find(name, ?kind:Class<T>):Null<T>`, checked
+  (`root.find("greeting", Text2D)`, null when it isn't one), or a type parameter taken from the variable
+  (`var g:Text2D = root.find("greeting")`), unchecked, which a wrong kind breaks later instead of there. Prefer the
+  checked one; it fits the stage's find too.
