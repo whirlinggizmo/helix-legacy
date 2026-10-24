@@ -94,6 +94,7 @@ class ActionsTests {
 		pads();
 		mouseAndTouch();
 		refusals();
+		sticks();
 		captures();
 		texts();
 		saving();
@@ -232,6 +233,107 @@ class ActionsTests {
 		input.touchEvent(5, 1950, 650, false);
 		check(actions.isFramePressed("shoot") && !actions.isDown("shoot"), "A tap inside a frame is a frame press");
 		step(input);
+	}
+
+	// A touch stick: a finger landing in its region holds it, centered there, its push over the radius read as X and Y by two actions
+	// (past the dead zone, in a circle) wherever it slides; a finger landing takes it over, centered where it lands; the holder lifting hands
+	// it to a finger still down, centered where that one is; a blocked landing doesn't take it. A stick on the whole screen; two on the halves.
+	// Saved and read back; refused without a radius. direction holds two axes to a circle.
+	static function sticks():Void {
+		var input = new InputState(),
+			actions = new Actions(input, presentation(None, 800, 600, 2));
+		// None at a ratio of 2: units are framebuffer pixels halved; the region 0..200 x 100..300 units.
+		var x = TouchStick(Region(BottomLeft, 0, -200, 200, 200), 50, X),
+			y = TouchStick(Region(BottomLeft, 0, -200, 200, 200), 50, Y);
+		check(actions.bind("moveX", x) && actions.bind("moveY", y), "Bound across and down");
+		input.touchEvent(1, 200, 400, true);
+		check(actions.axis("moveX") == 0 && actions.axis("moveY") == 0, "Where it landed: the middle, 0");
+		step(input);
+		input.touchEvent(1, 300, 400, true);
+		check(near(actions.axis("moveX"), 1) && actions.axis("moveY") == 0 && actions.isDown("moveX"), "A radius right: all the way");
+		input.touchEvent(1, 240, 400, true);
+		check(near(actions.axis("moveX"), (.4 - .12) / .88), "Part way, past the dead zone: " + actions.axis("moveX"));
+		input.touchEvent(1, 205, 400, true);
+		check(actions.axis("moveX") == 0, "Within the dead zone: 0");
+		input.touchEvent(1, 600, 100, true);
+		check(near(actions.axis("moveX"), .8) && near(actions.axis("moveY"), -.6), "Slid out of the region, still held, held to a circle");
+		var drawn = [0., 0., 0., 0., 0., 0., 0.];
+		check(@:privateAccess actions.heldStick("moveY", drawn) && drawn[0] == 100 && drawn[1] == 200 && drawn[2] == 300 && drawn[3] == 50 && drawn[4] == 50,
+			"Where it landed and where it is, for drawing");
+		step(input);
+		// Another finger landing takes it over, centered where it lands.
+		input.touchEvent(2, 100, 500, true);
+		check(actions.axis("moveX") == 0 && @:privateAccess actions.heldStick("moveX", drawn) && drawn[0] == 50 && drawn[1] == 250,
+			"A finger landing takes it over, centered there");
+		step(input);
+		input.touchEvent(2, 160, 500, true);
+		check(near(actions.axis("moveX"), (.6 - .12) / .88), "and steers it");
+		step(input);
+		// The holder lifting hands it to the finger still down (1, out of the region now, but holding), centered where that one is.
+		input.touchEvent(1, 300, 400, true);
+		input.touchEvent(2, 160, 500, false);
+		check(actions.axis("moveX") == 0 && @:privateAccess actions.heldStick("moveX", drawn) && drawn[0] == 150 && drawn[1] == 200,
+			"Lifted: handed to the finger still down, centered where it is (no lurch)");
+		step(input);
+		input.touchEvent(1, 300, 400, false);
+		step(input);
+		check(actions.axis("moveX") == 0 && ! @:privateAccess actions.heldStick("moveX", drawn), "Every finger lifted: let go");
+		// A landing where touchStickBlocked says doesn't take it.
+		actions.touchStickBlocked = (bx, by) -> bx < 50;
+		input.touchEvent(3, 60, 450, true);
+		check(! @:privateAccess actions.heldStick("moveX", drawn), "A blocked landing (a button) doesn't take it");
+		input.touchEvent(3, 60, 450, false);
+		step(input);
+		actions.touchStickBlocked = null;
+		// The whole screen: held from anywhere, the top right corner here.
+		var whole = TouchStick(Anywhere, 50, X);
+		check(actions.bind("steer", whole), "A stick on the whole screen");
+		input.touchEvent(4, 780, 20, true);
+		step(input);
+		input.touchEvent(4, 680, 20, true);
+		check(near(actions.axis("steer"), -1), "Held from the top right corner, pushed left");
+		input.touchEvent(4, 680, 20, false);
+		step(input);
+		// Two sticks, the halves (x 0..200 and 200..400 units): each thumb takes its own, neither the other's, a landing taking over only
+		// its own half's.
+		var twin = new Actions(input, presentation(None, 800, 600, 2));
+		twin.bind("move", TouchStick(LeftHalf, 50, X));
+		twin.bind("aim", TouchStick(RightHalf, 50, Y));
+		input.touchEvent(5, 100, 300, true);
+		input.touchEvent(6, 700, 300, true);
+		step(input);
+		input.touchEvent(5, 200, 300, true);
+		input.touchEvent(6, 700, 400, true);
+		check(near(twin.axis("move"), 1) && near(twin.axis("aim"), 1), "Each half's thumb steers its own stick");
+		input.touchEvent(7, 600, 500, true);
+		check(near(twin.axis("move"), 1) && twin.axis("aim") == 0, "A thumb landing on the right takes over the right stick only");
+		var home = [0., 0., 0., 0., 0., 0., 0.];
+		check(@:privateAccess twin.heldStick("aim",
+			home) && home[5] == 400 - 90 && home[6] == 300 - 90, "The right stick's hint at the bottom right, margin and radius in");
+		for (id in [5, 6, 7])
+			input.touchEvent(id, 0, 0, false);
+		step(input);
+		twin.input = null;
+		// direction: two axes held to a circle.
+		actions.bind("dx", KeyboardPair(Left, Right));
+		actions.bind("dy", KeyboardPair(Up, Down));
+		input.keyEvent(Right, true);
+		input.keyEvent(Down, true);
+		var d = actions.direction("dx", "dy");
+		check(near(d.x, Math.sqrt(.5)) && near(d.y, Math.sqrt(.5)), "A diagonal of keys as long as straight");
+		input.keyEvent(Down, false);
+		check(actions.direction("dx", "dy", d) == d && d.x == 1 && d.y == 0, "Straight; into the point given");
+		input.keyEvent(Right, false);
+		step(input);
+		check(@:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(y)))
+			.equals(y) && @:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(whole)))
+			.equals(whole) && Actions.describe(x) == "Touch stick X",
+			"Saved and read back; described");
+		check(!actions.bind("a", TouchStick(Anywhere, 0, X))
+			&& !actions.bind("a", TouchStick(Anywhere, 5, null))
+			&& !actions.bind("a", TouchStick(null, 5, X))
+			&& !actions.bind("a", TouchStick(Region(Center, 0, 0, 10, 0), 5, X)),
+			"A stick with no radius, axis or area, or a region with no area, is refused");
 	}
 
 	static function refusals():Void {

@@ -25,4 +25,13 @@ enum Binding {
 	/** A touch region: 1 while a finger is down in it. In the game's units (Screen's): the anchor's point on the visible area, then x, y from
 		it to the region's top left, width x height across and down; so it scales with the design and follows the visible area's edges. */
 	TouchRegion(anchor:Anchor, x:Float, y:Float, width:Float, height:Float);
+
+	/** A floating stick for a thumb, in area (the whole screen, a half of it, or a region). A finger landing in it holds the stick, centered
+		where it landed, and its offset from there, radius units for all the way, is the stick's push, clamped to a circle and 0 within
+		Actions.touchStickDeadZone of the middle. Another finger landing in it takes it over, centered where it lands; the holding finger
+		lifting hands it to one still down in it, centered where that one is (so what it steers doesn't lurch). A finger landing where
+		Actions.touchStickBlocked says (a button) doesn't take it, nor one holding another stick. The action reads its axis (X right, Y down,
+		as a pad's stick); an action bound to X and one bound to Y of the same area and radius read one stick:
+		actions.bind("moveX", TouchStick(Anywhere, 80, X)), or for two sticks LeftHalf and RightHalf. */
+	TouchStick(area:StickArea, radius:Float, axis:StickAxis);
 }

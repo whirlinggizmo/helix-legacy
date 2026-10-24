@@ -6,7 +6,7 @@
 
 *class* in [`src/helix/input/Actions.hx`](../../src/helix/input/Actions.hx), `import helix.input.Actions;`
 
-What the player means ("jump", "steer", "fire"), bound by name to keys, pad buttons and axes, mouse buttons and touch regions, and read as one: a game asks for "jump", never for Space or the south button, and a player can rebind it (capture) and keep it (save, load). Each binding gives a value from -1 to 1 (Binding), and the action is the binding pushed furthest, across every pad: axis its value, value how far (0 to 1), isDown while any binding is pushed to its limit (0.5, or a pad axis's non-zero threshold). Pressed and released come per tick (isPressed, isReleased) and per frame (isFramePressed, isFrameReleased), as IInput's do: an action is pressed when it is down and wasn't as the last tick (or frame) ended, or when a key, button or finger of it went down since (IInput's own edges, so a tap shorter than a tick is still a press, and two taps reach two ticks). The map keeps whether each action was down itself, told by the input as each tick and frame ends (IInput.watch), so a game makes no extra calls. A finger's edges are frame edges only (IInput has no tick edges for touches): a tap shorter than a frame reaches isFramePressed, not isPressed. An action never bound reads as up and 0, so a game's code may run before its bindings load. Built on IInput, so whatever drives the input drives the actions: the autopilot's input given to it (input) replays them.
+What the player means ("jump", "steer", "fire"), bound by name to keys, pad buttons and axes, mouse buttons, touch regions and touch sticks, and read as one: a game asks for "jump", never for Space or the south button, and a player can rebind it (capture) and keep it (save, load). Each binding gives a value from -1 to 1 (Binding), and the action is the binding pushed furthest, across every pad: axis its value, value how far (0 to 1), isDown while any binding is pushed to its limit (0.5, or a pad axis's non-zero threshold). Pressed and released come per tick (isPressed, isReleased) and per frame (isFramePressed, isFrameReleased), as IInput's do: an action is pressed when it is down and wasn't as the last tick (or frame) ended, or when a key, button or finger of it went down since (IInput's own edges, so a tap shorter than a tick is still a press, and two taps reach two ticks). The map keeps whether each action was down itself, told by the input as each tick and frame ends (IInput.watch), so a game makes no extra calls. A finger's edges are frame edges only (IInput has no tick edges for touches): a tap shorter than a frame reaches isFramePressed, not isPressed. An action never bound reads as up and 0, so a game's code may run before its bindings load. Built on IInput, so whatever drives the input drives the actions: the autopilot's input given to it (input) replays them.
 
 ```haxe
 function new(?input:IInput, ?presentation:Presentation)
@@ -17,6 +17,8 @@ var input(default, set):Null<IInput>
 var names(get, never):Array<String>
 var capturing(default, null):Bool
 var captureTouchSize(default, set):Float
+var touchStickDeadZone(default, set):Float
+var touchStickBlocked:Null<(x:Float, y:Float) -> Bool>
 function bind(name:String, binding:Binding):Bool
 function unbind(name:String, binding:Binding):Bool
 function clear(name:String):Bool
@@ -26,6 +28,7 @@ function value(name:String):Float
 function isDown(name:String):Bool
 function isPressed(name:String):Bool
 function isReleased(name:String):Bool
+function direction(xName:String, yName:String, ?out:Point2D):Point2D
 function isFramePressed(name:String):Bool
 function isFrameReleased(name:String):Bool
 function capture(name:String, done:Binding -> Void, ?cancelled:() -> Void):Bool
@@ -45,6 +48,8 @@ function frameEnded():Void
 - `names`: The actions, in the order first bound; an action cleared or unbound to nothing stays.
 - `capturing`: Whether capture is waiting for a press; while it is, every action reads as up.
 - `captureTouchSize`: The width and height of a touch region capture makes, centered where the finger landed, in the game's units (Screen's). At least 1; 96 to begin with.
+- `touchStickDeadZone`: How far from its middle a touch stick reads 0, a fraction of its radius (0 to 0.9): .12 to begin with, so a resting thumb doesn't drift; past it the push runs from 0 to 1.
+- `touchStickBlocked`: Where a finger landing doesn't take a touch stick, asked with x, y in the game's units (Screen's): over a button, say. Null (the start): nowhere. A touch region binding isn't affected.
 - `bind`: Adds binding to the action name, making the action with its first binding. False, changing nothing, for an empty name, a binding the action has already, a pad axis's side not -1, 0 or 1 or threshold outside 0 to 1, or a touch region with no area or an offset that isn't a number.
 - `unbind`: Takes binding off the action name, the action kept; false for an action or binding there isn't.
 - `clear`: Takes every binding off the action name, the action kept (a remap screen binds it again); false for an action there isn't.
@@ -54,6 +59,7 @@ function frameEnded():Void
 - `isDown`: Whether the action is held: any of its bindings pushed to 0.5, or a pad axis to its threshold when that isn't 0.
 - `isPressed`: The action went down: since the last tick ended, it went down, or a key, button or mouse button of it did (a tick edge).
 - `isReleased`: The action came up: it was down as the last tick ended and isn't now, or a key, button or mouse button of it came up and it isn't down (a tick edge).
+- `direction`: One direction from two actions, xName across and yName down (a stick's X and Y, or a pair of keys each): their axes, held to a circle, so a diagonal of keys is as long as straight and a stick's push keeps its strength. Into out when given (allocating nothing), a new Point2D otherwise: actions.direction("moveX", "moveY").
 - `isFramePressed`: The action went down this frame, as isPressed for the frame, a finger landing in a touch region too (a frame edge).
 - `isFrameReleased`: The action came up this frame, as isReleased for the frame, a finger lifting in a touch region too (a frame edge).
 - `capture`: Waits for the player's next press and binds it to the action name: a key, a pad button, a pad axis pushed past half way (Axis with its side and a threshold of CAPTURE_THRESHOLD), or a finger (a captureTouchSize square centered where it landed, anchored to the nearest of the visible area's nine anchors). Mouse buttons aren't captured, as the mouse works the remap screen itself. The press replaces the action's bindings of the same device (the keyboard's Keyboard and KeyboardPair; the pad's Pad, PadPair and Axis; the touch screen's TouchRegion) and leaves the others; done is then called with it. Escape cancels, calling cancelled. Presses in the frame capture is called in don't count (the click or tap on a Rebind button), and while it waits every action reads as up; the captured press, and the Escape, read as up until they are let go. False, starting nothing, for an empty name or while capturing already.
@@ -93,6 +99,7 @@ What drives an action (Actions), each giving a value from -1 to 1; the action is
 - `Axis(axis:PadAxis, side:Int, threshold:Float)`: A pad axis, past the dead zone (Gamepad.getAxis), the pad pushed furthest: side 0 reads both directions (-1..1, a trigger 0..1), 1 or -1 only that side, as 0..1; under threshold (0..1) it reads 0, and at or past a non-zero threshold the action is down.
 - `Mouse(button:MouseButton)`: A mouse button: 1 while it is down.
 - `TouchRegion(anchor:Anchor, x:Float, y:Float, width:Float, height:Float)`: A touch region: 1 while a finger is down in it. In the game's units (Screen's): the anchor's point on the visible area, then x, y from it to the region's top left, width x height across and down; so it scales with the design and follows the visible area's edges.
+- `TouchStick(area:StickArea, radius:Float, axis:StickAxis)`: A floating stick for a thumb, in area (the whole screen, a half of it, or a region). A finger landing in it holds the stick, centered where it landed, and its offset from there, radius units for all the way, is the stick's push, clamped to a circle and 0 within Actions.touchStickDeadZone of the middle. Another finger landing in it takes it over, centered where it lands; the holding finger lifting hands it to one still down in it, centered where that one is (so what it steers doesn't lurch). A finger landing where Actions.touchStickBlocked says (a button) doesn't take it, nor one holding another stick. The action reads its axis (X right, Y down, as a pad's stick); an action bound to X and one bound to Y of the same area and radius read one stick: actions.bind("moveX", TouchStick(Anywhere, 80, X)), or for two sticks LeftHalf and RightHalf.
 
 ## Gamepad
 
@@ -502,6 +509,26 @@ function update(now:Float, perTick:Bool, ?input:IInput):Void
 - `flickVelocityX`: Velocity over the last tenth of a second before release, pixels per second.
 - `flickVelocityY`: Vertical velocity as flickVelocityX, down positive.
 - `update`: Reads the pointer of input, the program's (Input) when not given: once per tick with perTick, its tick edges, before the input is consumed; or once per frame without, its frame edges. now is the time in seconds.
+
+## StickArea
+
+*enum* in [`src/helix/input/StickArea.hx`](../../src/helix/input/StickArea.hx), `import helix.input.StickArea;`
+
+Where a finger can land to take a touch stick (Binding.TouchStick), following the visible area (Screen's) as the window changes shape or turns. Two sticks split it down the middle in either orientation (both thumbs at the bottom of a phone held upright, too).
+
+- `Anywhere`: The whole visible area: one stick, either thumb, anywhere.
+- `LeftHalf`: The visible area's left half: the moving stick of two.
+- `RightHalf`: The visible area's right half: the aiming stick of two.
+- `Region(anchor:Anchor, x:Float, y:Float, width:Float, height:Float)`: A rectangle placed as a touch region is (Binding.TouchRegion): the anchor's point on the visible area, then x, y from it to the top left, width x height across and down, in the game's units.
+
+## StickAxis
+
+*enum* in [`src/helix/input/StickAxis.hx`](../../src/helix/input/StickAxis.hx), `import helix.input.StickAxis;`
+
+Which way of a touch stick (Binding.TouchStick) an action reads, as a pad's stick runs: across (X, right positive) or up and down (Y, down positive).
+
+- `X`: Across: -1 at the left, 1 at the right.
+- `Y`: Up and down: -1 at the top, 1 at the bottom.
 
 ## Touch
 

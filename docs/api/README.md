@@ -13,7 +13,7 @@ Generated from the code's doc comments by `tools/gen_apidoc.py` (the same source
 - [`helix.graphics`](graphics.md): AlphaMode, BlendMode, ClipFlip, Color, DepthTest, Graphics, PostProcess, ScreenEffect, ScreenFrame, ScreenshotResult, Screenshots, Shader, ShaderParameter, ShaderParameters, Shaders, SpriteEffect
 - [`helix`](helix.md): App, AppOptions
 - [`helix.host`](host.md): Config, Host, Identity, PresentationMode, Screen, ScreenShape, Window, WindowOptions
-- [`helix.input`](input.md): Actions, Anchor, Binding, Gamepad, IInput, Input, InputState, Key, MouseButton, PadAxis, PadButton, PointerGestures, Touch
+- [`helix.input`](input.md): Actions, Anchor, Binding, Gamepad, IInput, Input, InputState, Key, MouseButton, PadAxis, PadButton, PointerGestures, StickArea, StickAxis, Touch
 - [`helix.math`](math.md): Bounds2D, Bounds3D, Curve, CurveKind, Interpolate, Point2D, Point3D, Random, Trig
 - [`helix.particle`](particle.md): Emitter, ParticlePreset
 - [`helix.render2d`](render2d.md): Align2D, AnimationDirection2D, Camera2D, CameraFollow2D, Decals2D, Drawing2D, HitArea2D, Node2D, Particles2D, Polygon2D, Shape2D, ShapeForm2D, ShapeShading2D, Sprite2D, SpriteAnimation2D, SpriteAnimator2D, SpriteFrame2D, SpriteSheet2D, Stage, Text2D, View, View2D
@@ -26,4 +26,4 @@ Generated from the code's doc comments by `tools/gen_apidoc.py` (the same source
 - [`helix.time`](time.md): Clock, Ticker, Time, Timer, Timers
 - [`helix.tool`](tool.md): Build, Watchers, WebServer
 - [`helix.tween`](tween.md): Ease, Tween, Tweens
-- [`helix.ui`](ui.md): Alignment2D, Button, Chevron, ColorFormat, ColorPicker, Dropdown, FullscreenButton2D, Handle, Label, Layout2D, LayoutDirection2D, ListView, Panel, Popup, ProgressBar, ScrollArea, Scrollbar, ScrollbarVisibility, Separator, Sizing2D, Slider, TextField, Theme, Tile, Toggle, Ui, Widget, WidgetState
+- [`helix.ui`](ui.md): Alignment2D, Button, Chevron, ColorFormat, ColorPicker, Dropdown, FullscreenButton2D, Handle, Label, Layout2D, LayoutDirection2D, ListView, Panel, Popup, ProgressBar, ScrollArea, Scrollbar, ScrollbarVisibility, Separator, Sizing2D, Slider, TextField, Theme, Tile, Toggle, TouchStick2D, Ui, Widget, WidgetState

@@ -591,6 +591,28 @@ var changed(default, null):Bool
 - `on`: Whether it's on.
 - `changed`: Whether it was switched this frame.
 
+## TouchStick2D
+
+*class* in [`src/helix/ui/TouchStick2D.hx`](../../src/helix/ui/TouchStick2D.hx), `import helix.ui.TouchStick2D;`
+
+A touch stick drawn while it's held (Binding.TouchStick): a ring where the finger landed, its radius the stick's, and a knob under the finger, kept within the ring. Draws nothing while no finger holds it, so it shows only on a touch screen in use. It needs no Ui and runs itself: add it to the stage, over the game: Stage.addChild(new TouchStick2D(actions, "moveX")), naming an action bound to the stick. With hint on, a faint ring and knob say where a thumb goes while no finger holds it: the bottom left for the whole screen or the left half, the bottom right for the right half, a region's center.
+
+```haxe
+function new(actions:Actions, action:String, ?color:Int = 0x80e8e8e8)
+var actions:Actions
+var action:String
+var color:Int
+var hint:Bool
+var hintMargin:Float
+```
+
+- `new`: The stick of action in actions drawn (its first touch stick binding that's held), in color (0xAARRGGBB: a light gray, half seen, unless given).
+- `actions`: The actions it reads.
+- `action`: The action whose stick it draws.
+- `color`: Its color, 0xAARRGGBB: the ring's, and the knob's a little more opaque.
+- `hint`: Whether to draw the idle hint while no finger holds it: off to start (a game turns it on once it has seen a touch, say).
+- `hintMargin`: How far in from the visible area's corner the hint's ring sits, the stage's units: 40 to start.
+
 ## Ui
 
 *class* in [`src/helix/ui/Ui.hx`](../../src/helix/ui/Ui.hx), `import helix.ui.Ui;`

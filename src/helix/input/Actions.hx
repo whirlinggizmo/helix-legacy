@@ -6,6 +6,7 @@ import helix.asset.Saves;
 import helix.host.Presentation;
 import helix.host.PresentationMode;
 import helix.host.Screen;
+import helix.math.Point2D;
 
 /** An action and its bindings, with whether it was down as the last frame (FRAME) and the last tick (TICK) ended. */
 private typedef Action = {
@@ -14,7 +15,8 @@ private typedef Action = {
 	final was:Array<Bool>;
 }
 
-/** What the player means ("jump", "steer", "fire"), bound by name to keys, pad buttons and axes, mouse buttons and touch regions, and read as
+/** What the player means ("jump", "steer", "fire"), bound by name to keys, pad buttons and axes, mouse buttons, touch regions and touch
+	sticks, and read as
 	one: a game asks for "jump", never for Space or the south button, and a player can rebind it (capture) and keep it (save, load).
 
 	Each binding gives a value from -1 to 1 (Binding), and the action is the binding pushed furthest, across every pad: axis its value, value
@@ -105,6 +107,9 @@ class Actions implements IInputWatcher {
 	// the press that was captured doesn't also fire a game action.
 	var swallowed:Array<Null<Binding>> = [null, null];
 
+	// Each touch stick held (by its area and radius, Binding.TouchStick): the finger holding it and where it landed, in the game's units.
+	var sticks:Map<String, {finger:Int, x:Float, y:Float}> = [];
+
 	var captureName = "";
 	var captureDone:Null<Binding->Void>;
 	var captureCancelled:Null<Void->Void>;
@@ -155,6 +160,19 @@ class Actions implements IInputWatcher {
 		value = value >= 1 ? value : 1;
 		captureTouchSize = value;
 		return value;
+	}
+
+	/** How far from its middle a touch stick reads 0, a fraction of its radius (0 to 0.9): .12 to begin with, so a resting thumb doesn't
+		drift; past it the push runs from 0 to 1. */
+	public var touchStickDeadZone(default, set):Float = .12;
+
+	/** Where a finger landing doesn't take a touch stick, asked with x, y in the game's units (Screen's): over a button, say. Null (the start):
+		nowhere. A touch region binding isn't affected. */
+	public var touchStickBlocked:Null<(x:Float, y:Float) -> Bool> = null;
+
+	function set_touchStickDeadZone(value:Float):Float {
+		touchStickDeadZone = value > 0 ? (value < .9 ? value : .9) : 0;
+		return touchStickDeadZone;
 	}
 
 	/** Adds binding to the action name, making the action with its first binding. False, changing nothing, for an empty name, a binding the
@@ -232,6 +250,18 @@ class Actions implements IInputWatcher {
 	public function isReleased(name:String):Bool
 		return released(find(name), TICK);
 
+	/** One direction from two actions, xName across and yName down (a stick's X and Y, or a pair of keys each): their axes, held to a circle,
+		so a diagonal of keys is as long as straight and a stick's push keeps its strength. Into out when given (allocating nothing), a new
+		Point2D otherwise: actions.direction("moveX", "moveY"). */
+	public function direction(xName:String, yName:String, ?out:Point2D):Point2D {
+		if (out == null)
+			out = new Point2D();
+		var x = axis(xName),
+			y = axis(yName),
+			length = Math.sqrt(x * x + y * y);
+		return length > 1 ? out.set(x / length, y / length) : out.set(x, y);
+	}
+
 	/** The action went down this frame, as isPressed for the frame, a finger landing in a touch region too (a frame edge). */
 	public function isFramePressed(name:String):Bool
 		return pressed(find(name), FRAME);
@@ -283,6 +313,7 @@ class Actions implements IInputWatcher {
 				}
 			case Mouse(button): MOUSE_NAMES[button] + " mouse";
 			case TouchRegion(_, _, _, _, _): "Touch";
+			case TouchStick(_, _, axis): axis == X ? "Touch stick X" : "Touch stick Y";
 		}
 
 	/** Writes every action's bindings as the save named key (Saves, kept apart from the asset cache, so clearing it keeps them), as JSON: {"version":1,"actions":{"jump":[{"key":"Space"},{"padButton":"South"}]}},
@@ -323,6 +354,16 @@ class Actions implements IInputWatcher {
 	public function frameEnded():Void {
 		if (capturing)
 			takeCapture();
+		// A stick whose finger lifted lets go of it.
+		if (input != null)
+			for (key in [for (k in sticks.keys()) k]) {
+				var lifted = true;
+				for (t in input.touches)
+					if (t.id == sticks.get(key).finger && t.down)
+						lifted = false;
+				if (lifted)
+					sticks.remove(key);
+			}
 		for (action in actions)
 			action.was[FRAME] = isActionDown(action, FRAME);
 		if (swallowed[FRAME] != null && rawValue(swallowed[FRAME]) == 0)
@@ -415,7 +456,120 @@ class Actions implements IInputWatcher {
 					if (t.down && isInRegion(binding, t.x, t.y))
 						found = true;
 				found ? 1 : 0;
+			case TouchStick(_, _, axis):
+				var push = [0., 0.];
+				stickPush(binding, push) ? push[axis == X ? 0 : 1] : 0;
 		}
+	}
+
+	// The push of the touch stick binding, -1 to 1 across and down, into out (past the dead zone, in a circle); false while no finger holds
+	// it. A finger down in its region and holding no other stick takes it, where it is then being the middle.
+	function stickPush(binding:Binding, out:Array<Float>):Bool {
+		var held = holdStick(binding);
+		if (held == null)
+			return false;
+		var p = screen(), radius = switch binding {
+			case TouchStick(_, r, _): r;
+			case _: 1.;
+		};
+		var dx = (p.toUnitsX(held.touch.x) - held.x) / radius,
+			dy = (p.toUnitsY(held.touch.y) - held.y) / radius;
+		var length = Math.sqrt(dx * dx + dy * dy), dead = touchStickDeadZone;
+		var scale = length <= dead ? 0 : Math.min(1, (length - dead) / (1 - dead)) / length;
+		out[0] = dx * scale;
+		out[1] = dy * scale;
+		return true;
+	}
+
+	// The finger holding the touch stick binding and where its middle is (the game's units), or null for none. A finger that landed this
+	// frame in its region takes it, centered there; the holding finger gone, one still down takes it, centered where it is. Asked again in
+	// the same frame (its X and its Y), it answers the same.
+	function holdStick(binding:Binding):Null<{touch:Touch, x:Float, y:Float}> {
+		var p = screen();
+		if (input == null || p == null)
+			return null;
+		var key = stickKey(binding), held = sticks.get(key);
+		for (t in input.touches)
+			if (t.pressed && (held == null || held.finger != t.id) && canTakeStick(binding, key, t)) {
+				held = {finger: t.id, x: p.toUnitsX(t.x), y: p.toUnitsY(t.y)};
+				sticks.set(key, held);
+			}
+		if (held != null)
+			for (t in input.touches)
+				if (t.id == held.finger && t.down)
+					return {touch: t, x: held.x, y: held.y};
+		sticks.remove(key);
+		for (t in input.touches)
+			if (canTakeStick(binding, key, t)) {
+				held = {finger: t.id, x: p.toUnitsX(t.x), y: p.toUnitsY(t.y)};
+				sticks.set(key, held);
+				return {touch: t, x: held.x, y: held.y};
+			}
+		return null;
+	}
+
+	// Whether finger t may take the touch stick binding (its key): down in its region, not where a landing is blocked, holding no other.
+	function canTakeStick(binding:Binding, key:String, t:Touch):Bool {
+		var p = screen();
+		if (!t.down
+			|| !isInRegion(binding, t.x, t.y)
+			|| touchStickBlocked != null
+			&& touchStickBlocked(p.toUnitsX(t.x), p.toUnitsY(t.y)))
+			return false;
+		for (k => s in sticks)
+			if (k != key && s.finger == t.id)
+				return false;
+		return true;
+	}
+
+	// A touch stick's key, its region: the actions reading its X and Y share it.
+	static function stickKey(binding:Binding):String
+		return switch binding {
+			case TouchStick(area, radius, _): Std.string(area) + ' $radius';
+			case _: "";
+		}
+
+	/** The touch stick of the action name, for drawing it (TouchStick2D), into out: [landedX, landedY, x, y, radius, homeX, homeY], where
+		its finger landed and where it is, its radius, and where a thumb goes to take it (a hint's place: its area's bottom corner, margin and
+		its radius in from the edges, or a region's center), in the game's units. True while held; false while not, only its radius and home
+		written (radius 0 for an action with no touch stick). */
+	@:allow(helix)
+	function heldStick(name:String, out:Array<Float>, margin = 40.):Bool {
+		var action = find(name), p = screen();
+		out[4] = 0;
+		if (action == null || p == null)
+			return false;
+		for (b in action.bindings)
+			switch b {
+				case TouchStick(area, radius, _):
+					if (out[4] == 0) {
+						out[4] = radius;
+						var inset = margin + radius;
+						switch area {
+							case Region(anchor, rx, ry, width, height):
+								var i = ANCHORS.indexOf(anchor);
+								out[5] = p.visibleX + p.visibleWidth * (i % 3) / 2 + rx + width / 2;
+								out[6] = p.visibleY + p.visibleHeight * Std.int(i / 3) / 2 + ry + height / 2;
+							case RightHalf:
+								out[5] = p.visibleX + p.visibleWidth - inset;
+								out[6] = p.visibleY + p.visibleHeight - inset;
+							case _:
+								out[5] = p.visibleX + inset;
+								out[6] = p.visibleY + p.visibleHeight - inset;
+						}
+					}
+					var held = holdStick(b);
+					if (held != null) {
+						out[0] = held.x;
+						out[1] = held.y;
+						out[2] = p.toUnitsX(held.touch.x);
+						out[3] = p.toUnitsY(held.touch.y);
+						out[4] = radius;
+						return true;
+					}
+				case _:
+			}
+		return false;
 	}
 
 	// Whether a key, pad button, mouse button or (for a frame) finger of binding went down (pressing) or came up since the context began.
@@ -438,7 +592,7 @@ class Actions implements IInputWatcher {
 			case KeyboardPair(negative, positive): key(negative) || key(positive);
 			case Pad(b): button(b);
 			case PadPair(negative, positive): button(negative) || button(positive);
-			case Axis(_, _, _): false;
+			case Axis(_, _, _) | TouchStick(_, _, _): false;
 			case Mouse(b):
 				frame ? (pressing ? input.isMouseFramePressed(b) : input.isMouseFrameReleased(b)) : (pressing ? input.isMousePressed(b) : input.isMouseReleased(b));
 			case TouchRegion(_, _, _, _, _):
@@ -459,11 +613,21 @@ class Actions implements IInputWatcher {
 		var p = screen();
 		if (p == null)
 			return false;
-		return switch binding {
-			case TouchRegion(anchor, rx, ry, width, height): var i = ANCHORS.indexOf(anchor); var left = p.visibleX + p.visibleWidth * (i % 3) / 2 + rx,
-					top = p.visibleY + p.visibleHeight * Std.int(i / 3) / 2 + ry; var ux = p.toUnitsX(x),
-					uy = p.toUnitsY(y); ux >= left && uy >= top && ux < left + width && uy < top + height;
-			case _: false;
+		switch binding {
+			case TouchStick(Anywhere, _, _):
+				return true;
+			case TouchStick(LeftHalf, _, _):
+				return p.toUnitsX(x) < p.visibleX + p.visibleWidth / 2;
+			case TouchStick(RightHalf, _, _):
+				return p.toUnitsX(x) >= p.visibleX + p.visibleWidth / 2;
+			case TouchRegion(anchor, rx, ry, width, height) | TouchStick(Region(anchor, rx, ry, width, height), _, _):
+				var i = ANCHORS.indexOf(anchor);
+				var left = p.visibleX + p.visibleWidth * (i % 3) / 2 + rx,
+					top = p.visibleY + p.visibleHeight * Std.int(i / 3) / 2 + ry;
+				var ux = p.toUnitsX(x), uy = p.toUnitsY(y);
+				return ux >= left && uy >= top && ux < left + width && uy < top + height;
+			case _:
+				return false;
 		}
 	}
 
@@ -474,6 +638,10 @@ class Actions implements IInputWatcher {
 			return false;
 		return switch binding {
 			case Axis(_, side, threshold): (side == -1 || side == 0 || side == 1) && threshold >= 0 && threshold <= 1;
+			case TouchStick(area, radius, axis): area != null && axis != null && radius > 0 && Math.isFinite(radius) && switch area {
+					case Region(anchor, x, y, width, height): isValid(TouchRegion(anchor, x, y, width, height));
+					case _: true;
+				};
 			case TouchRegion(anchor, x, y, width, height):
 				anchor != null
 				&& Math.isFinite(x)
@@ -492,7 +660,7 @@ class Actions implements IInputWatcher {
 			case Keyboard(_) | KeyboardPair(_, _): 0;
 			case Pad(_) | PadPair(_, _) | Axis(_, _, _): 1;
 			case Mouse(_): 2;
-			case TouchRegion(_, _, _, _, _): 3;
+			case TouchRegion(_, _, _, _, _) | TouchStick(_, _, _): 3;
 		}
 
 	// Each action's bindings as they stand, for those without defaults yet.
@@ -667,6 +835,14 @@ class Actions implements IInputWatcher {
 			case Mouse(button): '{"mouseButton":${text(MOUSE_NAMES[button])}}';
 			case TouchRegion(anchor, x, y, width, height):
 				'{"touch":${text(ANCHOR_NAMES[ANCHORS.indexOf(anchor)])},"x":${number(x)},"y":${number(y)},"width":${number(width)},"height":${number(height)}}';
+			case TouchStick(area, radius, axis):
+				var tail = '"radius":${number(radius)},"axis":${text(axis == X ? "X" : "Y")}}';
+				switch area {
+					case Region(anchor, x, y, width, height):
+						'{"touchStick":"Region","anchor":${text(ANCHOR_NAMES[ANCHORS.indexOf(anchor)])},"x":${number(x)},"y":${number(y)},"width":${number(width)},"height":${number(height)},$tail';
+					case _:
+						'{"touchStick":${text(Std.string(area))},$tail';
+				}
 		}
 	}
 
@@ -771,6 +947,13 @@ class Actions implements IInputWatcher {
 		}
 		if (Reflect.hasField(entry, "mouseButton"))
 			return Mouse(cast named(MOUSE_NAMES, text("mouseButton"), "mouse button"));
+		if (Reflect.hasField(entry, "touchStick"))
+			return TouchStick(switch named(["Anywhere", "LeftHalf", "RightHalf", "Region"], text("touchStick"), "stick area") {
+				case 0: Anywhere;
+				case 1: LeftHalf;
+				case 2: RightHalf;
+				case _: Region(ANCHORS[named(ANCHOR_NAMES, text("anchor"), "anchor")], number("x"), number("y"), number("width"), number("height"));
+			}, number("radius"), named(["X", "Y"], text("axis"), "stick axis") == 0 ? X : Y);
 		if (Reflect.hasField(entry, "touch"))
 			return TouchRegion(ANCHORS[named(ANCHOR_NAMES, text("touch"), "anchor")], number("x"), number("y"), number("width"), number("height"));
 		throw 'unknown binding ${Json.stringify(entry)}';
