@@ -589,6 +589,7 @@ static var heldTime(get, set):Null<Float>
 static var postProcess(get, set):Null<PostProcess>
 static function addChild(node:Node2D):Void
 static function addChildAt(node:Node2D, index:Int):Void
+static function addChildInPlace(node:Node2D):Bool
 static function getChild(index:Int):Null<Node2D>
 static function contains(node:Null<Node>):Bool
 static function getChildIndex(node:Node2D):Int
@@ -609,6 +610,7 @@ static function pick(x:Float, y:Float, ?hit:Any):Null<Node>
 - `postProcess`: Screen effects over everything the stage draws (helix.graphics.PostProcess: bloom, a vignette, a color grade), or null for none: the stage is drawn into its scene, then the chain runs and is presented on the screen. In an HDR chain (an effect wanting HDR) the 3D views draw their light untone-mapped into it and the chain's tone mapping (Neutral, unless the chain has its own) brings it to the screen.
 - `addChild`: Puts node on the stage over what's there (its last child), taking it from any parent it had; a child of the stage already moves to the top, as Flash's addChild does (Node2D.addChild).
 - `addChildAt`: Puts node on the stage at index in drawing order (0 is drawn first, under the rest), as Node2D.addChildAt does: a level made after the HUD put under it. An index past the end, or -1, puts it over everything, as addChild.
+- `addChildInPlace`: Puts node on the stage over what's there without it moving on screen: its world transform is kept (Node2D.addChildInPlace), a node taken from a moving group left where it is. False, changing nothing, for a node whose place can't be kept (scaled to nothing).
 - `getChild`: Its child at index, in drawing order; null past the end.
 - `contains`: Whether node is on the stage: one of its children or anywhere below one. Null is on nothing.
 - `getChildIndex`: node's index among the stage's children, in drawing order (0 is drawn first), or -1 when it isn't one of them.

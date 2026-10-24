@@ -71,6 +71,11 @@ class StageService {
 	public function addChildAt(node:Node2D, index:Int):Void
 		tree.root.addChildAt(node, index);
 
+	/** Puts node on the stage over what's there without it moving on screen: its world transform is kept (Node2D.addChildInPlace), a
+		node taken from a moving group left where it is. False, changing nothing, for a node whose place can't be kept (scaled to nothing). */
+	public function addChildInPlace(node:Node2D):Bool
+		return tree.root.addChildInPlace(node);
+
 	/** Its child at index, in drawing order; null past the end. */
 	public function getChild(index:Int):Null<Node2D>
 		return tree.root.getChild(index);

@@ -43,6 +43,18 @@ class StageTests {
 			&& stage.find("nothing", helix.render2d.Node2D) == null, "Of another kind, or not there: null");
 		check(stage.contains(label) && stage.contains(front) && !stage.contains(new helix.render2d.Node2D()) && !stage.contains(null),
 			"On the stage at any depth; not one off it");
+		// The stage offers every child method a Node2D has, so the two read alike (the stage forwards them to its root).
+		var own = Type.getInstanceFields(StageService);
+		for (name in Type.getInstanceFields(helix.render2d.Node2D))
+			if (~/child|find|contains/i.match(name) && !["findNamed", "children"].contains(name))
+				check(own.contains(name), 'The stage has $name, as a Node2D does (StageService forwards it; Stage too when generic)');
+		var moved = new helix.render2d.Node2D();
+		moved.setPosition(30, 40);
+		group.addChild(moved);
+		group.setPosition(5, 6);
+		check(stage.addChildInPlace(moved) && moved.parent == stage.tree.root && moved.x == 35 && moved.y == 46,
+			"addChildInPlace: onto the stage where it was");
+		stage.removeChild(moved);
 		check(stage.getChildIndex(front) == 1 && stage.getChildIndex(label) == -1, "The stage's index of a child; -1 for one deeper");
 		check(stage.removeChildAt(0) == group && stage.childCount == 2 && stage.removeChildAt(9) == null, "removeChildAt on the stage");
 		stage.color = 0xff14161c;
