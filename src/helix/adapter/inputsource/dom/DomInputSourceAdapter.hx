@@ -1,5 +1,6 @@
 package helix.adapter.inputsource.dom;
 
+import helix.debug.Log;
 import helix.input.IInputEvents;
 import helix.input.IInputSource;
 import helix.input.Key;
@@ -122,7 +123,7 @@ class DomInputSourceAdapter implements IInputSource {
 		// A browser reads motion sensors only on a secure page (HTTPS, or localhost): elsewhere there's nothing to read, and the console says
 		// why, as the game sees only Unavailable.
 		if (window.isSecureContext == false) {
-			trace("Tilt needs a secure page (HTTPS): this one isn't, so the browser gives no readings");
+			Log.warn("Tilt needs a secure page (HTTPS): this one isn't, so the browser gives no readings", "input");
 			events.tiltState(Unavailable);
 			return;
 		}

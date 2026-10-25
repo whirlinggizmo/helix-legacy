@@ -1,5 +1,6 @@
 package helix.graphics;
 
+import helix.debug.Log;
 import haxe.io.Bytes;
 import helix.asset.Failure;
 import helix.asset.IAssets;
@@ -67,12 +68,12 @@ class Shaders implements IReloadable {
 					assets.unsubscribe(entry.path, this);
 			}
 
-	/** The file behind loaded shaders changed: they're built again in place. One that no longer builds stays as it was, its log traced. */
+	/** The file behind loaded shaders changed: they're built again in place. One that no longer builds stays as it was, its log logged as an error. */
 	public function reloaded(path:String, bytes:Bytes):Void
 		for (entry in entries)
 			if (entry.path == path)
 				try
 					@:privateAccess entry.shader.replace(bytes.toString())
 				catch (e:Dynamic)
-					trace('$path: $e');
+					Log.error('$path: $e', "shader");
 }

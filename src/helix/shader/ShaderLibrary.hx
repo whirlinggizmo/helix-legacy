@@ -1,5 +1,6 @@
 package helix.shader;
 
+import helix.debug.Log;
 import haxe.io.Bytes;
 import helix.graphics.IGraphics;
 import helix.texture.Sampling;
@@ -130,7 +131,7 @@ class ShaderLibrary {
 
 	#if hotreload
 	// Development only (hotreload-hx): a reload brings the library packed again; a shader whose text changed is built again in place (its
-	// pipelines made again as they're next asked for), and one that no longer builds stays as it was, its log traced.
+	// pipelines made again as they're next asked for), and one that no longer builds stays as it was, its log logged as an error.
 	@:afterHotReload static function reloadShaders():Void {
 		var texts = PackedShaders.texts();
 		for (shaders in all)
@@ -145,7 +146,7 @@ class ShaderLibrary {
 					entry.shader.replace(text);
 					entry.text = text;
 				} catch (e:Dynamic)
-					trace('helix.shader $name: $e');
+					Log.error('$name: $e', "shader");
 			}
 	}
 	#end

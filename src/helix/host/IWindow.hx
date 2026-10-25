@@ -52,12 +52,12 @@ interface IWindow {
 
 	/** Asks for fullscreen (enabled) or a window; fullscreen answers on a later frame, and done is called once it's granted. On the web the
 		browser grants it only soon after a key press, click or tap: refused (none was recent, or the page may not), failed is called with
-		its reason, or without failed it's traced, and the page stays as it was; natively it's granted. False, calling neither, where it can't
+		its reason, or without failed it's logged as a warning, and the page stays as it was; natively it's granted. False, calling neither, where it can't
 		ask (canFullscreen). */
 	function requestFullscreen(enabled:Bool, ?done:Void->Void, ?failed:String->Void):Bool;
 
 	/** Asks for the screen held a way up (Landscape, Portrait) or as the player holds it (Any, letting a lock go): done once it's locked,
-		failed with the reason when it's refused, or without failed it's traced. Only some browsers lock it (Chrome on Android, and only in
+		failed with the reason when it's refused, or without failed it's logged as a warning. Only some browsers lock it (Chrome on Android, and only in
 		fullscreen: ask in requestFullscreen's done), not iOS Safari nor a desktop, so a game also shows "turn your device" when the shape is
 		wrong (Screen's portrait). False, calling neither, where it can't ask: natively, where the window is the window. */
 	function requestOrientation(orientation:helix.host.Orientation, ?done:Void->Void, ?failed:String->Void):Bool;

@@ -1,5 +1,6 @@
 package helix.input;
 
+import helix.debug.Log;
 import haxe.Json;
 import helix.asset.Failure;
 import helix.asset.Saves;
@@ -863,7 +864,7 @@ class Actions implements IInputWatcher {
 		if (failed != null)
 			failed(message);
 		else
-			trace('Save failed: ${Failure.named(key, message)}');
+			Log.warn('Save failed: ${Failure.named(key, message)}', "input");
 	}
 
 	// A save's text read into the actions the game binds.

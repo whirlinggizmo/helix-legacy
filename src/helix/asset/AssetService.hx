@@ -1,5 +1,6 @@
 package helix.asset;
 
+import helix.debug.Log;
 import helix.core.WorkQueue;
 import helix.asset.IAssets;
 import helix.asset.AssetCacheMode;
@@ -621,7 +622,7 @@ class AssetService implements IAssets {
 		// A reload that fails says so (development): the subscribers keep what they have.
 		function done(ok:Bool, message:String)
 			if (!ok)
-				trace('Asset reload failed: $path: $message');
+				Log.warn('Reload failed: $path: $message', "asset");
 		function tell(bytes:haxe.io.Bytes) {
 			var list = subscribers[path];
 			if (list != null)

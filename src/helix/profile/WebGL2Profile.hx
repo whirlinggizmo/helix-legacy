@@ -23,6 +23,7 @@ class WebGL2Profile {
 			?options:helix.host.WindowOptions):Void {
 		if (options == null)
 			options = new helix.host.WindowOptions();
+		helix.debug.Log.start(new helix.adapter.logoutput.console.ConsoleLogOutputAdapter());
 		var host = new DomHostAdapter(),
 			cacheName = identity.company + "/" + identity.product;
 		var runner = new Runner(host, () -> {

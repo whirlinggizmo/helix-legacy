@@ -1,5 +1,6 @@
 package helix.graphics;
 
+import helix.debug.Log;
 import haxe.io.Bytes;
 import helix.asset.IExport;
 import helix.asset.ExportResult;
@@ -63,7 +64,7 @@ class ScreenshotService {
 		if (failed != null)
 			failed(message);
 		else
-			trace('Screenshots.sample: $message');
+			Log.warn('Screenshots.sample: $message', "screenshot");
 
 	// The colors at points (design units) in a frame of width x height pixels, rows top first.
 	function colorsAt(points:Array<Array<Float>>, width:Int, height:Int, rgba:Bytes):Array<Array<Int>>

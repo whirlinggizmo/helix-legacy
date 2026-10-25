@@ -8,7 +8,7 @@ Generated from the code's doc comments by `tools/gen_apidoc.py` (the same source
 - [`helix.audio`](audio.md): Audio, AudioClip, AudioPlayback, AudioResource, AudioStream, Bus, Fade, FadeCurve, PlayState, StreamOpenResult
 - [`helix.behavior`](behavior.md): Behavior, BehaviorEntry, BehaviorPass, BehaviorProp, BehaviorPropType, BehaviorRegistry, BehaviorSchema, Behaviors, Phase
 - [`helix.collision`](collision.md): Body2D, Collide2D, Hit2D, Move2D, SpatialHash2D
-- [`helix.debug`](debug.md): Autopilot, FpsOverlay, PickOverlay2D, PickOverlay3D, TestHarness
+- [`helix.debug`](debug.md): Autopilot, FpsOverlay, Log, LogLevel, PickOverlay2D, PickOverlay3D, TestHarness
 - [`helix.font`](font.md): Font, Fonts, Glyph
 - [`helix.graphics`](graphics.md): AlphaMode, BlendMode, ClipFlip, Color, DepthTest, Graphics, PostProcess, ScreenEffect, ScreenFrame, ScreenshotResult, Screenshots, Shader, ShaderParameter, ShaderParameters, Shaders, SpriteEffect
 - [`helix`](helix.md): App, AppOptions

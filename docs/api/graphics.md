@@ -305,7 +305,7 @@ function reloaded(path:String, bytes:haxe.io.Bytes):Void
 - `new`: Loads through assets and builds on gpu: the program's (Assets, Graphics) for those not given, read as they're used, so a cache made before the program runs (a field's initial value) works.
 - `load`: Loads path (a .hxshader) into a shader. One of loaded or failed runs once on the host thread, and neither once the request is cancelled: loaded once its program is built; failed (else the log, with the path) for a load failure, a file it can't read or a program that doesn't build (with the compiler's log).
 - `release`: Frees a shader this service loaded (after the pipelines made with it), and stops reloading it.
-- `reloaded`: The file behind loaded shaders changed: they're built again in place. One that no longer builds stays as it was, its log traced.
+- `reloaded`: The file behind loaded shaders changed: they're built again in place. One that no longer builds stays as it was, its log logged as an error.
 
 ## SpriteEffect
 

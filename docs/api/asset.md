@@ -93,7 +93,7 @@ static function report(path:String, message:String, failed:Null<String -> Void>)
 static function named(path:String, message:String):String
 ```
 
-- `report`: Calls failed with message, or, when failed is null, traces "Load failed: " and the message named by its path (named).
+- `report`: Calls failed with message, or, when failed is null, logs a warning, "Load failed: " and the message named by its path (named).
 - `named`: message led by "path: ", or message as it is when it names path already (an HTTP status's does), so the path is said once.
 
 ## Fetch

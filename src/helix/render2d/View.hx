@@ -1,5 +1,6 @@
 package helix.render2d;
 
+import helix.debug.Log;
 import helix.graphics.IGraphics;
 import helix.graphics.PostProcess;
 import helix.scene.Node;
@@ -119,7 +120,7 @@ class View extends Node2D {
 		if (drawing.indexOf(content) >= 0 || isInside(content)) {
 			if (!cycleLogged) {
 				cycleLogged = true;
-				trace('View: "$name" shows a tree it is drawn inside; skipped');
+				Log.warn('"$name" shows a tree it is drawn inside; skipped', "view");
 			}
 			return;
 		}

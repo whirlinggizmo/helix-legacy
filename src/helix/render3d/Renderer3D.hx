@@ -1,5 +1,6 @@
 package helix.render3d;
 
+import helix.debug.Log;
 import haxe.ds.Vector;
 import haxe.io.Bytes;
 import helix.graphics.BlendMode;
@@ -235,7 +236,7 @@ class Renderer3D {
 	function light(environment:Null<Environment3D>):Void {
 		if (moreEnvironments && viewEnvironment == null && !moreLogged) {
 			moreLogged = true;
-			trace("View3D: more than one environment in a tree; the first lights it (docs/DISPLAY_MODEL.md)");
+			Log.warn("More than one environment in a View3D's tree; the first lights it (docs/DISPLAY_MODEL.md)", "view");
 		}
 		if (environment == null) {
 			setAmbient(0xffffffff, 0);

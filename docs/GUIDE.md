@@ -373,6 +373,21 @@ On itch.io: a new project, Kind of project **HTML**, upload the zip, check **Thi
 viewport to your design size (800 x 600 here), and tick the fullscreen button if you like (the starter has its own,
 `helix.ui.FullscreenButton2D`). Click the game before pressing keys.
 
+## Logging
+
+```haxe
+import helix.debug.Log;
+
+Log.info("level 3 loaded");
+Log.warn("no save yet", "saves");              // a tag says what it's about
+Log.debug('ball at $x, $y', "physics");        // gone from a release build
+Log.setTagLevel("physics", Warning);           // that tag's debug and info quieted
+```
+
+Each line says where it was written, as `trace` does, and goes to the browser's console (its level filter works) or, natively, the
+terminal. `Log.level` is the least that's written: Debug while developing, Info in a release. `trace` goes through it as Info. HeliX
+logs its own warnings the same way, tagged ("asset", "audio", "shader", "window", ...).
+
 ## When something's wrong
 
 - **Nothing happens on a key:** the page hasn't been clicked; or the `Actions` was made in a field, not in `init`.

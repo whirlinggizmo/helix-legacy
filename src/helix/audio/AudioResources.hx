@@ -1,5 +1,6 @@
 package helix.audio;
 
+import helix.debug.Log;
 import helix.asset.Failure;
 import helix.asset.IRequest;
 import helix.asset.Request;
@@ -174,7 +175,7 @@ class AudioResources implements IReloadable {
 						retired.push(resource.id);
 						resource.id = backend.createClip(samples);
 					}
-			case Failed(message): trace('Reloaded clip failed to decode, kept the old one: ' + path + ': ' + message);
+			case Failed(message): Log.warn('Reloaded clip failed to decode, kept the old one: ' + path + ': ' + message, "audio");
 			case Cancelled:
 		});
 	}

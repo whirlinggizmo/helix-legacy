@@ -1,5 +1,6 @@
 package helix.tiled;
 
+import helix.debug.Log;
 import helix.asset.Assets;
 import helix.asset.AssetPath;
 import helix.asset.IReloadable;
@@ -71,7 +72,7 @@ class TiledMap2D implements IReloadable {
 	/** Loads the map at path (.tmj) with its tilesets (.tsj beside it, when not embedded) and their images and any image layers' (nearest
 		sampled, for pixel art): loaded once all are in, failed (else the log) saying what couldn't be read. */
 	public static function load(path:String, loaded:TiledMap2D->Void, ?failed:String->Void):IRequest {
-		var fail = (message:String) -> if (failed != null) failed(message) else trace('Tiled map $path: $message');
+		var fail = (message:String) -> if (failed != null) failed(message) else Log.warn('$path: $message', "tiled");
 		var outer:Null<IRequest> = null, cancelled = false;
 		var request = Assets.load(path, bytes -> {
 			var text = bytes.toString(), json:Dynamic = null;
@@ -164,7 +165,7 @@ class TiledMap2D implements IReloadable {
 			this.text = text;
 			this.files = files;
 			adopt(fresh);
-		}, message -> trace('Tiled map ${this.path} not read again: $message'));
+		}, message -> Log.warn('${this.path} not read again: $message', "tiled"));
 	}
 
 	// Takes fresh's contents, the map read again, and builds its instances again.

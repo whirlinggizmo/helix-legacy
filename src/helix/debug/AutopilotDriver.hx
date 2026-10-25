@@ -36,7 +36,7 @@ class AutopilotDriver {
 			var failure = 'Autopilot script $script did not load: $message';
 			if (TestHarness.instance != null)
 				TestHarness.publish({failed: failure});
-			trace(failure);
+			Log.error(failure, "autopilot");
 		});
 		app.autopilotFrame = dt -> {
 			if (pilot == null || pilot.failure != null)

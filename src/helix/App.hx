@@ -1,5 +1,6 @@
 package helix;
 
+import helix.debug.Log;
 import helix.AppOptions;
 import helix.hotreload.AppRouter;
 import helix.graphics.Screenshots;
@@ -121,8 +122,8 @@ class App {
 			return;
 		if (options.devKeys && Input.isFramePressed(Key.F9))
 			Screenshots.take(null, result -> switch result {
-				case Saved(where, _): trace('Screenshot saved: $where');
-				case Failed(message): trace('Screenshot failed: $message');
+				case Saved(where, _): Log.info('Screenshot saved: $where', "screenshot");
+				case Failed(message): Log.warn('Screenshot failed: $message', "screenshot");
 			});
 		if (autopilotFrame == null || !autopilotFrame(dt))
 			update(dt);

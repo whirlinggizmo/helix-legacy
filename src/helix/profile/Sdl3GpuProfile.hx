@@ -25,6 +25,7 @@ class Sdl3GpuProfile {
 		the program; files made for the user (screenshots) in HELIX_EXPORT, else the user's pictures directory for the product
 		(FileSystemExportAdapter.getPicturesDirectory), else exports/ beside the program. The window opens as options ask (the defaults when not given). Returns when the window closes. */
 	public static function run(identity:helix.host.Identity, assetDirectory:String, router:AppRouter, ?options:helix.host.WindowOptions):Void {
+		helix.debug.Log.start(new helix.adapter.logoutput.stdio.StdioLogOutputAdapter());
 		var host = new Sdl3HostAdapter(options != null ? options.msaaSamples : new helix.host.WindowOptions().msaaSamples, false);
 		var runner = new Runner(host, () -> {
 			var root = haxe.io.Path.directory(Sys.programPath()), cache = Sys.getEnv("HELIX_CACHE");

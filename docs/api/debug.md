@@ -56,6 +56,54 @@ function update(dt:Float, cpu:Float):Void
 - `frameMs`: The frame's average cost in milliseconds over the last half second.
 - `update`: dt: the frame's interval; cpu: what the frame cost, in milliseconds (Time.frameCpu).
 
+## Log
+
+*class* in [`src/helix/debug/Log.hx`](../../src/helix/debug/Log.hx), `import helix.debug.Log;`
+
+Writes messages for whoever is developing the game, each with how much it matters and, optionally, a tag saying what it's about: `Log.info("level 3 loaded")`, `Log.warn('no save yet', "saves")`, `Log.debug('ball at $x, $y', "physics")`. A line says where it was written from, as trace does (`Game.hx:42: [physics] ball at 10, 4`). In the browser it goes to the console (console.debug, info, warn and error, so the console's own filter works); natively, debug and info lines to the standard output and warnings and errors to the standard error. trace goes through it too, as Info. What's written is what's at or above `Log.level`, or a tag's own level when it has one (`Log.setTagLevel("physics", Warning)` quiets that tag's debug and info). Log.debug is gone from a release build altogether, so leave it in freely. The engine logs as well, under its own tags ("asset", "audio", "input", "shader", "tiled", "view", "window", "autopilot", "screenshot", "saves").
+
+```haxe
+static var level:LogLevel
+static function debug(message:Dynamic, ?tag:String, ?pos:haxe.PosInfos):Void
+static function info(message:Dynamic, ?tag:String, ?pos:haxe.PosInfos):Void
+static function warn(message:Dynamic, ?tag:String, ?pos:haxe.PosInfos):Void
+static function error(message:Dynamic, ?tag:String, ?pos:haxe.PosInfos):Void
+static function write(level:LogLevel, message:Dynamic, ?tag:String, ?pos:haxe.PosInfos):Void
+static function isWritten(level:LogLevel, ?tag:String):Bool
+static function setTagLevel(tag:String, level:Null<LogLevel>):Void
+static function listen(listener:(LogLevel, String) -> Void):Void
+static function unlisten(listener:(LogLevel, String) -> Void):Void
+```
+
+- `level`: The least a message must matter to be written, unless its tag has a level of its own: Debug in a debug build and the dev loop, Info in a release, to start. Off writes nothing.
+- `debug`: Writes message (anything; written as a string) as Debug: detail for finding a fault. Only in a debug build or the dev loop: a release build leaves the call out.
+- `info`: Writes message as Info: what happened, worth knowing.
+- `warn`: Writes message as Warning: something went wrong and the game carried on.
+- `error`: Writes message as Error: something failed.
+- `write`: Writes message as level says, when it's let through (isWritten).
+- `isWritten`: Whether a message of level under tag (none when null) would be written: at or above the tag's level if it has one, else Log.level. To skip building a costly message that wouldn't be.
+- `setTagLevel`: Gives tag a level of its own, in place of Log.level for its messages (Off to silence it), or takes it away with null.
+- `listen`: Calls listener with each line written (its level, and the line as written), for an in-game console, an overlay or a test.
+- `unlisten`: Stops calling listener.
+
+## LogLevel
+
+*abstract* in [`src/helix/debug/LogLevel.hx`](../../src/helix/debug/LogLevel.hx), `import helix.debug.LogLevel;`
+
+How much a message matters (Log): Log.level and a tag's level let through what's at or above them.
+
+- `LogLevel.Debug`: Detail for finding a fault; written in debug builds and the dev loop, gone from a release build.
+- `LogLevel.Info`: What happened, worth knowing.
+- `LogLevel.Warning`: Something went wrong and the game carried on: a file that didn't load, a setting the platform refused.
+- `LogLevel.Error`: Something failed that the game may not recover from.
+- `LogLevel.Off`: As a level to let through: nothing.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## PickOverlay2D
 
 *class* in [`src/helix/debug/PickOverlay2D.hx`](../../src/helix/debug/PickOverlay2D.hx), `import helix.debug.PickOverlay2D;`

@@ -1,5 +1,6 @@
 package helix.adapter.host.dom;
 
+import helix.debug.Log;
 import helix.host.IWindow;
 import js.Browser;
 import js.html.CanvasElement;
@@ -94,7 +95,7 @@ class DomWindow implements IWindow {
 			if (failed != null)
 				failed(reason);
 			else
-				trace('Orientation refused: $reason');
+				Log.warn('Orientation refused: $reason', "window");
 			return null;
 		};
 		if (orientation == Any) {
@@ -134,7 +135,7 @@ class DomWindow implements IWindow {
 			if (failed != null)
 				failed(reason);
 			else
-				trace('Fullscreen refused: $reason');
+				Log.warn('Fullscreen refused: $reason', "window");
 			return null;
 		};
 		var granted = (_:Dynamic) -> {
