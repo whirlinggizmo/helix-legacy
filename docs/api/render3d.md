@@ -508,6 +508,7 @@ Triangles for lit models: each vertex a position, a normal, texture coordinates 
 ```haxe
 function new(vertices:haxe.io.Bytes, vertexCount:Int, indices:haxe.io.Bytes, indexCount:Int)
 static function fromArrays(positions:Array<Float>, normals:Null<Array<Float>>, uvs:Null<Array<Float>>, tangents:Null<Array<Float>>, indices:Null<Array<Int>>, ?joints:Array<Float>, ?weights:Array<Float>):Mesh3D
+static function extrude(points:Array<Float>, height:Float, ?uvScale:Float = 1.):Mesh3D
 static function plane(width:Float, length:Float, ?subdivisions:Int = 0):Mesh3D
 static function cube(width:Float, height:Float, length:Float):Mesh3D
 static function sphere(radius:Float, ?rings:Int = 16, ?segments:Int = 32):Mesh3D
@@ -535,6 +536,7 @@ function destroy():Void
 
 - `new`: A mesh of vertexCount vertices in vertices (Lit3DProgram.stride bytes each) and indexCount uint32 indices (whole triangles) in indices. Throws for a count of 0 or less, too few bytes, or an index past the vertices.
 - `fromArrays`: A mesh from arrays: positions (x, y, z each), normals (one a position, unit length; null to work them out from the triangles), texture coordinates (u, v each; null for zeros), tangents (x, y, z, w each, w the bitangent's sign; null to work them out) and indices (whole triangles; null for each three positions a triangle, in order); skinned when joints (four joint indices a vertex) and weights (their four weights, normalized here) are given. Throws for arrays that don't agree.
+- `extrude`: A block raised from a 2D outline: points (x and y in turn, at least 3, either winding, convex or not, not crossing itself) laid on the ground, a point's x as x and its y as z, raised height up y from 0. It has a top, a bottom, and a flat side for each edge, each face its own vertices (sharp edges). Texture coordinates are in world units over uvScale (a repeat every uvScale units): the top and bottom by x and z, the sides along the outline and down from the top, so blocks side by side with the same uvScale are patterned alike. A Tiled polygon's points (TiledObject2D.computePoints) become a wall or a raised floor. Throws for fewer than 3 points or one that can't be filled.
 - `plane`: Flat in x and z, facing +y, width along x and length along z, subdivisions (0..256) more cells each way; texture coordinates span it once.
 - `cube`: A box width along x, height along y and length along z, each face its own vertices (sharp edges), textured 0..1 a face.
 - `sphere`: A sphere of radius, rings (2..256) from pole to pole and segments (3..512) around; u around, v from the top pole to the bottom.

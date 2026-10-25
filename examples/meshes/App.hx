@@ -11,6 +11,8 @@ import helix.render3d.DirectionalLight3D;
 import helix.render3d.Environment3D;
 import helix.render3d.Material3D;
 import helix.render3d.Mesh3D;
+import helix.texture.Sampling;
+import helix.texture.Texture2D;
 import helix.render3d.Model3D;
 import helix.render3d.Node3D;
 import helix.render3d.View3D;
@@ -18,7 +20,8 @@ import helix.time.Time;
 import helix.host.ScreenShape;
 import helix.render3d.Orbit3D;
 
-/** Shapes made in code in a View3D's tree: plane, cube, sphere, cylinder, cone, capsule and torus in a row on a floor, each its own color, lit by a
+/** Shapes made in code in a View3D's tree: plane, cube, sphere, cylinder, cone, capsule and torus in a row on a floor, each its own color, and
+	behind them an L-shaped outline raised into a block patterned with checks (Mesh3D.extrude), lit by a
 	sun and an ambient light, the camera turning around them. O stops and starts the camera; Escape quits where quitting means anything. The text over them
 	is a Drawing2D on the stage, drawn again each update. */
 class App extends helix.App {
@@ -65,6 +68,20 @@ class App extends helix.App {
 			node.setPosition((i - (shapes.length - 1) / 2) * 1.4, shapes[i].y, 0);
 			level.addChild(node);
 		}
+		// An outline raised into a block (Mesh3D.extrude): an L behind the row, patterned with checks a unit across, repeating.
+		// Smooth and with mipmaps, so the far squares blend rather than sparkle.
+		var pixels = haxe.io.Bytes.alloc(32 * 32 * 4);
+		for (y in 0...32)
+			for (x in 0...32)
+				pixels.setInt32((y * 32 + x) * 4, (x < 16) == (y < 16) ? 0xffd8e4e8 : 0xff58423a);
+		var checks = Texture2D.fromRgba(32, 32, pixels, Linear, -1, -1, true);
+		checks.sampling = new Sampling(Linear, Repeat, Repeat);
+		var stone = new Material3D();
+		stone.texture = checks;
+		stone.roughness = .7;
+		var block = new Model3D(Mesh3D.extrude([0., 0, 4, 0, 4, 1, 1, 1, 1, 2.5, 0, 2.5], .6, 1), stone);
+		block.setPosition(-2, 0, -4.5);
+		level.addChild(block);
 		Stage.addChild(new View3D(level, camera));
 		Stage.addChild(text);
 		Stage.addChild(fps);
@@ -85,7 +102,9 @@ class App extends helix.App {
 			vw = Screen.visibleWidth;
 		text.clear();
 		var y = vy + 36;
-		y += text.drawTextWrapped("HeliX generated meshes: plane, cube, sphere, cylinder, cone, capsule, torus", vx + 12, y, 20, vw - 24, 0xfff5f5f5) + 3;
+		y += text.drawTextWrapped("HeliX generated meshes: plane, cube, sphere, cylinder, cone, capsule, torus, and an outline extruded", vx + 12, y, 20,
+			vw - 24, 0xfff5f5f5)
+			+ 3;
 		var keys = (orbit.running ? "O: stop the camera" : "O: turn the camera") + (Host.canQuit() ? "   ESC: quit" : "");
 		text.drawTextWrapped(keys, vx + 12, y, 16, vw - 24, 0xffc8c8c8);
 		fps.setPosition(vx + 12, vy + 10);

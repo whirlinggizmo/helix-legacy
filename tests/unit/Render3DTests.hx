@@ -26,6 +26,14 @@ class Render3DTests {
 	static function near(a:Float, b:Float):Bool
 		return Math.abs(a - b) < 1e-9;
 
+	static function throws(f:Void->Void, part:String):Bool {
+		try
+			f()
+		catch (e:Dynamic)
+			return Std.string(e).indexOf(part) >= 0;
+		return false;
+	}
+
 	// Clip coordinates of world point x, y, z through m: [x, y, z, w].
 	static function clip(m:Mat4, x:Float, y:Float, z:Float):Array<Float> {
 		var result = [];
@@ -108,7 +116,9 @@ class Render3DTests {
 			Mesh3D.cylinder(.5, 1, 12),
 			Mesh3D.cone(.5, 1, 12),
 			Mesh3D.capsule(.3, 1.2, 8, 12),
-			Mesh3D.torus(.4, .1, 12, 8)
+			Mesh3D.torus(.4, .1, 12, 8),
+			Mesh3D.extrude([0., 0, 4, 0, 4, 1, 1, 1, 1, 3, 0, 3], 2),
+			Mesh3D.extrude([0., 3, 1, 3, 1, 1, 4, 1, 4, 0, 0, 0], 2)
 		]) {
 			var v = shape.vertices, ix = shape.indices, facing = true;
 			for (t in 0...Std.int(shape.indexCount / 3)) {
@@ -151,6 +161,21 @@ class Render3DTests {
 		check(Math.abs(bv.getFloat(equator + 8) + 1) < 1e-5, "At the equator's +x, the tangent follows u toward -z");
 		var box = Mesh3D.cube(1, 2, 3);
 		check(near(box.minX, -.5) && near(box.maxY, 1) && near(box.maxZ, 1.5) && box.indexCount == 36, "A cube's box and triangles");
+		// An L raised 2: its box (an outline's y is z), a top and a bottom of 4 triangles each and two a side, and the sides' texture
+		// coordinates along the outline in world units over uvScale.
+		var block = Mesh3D.extrude([0., 0, 4, 0, 4, 1, 1, 1, 1, 3, 0, 3], 2, 2);
+		check(near(block.minX, 0)
+			&& near(block.maxX, 4)
+			&& near(block.maxY, 2)
+			&& near(block.maxZ, 3)
+			&& block.indexCount == (8 + 12) * 3,
+			"An extruded outline's box and triangles");
+		var second = (12 + 4) * Lit3DProgram.stride + Lit3DProgram.uvOffset; // the second side's first vertex: 4 along, at the top
+		check(near(block.vertices.getFloat(second), 2)
+			&& near(block.vertices.getFloat(second + 4), 0)
+			&& near(block.vertices.getFloat(second + 2 * Lit3DProgram.stride + 4), 1),
+			"A side's u runs along the outline and v down from the top, over uvScale");
+		check(throws(() -> Mesh3D.extrude([0., 0, 1, 1], 1), "3 points"), "Too few points are refused");
 		// Vertices are float32: 0.6 comes back as 0.6000000238.
 		var capsule = Mesh3D.capsule(.3, 1.2);
 		check(Math.abs(capsule.maxY - .6) < 1e-6 && Math.abs(capsule.minY + .6) < 1e-6, "A capsule is its height from end to end");

@@ -335,6 +335,63 @@ class Mesh3D {
 		return mesh;
 	}
 
+	/** A block raised from a 2D outline: points (x and y in turn, at least 3, either winding, convex or not, not crossing itself) laid on the
+		ground, a point's x as x and its y as z, raised height up y from 0. It has a top, a bottom, and a flat side for each edge, each face
+		its own vertices (sharp edges). Texture coordinates are in world units over uvScale (a repeat every uvScale units): the top and bottom
+		by x and z, the sides along the outline and down from the top, so blocks side by side with the same uvScale are patterned alike. A
+		Tiled polygon's points (TiledObject2D.computePoints) become a wall or a raised floor. Throws for fewer than 3 points or one that
+		can't be filled. */
+	public static function extrude(points:Array<Float>, height:Float, uvScale = 1.):Mesh3D {
+		var n = points.length >> 1;
+		var cap = n >= 3 ? helix.render2d.Polygon2D.triangulate(points) : [];
+		if (cap.length == 0)
+			throw "An outline to extrude needs 3 points or more, not crossing itself";
+		var b = new MeshBuilder(), scale = uvScale > 0 ? uvScale : 1.;
+		// The top and the bottom, each the outline filled (MeshBuilder turns each triangle to face its normals).
+		for (face in 0...2) {
+			var y = face == 0 ? height : 0.,
+				up = face == 0 ? 1 : -1,
+				first = b.vertexCount;
+			for (i in 0...n)
+				b.vertex(points[i * 2], y, points[i * 2 + 1], 0, up, 0, points[i * 2] / scale, points[i * 2 + 1] / scale);
+			var k = 0;
+			while (k + 2 < cap.length) {
+				b.triangle(first + cap[k], first + cap[k + 1], first + cap[k + 2]);
+				k += 3;
+			}
+		}
+		// The sides: each edge's outward normal, by the outline's winding (its signed area).
+		var area = 0.;
+		for (i in 0...n) {
+			var j = (i + 1) % n;
+			area += points[i * 2] * points[j * 2 + 1] - points[j * 2] * points[i * 2 + 1];
+		}
+		var outward = area > 0 ? 1 : -1, along = 0.;
+		for (i in 0...n) {
+			var j = (i + 1) % n,
+				ax = points[i * 2],
+				az = points[i * 2 + 1],
+				bx = points[j * 2],
+				bz = points[j * 2 + 1];
+			var dx = bx - ax, dz = bz - az, length = Math.sqrt(dx * dx + dz * dz);
+			if (length == 0)
+				continue;
+			var nx = dz / length * outward,
+				nz = -dx / length * outward,
+				first = b.vertexCount;
+			var u0 = along / scale,
+				u1 = (along + length) / scale,
+				bottom = height / scale;
+			b.vertex(ax, height, az, nx, 0, nz, u0, 0);
+			b.vertex(bx, height, bz, nx, 0, nz, u1, 0);
+			b.vertex(bx, 0, bz, nx, 0, nz, u1, bottom);
+			b.vertex(ax, 0, az, nx, 0, nz, u0, bottom);
+			b.quad(first, first + 1, first + 2, first + 3);
+			along += length;
+		}
+		return b.build();
+	}
+
 	/** Flat in x and z, facing +y, width along x and length along z, subdivisions (0..256) more cells each way; texture coordinates span it
 		once. */
 	public static function plane(width:Float, length:Float, subdivisions = 0):Mesh3D {
