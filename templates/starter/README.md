@@ -33,11 +33,24 @@ directory:
 
 ```console
 haxelib newrepo                                                            # .haxelib/, used only by builds run from here
-haxelib git helix https://github.com/whirlinggizmo/helix                   # a clone as it is now; add a tag or commit to pin one
+haxelib git helix https://github.com/whirlinggizmo/helix                   # a clone as it is now
 haxelib git hotreload-hx https://github.com/whirlinggizmo/hotreload-hx     # the dev loop's
 ```
 
 The hxml files don't change (`-lib helix` finds the game's own). A local repository doesn't fall back to the machine's, so every library the
 game uses goes in it (hxcpp too, for a native build: `haxelib install hxcpp`). `.haxelib/` isn't committed (.gitignore): these commands
 remake it, and `git -C .haxelib/helix/git log -1` says which HeliX it holds. `haxelib deleterepo` goes back to the machine's.
+
+To keep the game on one HeliX (a tag or a commit), say so in `hxml/common.hxml`, where it stays with the game, rather than on the
+command line: `haxelib update` moves a library installed with `haxelib git ... <tag>` back to the branch's latest.
+
+```hxml
+-lib helix:git:https://github.com/whirlinggizmo/helix#jam-2026-10-23        # in hxml/common.hxml, for -lib helix
+```
+
+```console
+haxelib install hxml/common.hxml                                           # fetches what the hxml names, and puts a moved one back
+```
+
+Then don't run `haxelib update` for it; change the tag in the hxml and install again to move to another HeliX.
 
