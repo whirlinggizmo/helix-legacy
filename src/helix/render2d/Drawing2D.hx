@@ -5,7 +5,7 @@ import helix.texture.Texture2D;
 import helix.math.Bounds2D;
 
 /** Drawing kept on a node (docs/DISPLAY_MODEL.md): Flash's graphics, as calls named as Batch2D's (rect, frame, roundedRect, circle,
-	circleLines, ellipse, line, polyline, polygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls
+	circleLines, ellipse, line, polyline, polygon, texturedPolygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls
 	are kept in order, in the node's own units, and drawn each frame where the node is, turned, scaled and faded with it; clear takes them away.
 	Calling clear and drawing again in update is immediate drawing, as Flash games did it. Not culled; picked by the box around what it holds. */
 class Drawing2D extends Node2D {
@@ -132,6 +132,27 @@ class Drawing2D extends Node2D {
 		return true;
 	}
 
+	/** A filled polygon through points (as polygon takes them) patterned with texture: laid flat across it and repeating, a texel a unit
+		times scale, turned by rotation (radians, clockwise) about offsetX, offsetY (where the texture's top-left corner falls, in the
+		drawing's units), tinted. A floor of checks, a face of wood grain: neighboring shapes with the same mapping meet seamlessly. Sampled
+		as sampling says when given, else with the texture's filter, repeating. False, holding nothing more, for a polygon that can't be
+		filled. */
+	public function texturedPolygon(points:Array<Float>, texture:Texture2D, tint = 0xffffffff, scale = 1., rotation = 0., offsetX = 0., offsetY = 0.,
+			?sampling:helix.texture.Sampling):Bool {
+		if (points.length < 6 || points.length % 2 != 0)
+			return false;
+		var made = Polygon2D.triangulate(points);
+		if (made.length == 0)
+			return false;
+		add(TexturedPolygon, [scale, rotation, offsetX, offsetY], tint);
+		this.points[this.points.length - 1] = points.copy();
+		triangles[triangles.length - 1] = made;
+		images[images.length - 1] = texture;
+		samplings[samplings.length - 1] = sampling;
+		includePoints(points, 0);
+		return true;
+	}
+
 	/** A polygon's outline through points (copied), closed, width wide centered on its edges, its corners pointed unless join says Round or
 		Bevel. False, holding nothing more, for fewer than 2 points. */
 	public function polygonLines(points:Array<Float>, width:Float, color:Int, join:LineJoin2D = Miter):Bool {
@@ -248,6 +269,10 @@ class Drawing2D extends Node2D {
 					batch.polyline(points[i], n[at], c, cast Std.int(n[at + 1]), cast Std.int(n[at + 2]));
 				case Polygon:
 					batch.polygon(points[i], c, triangles[i]);
+				case TexturedPolygon:
+					batch.samplingOverride = samplings[i];
+					batch.texturedPolygon(points[i], images[i], c, n[at], n[at + 1], n[at + 2], n[at + 3], triangles[i]);
+					batch.samplingOverride = null;
 				case PolygonLines:
 					batch.polygonLines(points[i], n[at], c, cast Std.int(n[at + 1]));
 				case Text:
@@ -311,6 +336,7 @@ private enum abstract DrawingKind(Int) {
 	var Line;
 	var Polyline;
 	var Polygon;
+	var TexturedPolygon;
 	var PolygonLines;
 	var Text;
 	var WrappedText;

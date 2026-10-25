@@ -809,6 +809,38 @@ class Batch2D {
 		}
 	}
 
+	/** A polygon through points filled with texture laid flat across it and repeating: a texel a world unit times scale, turned by rotation
+		(radians, clockwise) about the offset point offsetX, offsetY, where the texture's top-left corner falls; tinted. Sampled with the
+		texture's filter and repeating both ways, unless the batch's sampling override says otherwise. As triangles of its indices
+		(Polygon2D.triangulate's), worked out here when null. */
+	function texturedPolygon(points:Array<Float>, texture:Texture2D, tint:Int, scale:Float, rotation:Float, offsetX:Float, offsetY:Float,
+			?triangles:Array<Int>):Void {
+		if (triangles == null)
+			triangles = Polygon2D.triangulate(points);
+		var held = samplingOverride;
+		if (samplingOverride == null)
+			samplingOverride = texture.sampling.withWrap(Repeat, Repeat);
+		useTexture(texture);
+		samplingOverride = held;
+		color(tint);
+		region(0, 0, 1, 1);
+		// A point's place in the texture: back from the offset, turned back, over the texture's size in units.
+		var c = Math.cos(rotation),
+			s = Math.sin(rotation),
+			across = texture.width * scale,
+			down = texture.height * scale;
+		var i = 0;
+		while (i + 2 < triangles.length) {
+			for (k in 0...3) {
+				var at = triangles[i + k] * 2,
+					dx = points[at] - offsetX,
+					dy = points[at + 1] - offsetY;
+				vertex(points[at], points[at + 1], (dx * c + dy * s) / across, (-dx * s + dy * c) / down);
+			}
+			i += 3;
+		}
+	}
+
 	/** A polygon's outline, closed, width world units wide centered on its edges, its corners as join says (mitered unless told; a miter
 		longer than twice the width is cut to that). Nothing for fewer than 2 points. */
 	function polygonLines(points:Array<Float>, width:Float, tint:Int, join:LineJoin2D = Miter):Void
