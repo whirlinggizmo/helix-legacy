@@ -24,7 +24,9 @@ import helix.ui.TouchStick2D;
 	  takes neither.
 	The buttons aren't the sticks' (Actions.touchStickBlocked): a tap on one presses it. A faint ring says where each stick's thumb goes
 	while none holds it. The arrow keys and a pad's left stick steer the dot too (and the pad's right stick aims), all read as one direction
-	held to a circle (Actions.direction), so a diagonal of keys is no faster than straight. Escape quits where quitting means anything.
+	held to a circle (Actions.direction), so a diagonal of keys is no faster than straight; on a phone, the Tilt button under the row
+	makes the device's tilt steer it in place of the moving stick (Binding.Tilt), asked for as it's tapped (Input.requestTilt), and a Level
+	button beside it takes how the device is held as level (Input.calibrateTilt). Escape quits where quitting means anything.
 	Its probes (mode, x, y, aimUp) make it scriptable: its autopilot taps the buttons and plays thumbs on the sticks (App.probe). */
 class App extends helix.App {
 	static inline var SPEED = 420.;
@@ -39,6 +41,7 @@ class App extends helix.App {
 
 	var actions:Actions;
 	var dot = Shape2D.circle(24, 0xffffd25a);
+	var fullscreen = new helix.ui.FullscreenButton2D();
 	var drawing = new Drawing2D();
 	var status = new Text2D("", 18, 0xffe8e8e8);
 	var moveStick:TouchStick2D;
@@ -49,6 +52,13 @@ class App extends helix.App {
 		face:Shape2D,
 		text:Text2D
 	}> = [];
+	// Whether the tilt steers in place of the moving stick, and its buttons under the row: Tilt turning it on and off, Level shown while
+	// it reads.
+	var tilting = false;
+	var tiltFace = Shape2D.rectangle(1, BUTTON_HEIGHT, 0xff2e3448);
+	var tiltText = new Text2D("Tilt", 18, 0xffe8e8e8);
+	var levelFace = Shape2D.rectangle(1, BUTTON_HEIGHT, 0xff2e3448);
+	var levelText = new Text2D("Level", 18, 0xffe8e8e8);
 	var move = new Point2D();
 	var aim = new Point2D();
 	var aimX = 1.;
@@ -78,11 +88,21 @@ class App extends helix.App {
 			Stage.addChild(button.text);
 			buttons.push(button);
 		}
+		for (face in [tiltFace, levelFace])
+			face.setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+		for (text in [tiltText, levelText])
+			text.setPivot(.5, .5);
+		Stage.addChild(tiltFace);
+		Stage.addChild(tiltText);
+		Stage.addChild(levelFace);
+		Stage.addChild(levelText);
 		moveStick = new TouchStick2D(null, "moveX");
 		aimStick = new TouchStick2D(null, "aimX", 0x80ff9a6a);
 		moveStick.hint = aimStick.hint = true;
 		Stage.addChild(moveStick);
 		Stage.addChild(aimStick);
+		// The fullscreen icon at the top right (a phone's browser needs fullscreen to lock an orientation, and plays better in it).
+		Stage.addChild(fullscreen);
 		choose("1 stick");
 	}
 
@@ -97,10 +117,18 @@ class App extends helix.App {
 			case "Region" | "2 regions": REGION;
 			case _: Anywhere;
 		};
-		actions.bind("moveX", TouchStick(moveArea, RADIUS, X));
-		actions.bind("moveY", TouchStick(moveArea, RADIUS, Y));
+		// The moving stick, or the device tilted (a phone) in its place.
+		if (tilting) {
+			actions.bind("moveX", Tilt(X));
+			actions.bind("moveY", Tilt(Y));
+		} else {
+			actions.bind("moveX", TouchStick(moveArea, RADIUS, X));
+			actions.bind("moveY", TouchStick(moveArea, RADIUS, Y));
+		}
 		if (aiming()) {
-			var aimArea:StickArea = mode == "2 sticks" ? RightHalf : AIM_REGION;
+			// With the tilt moving, the aiming stick in two sticks takes the whole screen.
+			var aimArea:StickArea = mode == "2 sticks" ? (tilting ? Anywhere : RightHalf) : AIM_REGION;
+			aimStick.hintCorner = tilting ? BottomRight : null;
 			actions.bind("aimX", TouchStick(aimArea, RADIUS, X));
 			actions.bind("aimY", TouchStick(aimArea, RADIUS, Y));
 		}
@@ -111,7 +139,7 @@ class App extends helix.App {
 		actions.bind("aimX", Axis(RightX, 0, 0));
 		actions.bind("aimY", Axis(RightY, 0, 0));
 		// A thumb landing on a button presses it, not a stick.
-		actions.touchStickBlocked = (x, y) -> buttonAt(x, y) != null;
+		actions.touchStickBlocked = (x, y) -> buttonAt(x, y) != null || onTilt(x, y) || onLevel(x, y) || fullscreen.covers(x, y);
 		moveStick.actions = aimStick.actions = actions;
 	}
 
@@ -141,6 +169,24 @@ class App extends helix.App {
 		return null;
 	}
 
+	// Whether x, y (the stage's units) is on the Tilt button, under the row at the left.
+	function onTilt(x:Float, y:Float):Bool {
+		var left = Screen.visibleX + BUTTON_GAP,
+			top = Screen.visibleY + BUTTON_Y + BUTTON_HEIGHT + BUTTON_GAP;
+		return x >= left && x < left + BUTTON_WIDTH && y >= top && y < top + BUTTON_HEIGHT;
+	}
+
+	// Whether the Level button shows: while the tilt steers and reads.
+	function levelShown():Bool
+		return tilting && (Input.tiltState == On || Input.tiltState == Calibrating);
+
+	// Whether x, y (the stage's units) is on the Level button, beside Tilt while it shows.
+	function onLevel(x:Float, y:Float):Bool {
+		var left = Screen.visibleX + BUTTON_GAP * 2 + BUTTON_WIDTH,
+			top = Screen.visibleY + BUTTON_Y + BUTTON_HEIGHT + BUTTON_GAP;
+		return levelShown() && x >= left && x < left + BUTTON_WIDTH && y >= top && y < top + BUTTON_HEIGHT;
+	}
+
 	override public function update(dt:Float):Void {
 		ScreenShape.update();
 		var vx = Screen.visibleX,
@@ -163,8 +209,26 @@ class App extends helix.App {
 				button.text.text = paused ? "Resume" : "Pause";
 			left += button.width + BUTTON_GAP;
 		}
+		var secondY = vy + BUTTON_Y + BUTTON_HEIGHT + BUTTON_GAP;
+		tiltFace.setPosition(vx + BUTTON_GAP, secondY);
+		tiltText.setPosition(vx + BUTTON_GAP + BUTTON_WIDTH / 2, secondY + BUTTON_HEIGHT / 2);
+		tiltFace.color = tilting ? 0xff4c8ef0 : 0xff2e3448;
+		levelFace.visible = levelText.visible = levelShown();
+		levelFace.setPosition(vx + BUTTON_GAP * 2 + BUTTON_WIDTH, secondY);
+		levelText.setPosition(vx + BUTTON_GAP * 2 + BUTTON_WIDTH * 1.5, secondY + BUTTON_HEIGHT / 2);
 		if (Input.pointerFramePressed) {
-			var pressed = buttonAt(Stage.camera.screenToWorldX(Input.pointerX), Stage.camera.screenToWorldY(Input.pointerY));
+			var x = Stage.camera.screenToWorldX(Input.pointerX),
+				y = Stage.camera.screenToWorldY(Input.pointerY);
+			var pressed = buttonAt(x, y);
+			if (onLevel(x, y))
+				Input.calibrateTilt();
+			// Tilt on: asked for now (a browser that wants a tap asks inside this one), steering in place of the moving stick.
+			if (onTilt(x, y)) {
+				tilting = !tilting;
+				if (tilting)
+					Input.requestTilt();
+				choose(mode);
+			}
 			if (pressed == "Pause")
 				paused = !paused;
 			else if (pressed != null && pressed != mode)
@@ -184,12 +248,12 @@ class App extends helix.App {
 		if (aiming())
 			drawing.line(dot.x, dot.y, dot.x + aimX * 70, dot.y + aimY * 70, 4, 0xffff9a6a);
 		// The regions' outlines, where a thumb takes a stick.
-		if (mode == "Region" || mode == "2 regions")
+		if (!tilting && (mode == "Region" || mode == "2 regions"))
 			drawing.frame(vx, vy + vh - REGION_SIDE, REGION_SIDE, REGION_SIDE, 2, 0x40e8e8e8);
 		if (mode == "2 regions")
 			drawing.frame(vx + vw - REGION_SIDE, vy + vh - REGION_SIDE, REGION_SIDE, REGION_SIDE, 2, 0x40ff9a6a);
 		status.setPosition(vx + 16, vy + 16);
 		var push = Math.round(Math.sqrt(move.x * move.x + move.y * move.y) * 100);
-		status.text = '$mode: move ${push}%${aiming() ? '   aim ${Math.round(aimed * 100)}%' : ""}${paused ? "   paused" : ""}';
+		status.text = '$mode: move ${push}%${aiming() ? '   aim ${Math.round(aimed * 100)}%' : ""}${paused ? "   paused" : ""}   tilt: ${Input.tiltState == Calibrating ? "Calibrating (hold steady)" : Input.tiltState.toString()}${Input.tiltState == On ? ' ${Math.round(Input.tiltX * 100)}, ${Math.round(Input.tiltY * 100)}' : ""}';
 	}
 }
