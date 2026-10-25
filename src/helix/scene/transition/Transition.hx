@@ -5,11 +5,12 @@ import helix.render2d.Node2D;
 import helix.render2d.Stage;
 import helix.scene.Flow;
 
-/** How one screen gives way to the next on the stage (docs/DISPLAY_MODEL.md): a cover drawn over everything, covering for coverSeconds and
-	uncovering for uncoverSeconds, what's shown swapped at the middle between; after a delay when given, held covered at the middle for
-	hold seconds, each half along its own ease. It runs itself (run, swap) on the frames' time, not the game's clock, so a paused game still transitions to its
-	menu; quick (the run option quick=1) skips it, swapping at once. The kinds made (Fade, Slide, Iris, Diamond, Noise) each draw their cover;
-	a game's own extends this and draws anything into its cover by progress (draw). */
+/** How one screen gives way to the next on the stage (docs/DISPLAY_MODEL.md): a cover drawn over everything. Run whole (run, swap), it
+	covers for coverSeconds, swaps what's shown at the middle, stays covered for hold seconds and uncovers for uncoverSeconds, after a delay
+	when given, each half along its own ease. Or in halves: cover covers and stays covered (game over, a load under the cover) until uncover
+	is called, and uncover alone, from covered, is a fade in from black at the start. It runs itself on the frames' time, not the game's
+	clock, so a paused game still transitions to its menu; quick (the run option quick=1) skips it, swapping at once. The kinds made (Fade,
+	Slide, Iris, Diamond, Noise) each draw their cover; a game's own extends this and draws anything into its cover by progress (draw). */
 class Transition {
 	/** A transition taking seconds, half covering and half uncovering (coverSeconds, uncoverSeconds). Throws for 0 or less. */
 	public function new(seconds:Float) {
@@ -37,8 +38,14 @@ class Transition {
 	function get_seconds():Float
 		return coverSeconds + uncoverSeconds;
 
-	/** Whether it's running now: from run through its delay, its covering, its hold and its uncovering. */
+	/** Whether it's running now: from run or cover through its delay and covering, while covered, and through its uncovering. */
 	public var running(default, null):Bool = false;
+
+	/** Whether it's fully covered now: after cover until uncover (or through run's hold). */
+	public var covered(get, never):Bool;
+
+	function get_covered():Bool
+		return phase == COVERED;
 
 	/** Where it is, as last drawn: 0 to .5 covering, .5 covered (at the middle and through its hold), .5 to 1 uncovering, each half
 		after its ease; 0 before it starts (and through its delay), 1 once done. */
@@ -68,6 +75,58 @@ class Transition {
 		units), the visible area x, y, width x height. Nothing by default. */
 	public function draw(cover:Drawing2D, x:Float, y:Float, width:Float, height:Float, progress:Float):Void {}
 
+	// Where it is: idle, waiting out its delay, covering, covered, or uncovering; seconds into that, and what's called next.
+	static inline var IDLE = 0;
+	static inline var WAITING = 1;
+	static inline var COVERING = 2;
+	static inline var COVERED = 3;
+	static inline var UNCOVERING = 4;
+
+	var phase = IDLE;
+	var phaseSeconds = 0.;
+	// Called once covered; seconds covered before uncovering on its own (run's hold), or -1 to stay until uncover; called once uncovered.
+	var whenCovered:Null<Void->Void>;
+	var holdLeft = -1.;
+	var whenUncovered:Null<Void->Void>;
+	var coverNode:Null<Drawing2D>;
+
+	/** Covers the stage after its delay, over coverSeconds, and stays covered until uncover is called: done (when given) once covered (put
+		the next screen on the stage there, or start a load under the cover). False, doing nothing, while it's running already. */
+	public function cover(?done:Void->Void):Bool {
+		if (running)
+			return false;
+		if (Flow.quick) {
+			start(COVERED);
+			if (done != null)
+				done();
+			return true;
+		}
+		whenCovered = done;
+		holdLeft = -1;
+		start(delay > 0 ? WAITING : COVERING);
+		return true;
+	}
+
+	/** Uncovers the stage over uncoverSeconds, done (when given) at its end: from covered (after cover), or, not running, from fully covered
+		at once (a fade in from black as a game starts). While it's still covering, it uncovers once covered. False, doing nothing, while it's
+		uncovering already. */
+	public function uncover(?done:Void->Void):Bool {
+		if (phase == UNCOVERING)
+			return false;
+		whenUncovered = done;
+		if (phase == WAITING || phase == COVERING) {
+			holdLeft = 0;
+			return true;
+		}
+		if (phase == IDLE)
+			start(UNCOVERING);
+		else
+			enter(UNCOVERING);
+		if (Flow.quick)
+			finish();
+		return true;
+	}
+
 	/** Runs it over the stage, after its delay: atMiddle at its middle (swap what's shown there), held covered for its hold, done (when
 		given) at its end. False, running nothing, while it's running already. */
 	public function run(atMiddle:Void->Void, ?done:Void->Void):Bool {
@@ -79,49 +138,92 @@ class Transition {
 				done();
 			return true;
 		}
-		running = true;
-		progress = 0;
-		var cover = new Drawing2D(), elapsed = 0., swapped = false;
-		cover.pickable = false;
-		Stage.addChild(cover);
-		Flow.run(dt -> {
-			elapsed += Math.max(0, dt);
-			// Where it is: waiting out its delay, covering, held at the middle, or uncovering.
-			var covering = coverSeconds,
-				uncovering = uncoverSeconds,
-				since = elapsed - delay;
-			if (!swapped && since >= covering) {
-				swapped = true;
-				atMiddle();
-				// Over what the swap put on the stage.
-				Stage.addChild(cover);
-			}
-			inline function eased(curve:Float->Float, t:Float):Float {
-				var v = curve(t < 1 ? t : 1);
-				return v > 0 ? (v < 1 ? v : 1) : 0;
-			}
-			var progress = -1.;
-			if (since >= covering + hold)
-				progress = .5 + eased(uncoverEase, uncovering > 0 ? (since - covering - hold) / uncovering : 1) * .5;
-			else if (since >= covering)
-				progress = .5;
-			else if (since >= 0)
-				progress = eased(coverEase, since / covering) * .5;
-			this.progress = progress >= 0 ? progress : 0;
-			var area = helix.host.Screen.instance;
-			cover.clear();
-			if (progress >= 0)
-				draw(cover, area.visibleX, area.visibleY, area.visibleWidth, area.visibleHeight, progress);
-			if (since < covering + hold + uncovering)
-				return true;
-			Stage.removeChild(cover);
-			running = false;
-			this.progress = 1;
-			if (done != null)
-				done();
-			return false;
-		});
+		whenCovered = atMiddle;
+		whenUncovered = done;
+		holdLeft = hold;
+		start(delay > 0 ? WAITING : COVERING);
 		return true;
+	}
+
+	// Puts the cover on the stage and runs it from phase on the frames' time.
+	function start(from:Int):Void {
+		running = true;
+		var node = new Drawing2D();
+		node.pickable = false;
+		coverNode = node;
+		Stage.addChild(node);
+		enter(from);
+		Flow.run(dt -> step(Math.max(0, dt)));
+	}
+
+	function enter(next:Int):Void {
+		phase = next;
+		phaseSeconds = 0;
+		if (next == COVERED) {
+			var then = whenCovered;
+			whenCovered = null;
+			if (then != null)
+				then();
+			// Over what the swap put on the stage.
+			if (coverNode != null)
+				Stage.addChild(coverNode);
+		}
+	}
+
+	// A frame of it, dt seconds on: its phase moved on, its cover drawn; false once it's done.
+	function step(dt:Float):Bool {
+		if (phase == IDLE)
+			return false;
+		phaseSeconds += dt;
+		// Each phase's end within this frame starts the next with the time left over.
+		inline function next(end:Float, to:Int):Void {
+			// Rounding below a nanosecond is none (a frame's .05 and .2 reaching a .25 hold).
+			var over = phaseSeconds - end;
+			if (over < 1e-9)
+				over = 0;
+			enter(to);
+			phaseSeconds = over;
+		}
+		if (phase == WAITING && phaseSeconds >= delay)
+			next(delay, COVERING);
+		if (phase == COVERING && phaseSeconds >= coverSeconds)
+			next(coverSeconds, COVERED);
+		if (phase == COVERED && holdLeft >= 0 && phaseSeconds >= holdLeft)
+			next(holdLeft, UNCOVERING);
+		if (phase == UNCOVERING && phaseSeconds >= uncoverSeconds) {
+			finish();
+			return false;
+		}
+		inline function eased(curve:Float->Float, t:Float):Float {
+			var v = curve(t < 1 ? t : 1);
+			return v > 0 ? (v < 1 ? v : 1) : 0;
+		}
+		var drawn = switch phase {
+			case COVERING: eased(coverEase, coverSeconds > 0 ? phaseSeconds / coverSeconds : 1) * .5;
+			case COVERED: .5;
+			case UNCOVERING: .5 + eased(uncoverEase, uncoverSeconds > 0 ? phaseSeconds / uncoverSeconds : 1) * .5;
+			case _: -1.;
+		};
+		progress = drawn >= 0 ? drawn : 0;
+		var area = helix.host.Screen.instance;
+		coverNode.clear();
+		if (drawn >= 0)
+			draw(coverNode, area.visibleX, area.visibleY, area.visibleWidth, area.visibleHeight, drawn);
+		return true;
+	}
+
+	// Done: the cover off the stage, done called.
+	function finish():Void {
+		if (coverNode != null)
+			Stage.removeChild(coverNode);
+		coverNode = null;
+		phase = IDLE;
+		running = false;
+		progress = 1;
+		var then = whenUncovered;
+		whenUncovered = null;
+		if (then != null)
+			then();
 	}
 
 	/** Runs it, taking from off the stage and putting to on it at its middle (either null for none), done (when given) at its end. False,

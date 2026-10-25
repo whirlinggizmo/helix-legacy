@@ -11,8 +11,8 @@ class Fade extends Transition {
 		this.color = color;
 	}
 
-	/** Its color. */
-	public var color(default, null):Int;
+	/** Its color, 0xAARRGGBB: set it any time. */
+	public var color:Int;
 
 	override public function draw(cover:Drawing2D, x:Float, y:Float, width:Float, height:Float, progress:Float):Void {
 		var amount = progress < .5 ? progress * 2 : (1 - progress) * 2;

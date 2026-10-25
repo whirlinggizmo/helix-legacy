@@ -18,8 +18,9 @@ import helix.ui.Theme;
 	Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't
 	count, because browsers ignore it for that.
 
-	To go on without a press, set maxWait to a number of seconds. The splash runs itself; you don't update it. The run option quick=1 skips
-	its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md). */
+	To go on without a press, set maxWait to a number of seconds. To fade it in, set entrance (new Fade()). An Iris as its exit closes on
+	the logo (logoX, logoY say where it is). The splash runs itself; you don't update it. The run option quick=1 skips its wait. theme sets
+	its colors and font (docs/DISPLAY_MODEL.md). */
 class SplashScreen {
 	var logo:Null<Texture2D>;
 	var seconds:Float;
@@ -36,6 +37,19 @@ class SplashScreen {
 
 	/** The theme it draws with. */
 	public var theme:Theme = new Theme();
+
+	/** A transition it comes in by, uncovered as it's shown (new Fade() fades it in from black), or null (the start) to show it at once. */
+	public var entrance:Null<Transition> = null;
+
+	/** Where its logo is drawn, its middle in the stage's units, as of the last frame: to aim an iris at it, say. Its exit transition, a
+		Closing (Iris, Diamond) with no point of its own, closes on it already. NaN before it's drawn. */
+	public var logoX(default, null):Float = Math.NaN;
+
+	/** The logo's middle's y; NaN before it's drawn. */
+	public var logoY(default, null):Float = Math.NaN;
+
+	/** The logo's side in the stage's units (it's drawn square); 0 before it's drawn or without a logo. */
+	public var logoSize(default, null):Float = 0.;
 
 	/** The line that asks for the press, shown until one comes ("press any key" to start). */
 	public var prompt:String = "press any key";
@@ -59,11 +73,18 @@ class SplashScreen {
 		if (left || elapsed > 0 || drawing.parent != null)
 			return false;
 		Stage.addChild(drawing);
+		draw();
+		if (entrance != null)
+			entrance.uncover();
 		Flow.run(dt -> {
 			elapsed += Math.max(0, dt);
 			var pressed = Input.activated || (maxWait > 0 && elapsed >= maxWait);
 			if (!left && (Flow.quick || (elapsed >= seconds && pressed))) {
 				left = true;
+				// An iris (or another closing) with no point of its own closes on the logo, where it is as the splash leaves.
+				var closing = Std.downcast(transition, helix.scene.transition.Closing);
+				if (closing != null && Math.isNaN(closing.pointX) && !Math.isNaN(logoX))
+					closing.setPoint(logoX, logoY);
 				transition.run(() -> {
 					Stage.removeChild(drawing);
 					next();
@@ -84,10 +105,13 @@ class SplashScreen {
 			vh = p.visibleHeight;
 		drawing.clear();
 		drawing.rect(vx, vy, vw, vh, theme.panelColor);
-		if (logo != null) {
-			var side = Math.min(vw, vh) * .4;
-			drawing.image(logo, vx + (vw - side) / 2, vy + (vh - side) / 2 - 20, side, side);
-		}
+		// The logo a little above the middle, room left for the prompt.
+		var side = Math.min(vw, vh) * .4;
+		logoX = vx + vw / 2;
+		logoY = vy + vh / 2 - 20;
+		logoSize = logo != null ? side : 0;
+		if (logo != null)
+			drawing.image(logo, logoX - side / 2, logoY - side / 2, side, side);
 		if (!Input.activated)
 			drawing.drawText(prompt, vx + vw / 2, vy + vh * .8, theme.textSize, theme.disabledTextColor, Center, theme.font);
 	}

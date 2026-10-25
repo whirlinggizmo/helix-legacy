@@ -96,6 +96,36 @@ class SceneTests {
 			"Uncovering after the hold, along its own ease (quadOut)");
 		frame(.3);
 		check(over && !timed.running, "Done after delay, both halves and the hold");
+		// In halves: cover covers and stays covered until uncover (game over, a load under the cover); uncover alone starts covered (a fade
+		// in from black); uncover while still covering waits for covered.
+		var halves = new Probe(1, seenProgress),
+			coveredNow = false,
+			uncoveredNow = false;
+		check(halves.cover(() -> coveredNow = true) && !halves.cover(), "Covering; a second cover refused");
+		frame(.6);
+		check(coveredNow && halves.covered && seenProgress[seenProgress.length - 1] == .5, "Covered after coverSeconds, done called");
+		frame(5);
+		check(halves.covered && halves.running && seenProgress[seenProgress.length - 1] == .5, "Stays covered with no hold");
+		check(halves.uncover(() -> uncoveredNow = true) && !halves.covered, "Uncovering on asking");
+		frame(.6);
+		check(uncoveredNow && !halves.running && Stage.childCount == 1, "Uncovered, its cover off the stage");
+		var fadeIn = new Probe(1, seenProgress), inDone = false;
+		check(fadeIn.uncover(() -> inDone = true) && fadeIn.running, "Uncover alone: running, from covered");
+		frame(.01);
+		check(seenProgress[seenProgress.length - 1] > .5 && seenProgress[seenProgress.length - 1] < .6,
+			"starting from covered: " + seenProgress[seenProgress.length - 1]);
+		frame(.6);
+		check(inDone && !fadeIn.running, "a fade in, done");
+		var early = new Probe(1, seenProgress),
+			earlyCovered = false,
+			earlyDone = false;
+		early.cover(() -> earlyCovered = true);
+		frame(.2);
+		check(early.uncover(() -> earlyDone = true) && !earlyCovered, "Uncover asked while covering");
+		frame(.4);
+		check(earlyCovered && !earlyDone, "covers first");
+		frame(.6);
+		check(earlyDone && !early.running, "then uncovers");
 		// The time split unevenly: a quick close, a slow open.
 		var split = new Probe(1, seenProgress),
 			splitSwapped = false,
@@ -180,6 +210,18 @@ class SceneTests {
 		frame(1);
 		check(onward, "Past its most wait it goes on without one");
 		@:privateAccess Input.bind(input);
+		// Coming in by its entrance (uncovered as shown), its logo's place known, and an iris as its exit aimed there.
+		var iris = new helix.scene.transition.Iris(.4),
+			entering = new Fade(.4);
+		var aimed = new SplashScreen(null, .1, iris), went = false;
+		aimed.entrance = entering;
+		aimed.show(() -> went = true);
+		check(entering.running && !Math.isNaN(aimed.logoX) && !Math.isNaN(aimed.logoY), "Its entrance running as it's shown; its logo's place known");
+		frame(.5);
+		check(!entering.running && iris.running && iris.pointX == aimed.logoX && iris.pointY == aimed.logoY,
+			"Its entrance done; its iris exit closing on the logo");
+		frame(1);
+		check(went && Stage.childCount == 1, "Gone, next called");
 
 		// Things collected: they burst, fly to the target one after another, each told on arrival, then all done and off the stage.
 		var score = new Node2D();

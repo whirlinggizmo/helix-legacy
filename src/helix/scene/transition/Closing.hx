@@ -12,8 +12,8 @@ class Closing extends Transition {
 		this.color = color;
 	}
 
-	/** Its color. */
-	public var color(default, null):Int;
+	/** Its color, 0xAARRGGBB: set it any time. */
+	public var color:Int;
 
 	/** The point it closes on and opens from, in the stage's units; NaN (the default) for the middle of the visible area. */
 	public var pointX:Float = Math.NaN;

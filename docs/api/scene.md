@@ -397,11 +397,15 @@ A value as a .scene3d file holds it: a kind's property, a behavior's prop, or on
 
 *class* in [`src/helix/scene/SplashScreen.hx`](../../src/helix/scene/SplashScreen.hx), `import helix.scene.SplashScreen;`
 
-A splash screen: your logo, centered on the theme's background, before the game starts. Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key, clicks or taps, showing `prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you gave) and calls next at the transition's middle; put your title screen on the stage there. Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't count, because browsers ignore it for that. To go on without a press, set maxWait to a number of seconds. The splash runs itself; you don't update it. The run option quick=1 skips its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md).
+A splash screen: your logo, centered on the theme's background, before the game starts. Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key, clicks or taps, showing `prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you gave) and calls next at the transition's middle; put your title screen on the stage there. Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't count, because browsers ignore it for that. To go on without a press, set maxWait to a number of seconds. To fade it in, set entrance (new Fade()). An Iris as its exit closes on the logo (logoX, logoY say where it is). The splash runs itself; you don't update it. The run option quick=1 skips its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md).
 
 ```haxe
 function new(logo:Null<Texture2D>, seconds:Float, ?transition:Transition)
 var theme:Theme
+var entrance:Null<Transition>
+var logoX(default, null):Float
+var logoY(default, null):Float
+var logoSize(default, null):Float
 var prompt:String
 var elapsed(default, null):Float
 var maxWait(default, set):Float
@@ -410,6 +414,10 @@ function show(next:() -> Void):Bool
 
 - `new`: A splash of logo (null: the theme's colors alone), shown at least seconds, leaving by transition (a half-second fade unless given).
 - `theme`: The theme it draws with.
+- `entrance`: A transition it comes in by, uncovered as it's shown (new Fade() fades it in from black), or null (the start) to show it at once.
+- `logoX`: Where its logo is drawn, its middle in the stage's units, as of the last frame: to aim an iris at it, say. Its exit transition, a Closing (Iris, Diamond) with no point of its own, closes on it already. NaN before it's drawn.
+- `logoY`: The logo's middle's y; NaN before it's drawn.
+- `logoSize`: The logo's side in the stage's units (it's drawn square); 0 before it's drawn or without a logo.
 - `prompt`: The line that asks for the press, shown until one comes ("press any key" to start).
 - `elapsed`: Seconds shown so far.
 - `maxWait`: The most seconds it waits for a press before going on without one (a game that needs no audio unlock, or one that unlocks later); 0, the default, waits for one as long as it takes. 0 or more (under 0, or NaN, is 0).
