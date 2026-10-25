@@ -641,15 +641,20 @@ class Batch2D {
 		vertex(x2, y2, u, v);
 	}
 
-	/** A segment width world units wide, centered on its ends with square ends; nothing for a segment of length 0. */
-	function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, tint:Int):Void {
-		var dx = x1 - x0, dy = y1 - y0, length = Math.sqrt(dx * dx + dy * dy);
-		if (length == 0)
-			return;
-		var px = -dy * width / (2 * length), py = dx * width / (2 * length);
-		triangle(x0 + px, y0 + py, x0 - px, y0 - py, x1 - px, y1 - py, tint);
-		triangle(x0 + px, y0 + py, x1 - px, y1 - py, x1 + px, y1 + py, tint);
+	/** A segment width world units wide from x0, y0 to x1, y1, its ends as cap says (flat at the ends unless told); nothing for a segment of
+		length 0, but a dot for a round cap. */
+	function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, tint:Int, cap:LineCap2D = Butt):Void {
+		segment[0] = x0;
+		segment[1] = y0;
+		segment[2] = x1;
+		segment[3] = y1;
+		stroke(segment, false, width, Miter, cap, tint);
 	}
+
+	/** A path through points (x and y in turn), open, width world units wide centered on it, its corners as join says and its ends as cap
+		says. Nothing for fewer than 2 distinct points, but a dot for a round cap. */
+	function polyline(points:Array<Float>, width:Float, tint:Int, join:LineJoin2D = Miter, cap:LineCap2D = Butt):Void
+		stroke(points, false, width, join, cap, tint);
 
 	/** Rectangle outline drawn inside its bounds. */
 	function frame(x:Float, y:Float, w:Float, h:Float, width:Float, tint:Int):Void {
@@ -804,50 +809,161 @@ class Batch2D {
 		}
 	}
 
-	/** A polygon's outline, closed, width world units wide centered on its edges, its corners mitered (a miter longer than twice the width is cut
-		to that). Nothing for fewer than 2 points. */
-	function polygonLines(points:Array<Float>, width:Float, tint:Int):Void {
-		var n = points.length >> 1;
-		if (n < 2)
-			return;
-		// Each corner's offset, half the width out along its miter: inner and outer points.
-		var ox = [], oy = [];
-		for (i in 0...n) {
-			var p = (i + n - 1) % n, q = (i + 1) % n;
-			var ax = points[i * 2] - points[p * 2],
-				ay = points[i * 2 + 1] - points[p * 2 + 1],
-				bx = points[q * 2] - points[i * 2],
-				by = points[q * 2 + 1] - points[i * 2 + 1];
-			var al = Math.sqrt(ax * ax + ay * ay),
-				bl = Math.sqrt(bx * bx + by * by);
-			if (al == 0)
-				al = 1;
-			if (bl == 0)
-				bl = 1;
-			// The edges' normals, averaged, then stretched so the strip keeps its width.
-			var nx = -ay / al - by / bl,
-				ny = ax / al + bx / bl,
-				nl = Math.sqrt(nx * nx + ny * ny);
-			if (nl < 1e-9) {
-				nx = -ay / al;
-				ny = ax / al;
-				nl = 1;
-			}
-			nx /= nl;
-			ny /= nl;
-			var dot = nx * -ay / al + ny * ax / al,
-				scale = width / 2 / Math.max(dot, .25);
-			ox.push(nx * scale);
-			oy.push(ny * scale);
+	/** A polygon's outline, closed, width world units wide centered on its edges, its corners as join says (mitered unless told; a miter
+		longer than twice the width is cut to that). Nothing for fewer than 2 points. */
+	function polygonLines(points:Array<Float>, width:Float, tint:Int, join:LineJoin2D = Miter):Void
+		stroke(points, true, width, join, Butt, tint);
+
+	/** A filled ellipse centered on x, y, radiusX across and radiusY down before it's turned by rotation (radians, clockwise), with segments
+		for its size on screen. */
+	function ellipse(x:Float, y:Float, radiusX:Float, radiusY:Float, rotation:Float, tint:Int):Void {
+		var n = segments(Math.max(radiusX, radiusY)),
+			c = Math.cos(rotation),
+			s = Math.sin(rotation);
+		var lastX = x + radiusX * c, lastY = y + radiusX * s;
+		for (i in 1...n + 1) {
+			var a = i * Math.PI * 2 / n,
+				ex = Math.cos(a) * radiusX,
+				ey = Math.sin(a) * radiusY;
+			var px = x + ex * c - ey * s, py = y + ex * s + ey * c;
+			triangle(x, y, lastX, lastY, px, py, tint);
+			lastX = px;
+			lastY = py;
 		}
-		for (i in 0...n) {
+	}
+
+	// A segment's two ends, for line, kept to draw without making an array.
+	var segment = [0., 0., 0., 0.];
+	// A stroke's distinct points, and each segment's direction (a unit vector), kept between strokes.
+	var strokeX:Array<Float> = [];
+	var strokeY:Array<Float> = [];
+	var strokeDX:Array<Float> = [];
+	var strokeDY:Array<Float> = [];
+
+	// The path through points, closed or open, width wide centered on it: its corners joined as join says, an open path's ends capped as cap
+	// says. Mitered corners are drawn as one strip; round and bevelled ones as a flat-ended band per segment with the gap on a corner's
+	// outer side filled, so a translucent color shows a little overlap on the inner side.
+	function stroke(points:Array<Float>, closed:Bool, width:Float, join:LineJoin2D, cap:LineCap2D, tint:Int):Void {
+		var h = width / 2, xs = strokeX, ys = strokeY;
+		xs.resize(0);
+		ys.resize(0);
+		var k = 0;
+		while (k + 1 < points.length) {
+			var x = points[k], y = points[k + 1];
+			if (xs.length == 0 || x != xs[xs.length - 1] || y != ys[ys.length - 1]) {
+				xs.push(x);
+				ys.push(y);
+			}
+			k += 2;
+		}
+		if (closed && xs.length > 1 && xs[0] == xs[xs.length - 1] && ys[0] == ys[ys.length - 1]) {
+			xs.pop();
+			ys.pop();
+		}
+		var n = xs.length;
+		if (n < 2 || h <= 0) {
+			if (n >= 1 && !closed && cap == Round && h > 0)
+				circle(xs[0], ys[0], h, tint);
+			return;
+		}
+		var segments = closed ? n : n - 1, dxs = strokeDX, dys = strokeDY;
+		dxs.resize(0);
+		dys.resize(0);
+		for (i in 0...segments) {
 			var j = (i + 1) % n,
-				x0 = points[i * 2],
-				y0 = points[i * 2 + 1],
-				x1 = points[j * 2],
-				y1 = points[j * 2 + 1];
-			triangle(x0 + ox[i], y0 + oy[i], x0 - ox[i], y0 - oy[i], x1 - ox[j], y1 - oy[j], tint);
-			triangle(x0 + ox[i], y0 + oy[i], x1 - ox[j], y1 - oy[j], x1 + ox[j], y1 + oy[j], tint);
+				dx = xs[j] - xs[i],
+				dy = ys[j] - ys[i],
+				length = Math.sqrt(dx * dx + dy * dy);
+			dxs.push(dx / length);
+			dys.push(dy / length);
+		}
+		// A square cap: the open ends carried half the width on.
+		if (!closed && cap == Square) {
+			xs[0] -= dxs[0] * h;
+			ys[0] -= dys[0] * h;
+			xs[n - 1] += dxs[segments - 1] * h;
+			ys[n - 1] += dys[segments - 1] * h;
+		}
+		if (join == Miter) {
+			// Each point's offset, half the width out along its miter (along its one segment's normal at an open end).
+			var ox = outer, oy = inner;
+			for (i in 0...n) {
+				var before = closed || i > 0, after = closed || i < n - 1;
+				var a = before ? (i + segments - 1) % segments : i,
+					b = after ? i : i - 1;
+				var nx = -dys[a] - dys[b],
+					ny = dxs[a] + dxs[b],
+					length = Math.sqrt(nx * nx + ny * ny);
+				if (length < 1e-9) {
+					nx = -dys[a];
+					ny = dxs[a];
+					length = 1;
+				}
+				nx /= length;
+				ny /= length;
+				var scale = h / Math.max(nx * -dys[a] + ny * dxs[a], .25);
+				ox[i] = nx * scale;
+				oy[i] = ny * scale;
+			}
+			for (i in 0...segments) {
+				var j = (i + 1) % n;
+				triangle(xs[i] + ox[i], ys[i] + oy[i], xs[i] - ox[i], ys[i] - oy[i], xs[j] - ox[j], ys[j] - oy[j], tint);
+				triangle(xs[i] + ox[i], ys[i] + oy[i], xs[j] - ox[j], ys[j] - oy[j], xs[j] + ox[j], ys[j] + oy[j], tint);
+			}
+		} else {
+			for (i in 0...segments) {
+				var j = (i + 1) % n, px = -dys[i] * h, py = dxs[i] * h;
+				triangle(xs[i] + px, ys[i] + py, xs[i] - px, ys[i] - py, xs[j] - px, ys[j] - py, tint);
+				triangle(xs[i] + px, ys[i] + py, xs[j] - px, ys[j] - py, xs[j] + px, ys[j] + py, tint);
+			}
+			// Each corner's gap on its outer side: an arc around it, or one triangle across it.
+			for (i in (closed ? 0 : 1)...(closed ? n : n - 1)) {
+				var a = (i + segments - 1) % segments, b = i;
+				var turn = dxs[a] * dys[b] - dys[a] * dxs[b],
+					side = turn > 0 ? -1 : 1;
+				if (Math.abs(turn) < 1e-9 && dxs[a] * dxs[b] + dys[a] * dys[b] > 0)
+					continue;
+				var ax = -dys[a] * h * side,
+					ay = dxs[a] * h * side,
+					bx = -dys[b] * h * side,
+					by = dxs[b] * h * side;
+				if (join == Bevel)
+					triangle(xs[i], ys[i], xs[i] + ax, ys[i] + ay, xs[i] + bx, ys[i] + by, tint);
+				else
+					arc(xs[i], ys[i], h, Math.atan2(ay, ax), Math.atan2(by, bx), tint);
+			}
+		}
+		if (!closed && cap == Round) {
+			// Half a circle past each end, from one side round the end to the other.
+			var start = Math.atan2(dxs[0], -dys[0]),
+				end = Math.atan2(-dxs[segments - 1], dys[segments - 1]);
+			arcThrough(xs[0], ys[0], h, start, Math.PI, tint);
+			arcThrough(xs[n - 1], ys[n - 1], h, end, Math.PI, tint);
+		}
+	}
+
+	// A fan of radius around x, y from angle from to angle to, the short way round.
+	function arc(x:Float, y:Float, radius:Float, from:Float, to:Float, tint:Int):Void {
+		var sweep = to - from;
+		while (sweep > Math.PI)
+			sweep -= Math.PI * 2;
+		while (sweep <= -Math.PI)
+			sweep += Math.PI * 2;
+		arcThrough(x, y, radius, from, sweep, tint);
+	}
+
+	// A fan of radius around x, y from angle from through sweep radians, with steps for its size on screen.
+	function arcThrough(x:Float, y:Float, radius:Float, from:Float, sweep:Float, tint:Int):Void {
+		var steps = Std.int(Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI * 2) * segments(radius))));
+		var lastX = x + Math.cos(from) * radius,
+			lastY = y + Math.sin(from) * radius;
+		for (i in 1...steps + 1) {
+			var a = from + sweep * i / steps,
+				px = x + Math.cos(a) * radius,
+				py = y + Math.sin(a) * radius;
+			triangle(x, y, lastX, lastY, px, py, tint);
+			lastX = px;
+			lastY = py;
 		}
 	}
 

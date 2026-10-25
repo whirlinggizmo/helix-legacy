@@ -5,7 +5,7 @@ import helix.texture.Texture2D;
 import helix.math.Bounds2D;
 
 /** Drawing kept on a node (docs/DISPLAY_MODEL.md): Flash's graphics, as calls named as Batch2D's (rect, frame, roundedRect, circle,
-	circleLines, line, polygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls
+	circleLines, ellipse, line, polyline, polygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls
 	are kept in order, in the node's own units, and drawn each frame where the node is, turned, scaled and faded with it; clear takes them away.
 	Calling clear and drawing again in update is immediate drawing, as Flash games did it. Not culled; picked by the box around what it holds. */
 class Drawing2D extends Node2D {
@@ -88,11 +88,33 @@ class Drawing2D extends Node2D {
 		include(x - radius, y - radius, x + radius, y + radius);
 	}
 
-	/** A segment width wide from x0, y0 to x1, y1, square ended. */
-	public function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, color:Int):Void {
-		add(Line, [x0, y0, x1, y1, width], color);
-		var half = width / 2;
-		include(Math.min(x0, x1) - half, Math.min(y0, y1) - half, Math.max(x0, x1) + half, Math.max(y0, y1) + half);
+	/** A filled ellipse centered on x, y, radiusX across and radiusY down, turned by rotation (radians, clockwise). */
+	public function ellipse(x:Float, y:Float, radiusX:Float, radiusY:Float, color:Int, rotation = 0.):Void {
+		add(Ellipse, [x, y, radiusX, radiusY, rotation], color);
+		var reach = Math.max(radiusX, radiusY);
+		include(x - reach, y - reach, x + reach, y + reach);
+	}
+
+	/** A segment width wide from x0, y0 to x1, y1. Its ends are flat at the points unless cap says otherwise: Round for a half circle past
+		each (lines that meet then join smoothly), Square for flat half the width past. */
+	public function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, color:Int, cap:LineCap2D = Butt):Void {
+		add(Line, [x0, y0, x1, y1, width, (cap : Int)], color);
+		// A square cap's corners reach past an end by up to the width's 0.71.
+		var reach = width * .75;
+		include(Math.min(x0, x1) - reach, Math.min(y0, y1) - reach, Math.max(x0, x1) + reach, Math.max(y0, y1) + reach);
+	}
+
+	/** A line through points (x and y in turn, copied), open, width wide. Its corners are pointed unless join says Round or Bevel, and its
+		two ends are as cap says, as line's. A wall drawn as one polyline has no gaps at its corners, as separate lines would. False, holding
+		nothing more, for fewer than 2 points. */
+	public function polyline(points:Array<Float>, width:Float, color:Int, join:LineJoin2D = Miter, cap:LineCap2D = Butt):Bool {
+		if (points.length < 4 || points.length % 2 != 0)
+			return false;
+		add(Polyline, [width, (join : Int), (cap : Int)], color);
+		this.points[this.points.length - 1] = points.copy();
+		// A miter can reach twice the width past a corner.
+		includePoints(points, width * 2);
+		return true;
 	}
 
 	/** A filled polygon through points (x and y in turn, copied; at least 3 points, convex or not, not crossing itself). False, holding
@@ -110,12 +132,12 @@ class Drawing2D extends Node2D {
 		return true;
 	}
 
-	/** A polygon's outline through points (copied), closed, width wide centered on its edges. False, holding nothing more, for fewer than 2
-		points. */
-	public function polygonLines(points:Array<Float>, width:Float, color:Int):Bool {
+	/** A polygon's outline through points (copied), closed, width wide centered on its edges, its corners pointed unless join says Round or
+		Bevel. False, holding nothing more, for fewer than 2 points. */
+	public function polygonLines(points:Array<Float>, width:Float, color:Int, join:LineJoin2D = Miter):Bool {
 		if (points.length < 4 || points.length % 2 != 0)
 			return false;
-		add(PolygonLines, [width], color);
+		add(PolygonLines, [width, (join : Int)], color);
 		this.points[this.points.length - 1] = points.copy();
 		// A miter can reach twice the width past a corner.
 		includePoints(points, width * 2);
@@ -218,12 +240,16 @@ class Drawing2D extends Node2D {
 					batch.circle(n[at], n[at + 1], n[at + 2], c);
 				case CircleLines:
 					batch.circleLines(n[at], n[at + 1], n[at + 2], n[at + 3], c);
+				case Ellipse:
+					batch.ellipse(n[at], n[at + 1], n[at + 2], n[at + 3], n[at + 4], c);
 				case Line:
-					batch.line(n[at], n[at + 1], n[at + 2], n[at + 3], n[at + 4], c);
+					batch.line(n[at], n[at + 1], n[at + 2], n[at + 3], n[at + 4], c, cast Std.int(n[at + 5]));
+				case Polyline:
+					batch.polyline(points[i], n[at], c, cast Std.int(n[at + 1]), cast Std.int(n[at + 2]));
 				case Polygon:
 					batch.polygon(points[i], c, triangles[i]);
 				case PolygonLines:
-					batch.polygonLines(points[i], n[at], c);
+					batch.polygonLines(points[i], n[at], c, cast Std.int(n[at + 1]));
 				case Text:
 					batch.drawText(texts[i], n[at], n[at + 1], n[at + 2], c, aligns[i], fonts[i]);
 				case WrappedText:
@@ -281,7 +307,9 @@ private enum abstract DrawingKind(Int) {
 	var RoundedRect;
 	var Circle;
 	var CircleLines;
+	var Ellipse;
 	var Line;
+	var Polyline;
 	var Polygon;
 	var PolygonLines;
 	var Text;

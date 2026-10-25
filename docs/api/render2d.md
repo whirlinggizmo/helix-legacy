@@ -171,7 +171,7 @@ function clear():Void
 
 *class* in [`src/helix/render2d/Drawing2D.hx`](../../src/helix/render2d/Drawing2D.hx), `import helix.render2d.Drawing2D;`
 
-Drawing kept on a node (docs/DISPLAY_MODEL.md): Flash's graphics, as calls named as Batch2D's (rect, frame, roundedRect, circle, circleLines, line, polygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls are kept in order, in the node's own units, and drawn each frame where the node is, turned, scaled and faded with it; clear takes them away. Calling clear and drawing again in update is immediate drawing, as Flash games did it. Not culled; picked by the box around what it holds.
+Drawing kept on a node (docs/DISPLAY_MODEL.md): Flash's graphics, as calls named as Batch2D's (rect, frame, roundedRect, circle, circleLines, ellipse, line, polyline, polygon, polygonLines, image, drawText, drawTextWrapped), each taking its own color (0xAARRGGBB), so there is no fill to begin or end. The calls are kept in order, in the node's own units, and drawn each frame where the node is, turned, scaled and faded with it; clear takes them away. Calling clear and drawing again in update is immediate drawing, as Flash games did it. Not culled; picked by the box around what it holds.
 
 ```haxe
 function new()
@@ -182,9 +182,11 @@ function frame(x:Float, y:Float, w:Float, h:Float, width:Float, color:Int):Void
 function roundedRect(x:Float, y:Float, w:Float, h:Float, radius:Float, color:Int):Void
 function circle(x:Float, y:Float, radius:Float, color:Int):Void
 function circleLines(x:Float, y:Float, radius:Float, width:Float, color:Int):Void
-function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, color:Int):Void
+function ellipse(x:Float, y:Float, radiusX:Float, radiusY:Float, color:Int, ?rotation:Float = 0.):Void
+function line(x0:Float, y0:Float, x1:Float, y1:Float, width:Float, color:Int, ?cap:LineCap2D = Butt):Void
+function polyline(points:Array<Float>, width:Float, color:Int, ?join:LineJoin2D = Miter, ?cap:LineCap2D = Butt):Bool
 function polygon(points:Array<Float>, color:Int):Bool
-function polygonLines(points:Array<Float>, width:Float, color:Int):Bool
+function polygonLines(points:Array<Float>, width:Float, color:Int, ?join:LineJoin2D = Miter):Bool
 function image(texture:Texture2D, x:Float, y:Float, w:Float, h:Float, ?tint:Int = 0xffffffff, ?sourceX:Float = 0., ?sourceY:Float = 0., ?sourceWidth:Float = 0., ?sourceHeight:Float = 0., ?sampling:Sampling):Void
 function drawTextWrapped(text:String, x:Float, y:Float, size:Float, width:Float, color:Int, ?align:Align2D = Left, ?lineHeight:Float = 1.25, ?font:Font):Float
 function drawText(text:String, x:Float, y:Float, size:Float, color:Int, ?align:Align2D = Left, ?font:Font):Void
@@ -198,9 +200,11 @@ function drawText(text:String, x:Float, y:Float, size:Float, color:Int, ?align:A
 - `roundedRect`: A filled rectangle with corners of radius (clamped to half the shorter side).
 - `circle`: A filled circle centered on x, y.
 - `circleLines`: A circle's outline width wide, drawn inside the circle of radius around x, y (from radius - width out to radius).
-- `line`: A segment width wide from x0, y0 to x1, y1, square ended.
+- `ellipse`: A filled ellipse centered on x, y, radiusX across and radiusY down, turned by rotation (radians, clockwise).
+- `line`: A segment width wide from x0, y0 to x1, y1. Its ends are flat at the points unless cap says otherwise: Round for a half circle past each (lines that meet then join smoothly), Square for flat half the width past.
+- `polyline`: A line through points (x and y in turn, copied), open, width wide. Its corners are pointed unless join says Round or Bevel, and its two ends are as cap says, as line's. A wall drawn as one polyline has no gaps at its corners, as separate lines would. False, holding nothing more, for fewer than 2 points.
 - `polygon`: A filled polygon through points (x and y in turn, copied; at least 3 points, convex or not, not crossing itself). False, holding nothing more, for fewer than 3 points or one that can't be filled.
-- `polygonLines`: A polygon's outline through points (copied), closed, width wide centered on its edges. False, holding nothing more, for fewer than 2 points.
+- `polygonLines`: A polygon's outline through points (copied), closed, width wide centered on its edges, its corners pointed unless join says Round or Bevel. False, holding nothing more, for fewer than 2 points.
 - `image`: texture drawn top-left at x, y, w x h, tinted (white by default): its region sourceX, sourceY, sourceWidth x sourceHeight in texels, or all of it when sourceWidth or sourceHeight is 0 or less; sampled as sampling says, or as the texture's sampling is when drawn when null.
 - `drawTextWrapped`: Text wrapped to width (Font.wrap), its lines lineHeight times size apart, the first's top at y, each placed by align at x, in font (null for the batch's, the stage's font). Returns the height its lines take, as Batch2D's does, for placing what follows (one line's when no font is known: none given and no stage running).
 - `drawText`: One line of text, its top at y and x its left edge, center or right edge by align, size tall, in font (null for the batch's).
@@ -220,6 +224,38 @@ function contains(x:Float, y:Float):Bool
 - `rectangle`: A rectangle width x height, its top-left at x, y (below 0 is 0), as Shape2D.rectangle places one.
 - `circle`: A circle of radius (below 0 is 0) centered on x, y, as Shape2D.circle places one.
 - `contains`: Whether its node's own point x, y is inside it, edges included.
+
+## LineCap2D
+
+*abstract* in [`src/helix/render2d/LineCap2D.hx`](../../src/helix/render2d/LineCap2D.hx), `import helix.render2d.LineCap2D;`
+
+How a thick line's ends are drawn (Drawing2D.line, polyline).
+
+- `LineCap2D.Butt`: Flat, at the end point itself.
+- `LineCap2D.Round`: A half circle around the end point, half the line's width out.
+- `LineCap2D.Square`: Flat, half the line's width past the end point.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
+## LineJoin2D
+
+*abstract* in [`src/helix/render2d/LineJoin2D.hx`](../../src/helix/render2d/LineJoin2D.hx), `import helix.render2d.LineJoin2D;`
+
+How a thick line's corners are drawn where two segments meet (Drawing2D.polyline, polygonLines).
+
+- `LineJoin2D.Miter`: Pointed: the edges carried on until they meet, cut at twice the line's width for a sharp corner.
+- `LineJoin2D.Round`: Rounded: a circle's arc around the corner.
+- `LineJoin2D.Bevel`: Cut off flat across the corner.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Node2D
 
