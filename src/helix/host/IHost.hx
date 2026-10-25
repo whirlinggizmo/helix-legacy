@@ -15,6 +15,9 @@ interface IHost {
 	/** The window the program draws in (the page, on the web). */
 	var window(get, never):IWindow;
 
+	/** What the program runs on, as far as the platform says (Device). */
+	var device(get, never):Device;
+
 	/** Whether quitting closes anything, so whether an app should offer a quit key: not in a browser page, where quit stops the program but
 		the page stays. */
 	public function canQuit():Bool;

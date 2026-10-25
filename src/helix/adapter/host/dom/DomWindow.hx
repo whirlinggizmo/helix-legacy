@@ -85,6 +85,38 @@ class DomWindow implements IWindow {
 	public function requestPosition(x:Int, y:Int):Bool
 		return false;
 
+	public function requestOrientation(orientation:helix.host.Orientation, ?done:Void->Void, ?failed:String->Void):Bool {
+		var lock:Dynamic = js.Syntax.code("(screen.orientation && screen.orientation.lock) ? screen.orientation : null");
+		if (lock == null)
+			return false;
+		var refused = (error:Dynamic) -> {
+			var reason = error != null && error.message != null ? Std.string(error.message) : Std.string(error);
+			if (failed != null)
+				failed(reason);
+			else
+				trace('Orientation refused: $reason');
+			return null;
+		};
+		if (orientation == Any) {
+			try
+				lock.unlock()
+			catch (_:Dynamic) {}
+			if (done != null)
+				done();
+			return true;
+		}
+		var asked:Dynamic = try lock.lock(orientation == Landscape ? "landscape" : "portrait") catch (e:Dynamic) {
+			refused(e);
+			return true;
+		};
+		asked.then(_ -> {
+			if (done != null)
+				done();
+			return null;
+		}, refused);
+		return true;
+	}
+
 	public function canFullscreen():Bool
 		return Browser.document.fullscreenEnabled;
 

@@ -51,6 +51,19 @@ abstract class NativeHost implements IHost {
 	public function canQuit():Bool
 		return true;
 
+	public var device(get, never):helix.host.Device;
+
+	// The system's name (Sys.systemName: Windows, Linux, Mac, BSD), lowercase as Device names it; a mouse assumed, no touch screen reported.
+	function get_device():helix.host.Device {
+		var os = switch Sys.systemName() {
+			case "Windows": "windows";
+			case "Mac": "macos";
+			case "Linux": "linux";
+			case _: "";
+		};
+		return new helix.host.Device(false, os, false, true);
+	}
+
 	public function getOption(name:String):Null<String>
 		return Sys.getEnv("HELIX_" + name.toUpperCase());
 

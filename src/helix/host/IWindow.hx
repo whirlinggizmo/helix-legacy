@@ -56,6 +56,12 @@ interface IWindow {
 		ask (canFullscreen). */
 	function requestFullscreen(enabled:Bool, ?done:Void->Void, ?failed:String->Void):Bool;
 
+	/** Asks for the screen held a way up (Landscape, Portrait) or as the player holds it (Any, letting a lock go): done once it's locked,
+		failed with the reason when it's refused, or without failed it's traced. Only some browsers lock it (Chrome on Android, and only in
+		fullscreen: ask in requestFullscreen's done), not iOS Safari nor a desktop, so a game also shows "turn your device" when the shape is
+		wrong (Screen's portrait). False, calling neither, where it can't ask: natively, where the window is the window. */
+	function requestOrientation(orientation:helix.host.Orientation, ?done:Void->Void, ?failed:String->Void):Bool;
+
 	/** Whether the window is shown (the canvas, on the web). */
 	var visible(get, never):Bool;
 

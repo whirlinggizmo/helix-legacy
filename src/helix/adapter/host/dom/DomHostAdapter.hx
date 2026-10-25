@@ -85,6 +85,34 @@ class DomHostAdapter implements IHost {
 	public function canQuit():Bool
 		return false;
 
+	public var device(get, never):helix.host.Device;
+
+	// The browser's word for it: the system from its user agent, a touch screen from its touch points, a fine pointer from any-pointer.
+	function get_device():helix.host.Device {
+		var touches:Int = js.Syntax.code("navigator.maxTouchPoints || 0");
+		var fine:Bool = js.Syntax.code("window.matchMedia ? window.matchMedia('(any-pointer: fine)').matches : true");
+		return new helix.host.Device(true, systemOf(Browser.navigator.userAgent, touches), touches > 0, fine);
+	}
+
+	/** The operating system a browser's user agent names, as Device names it ("" for none it knows); an iPad saying it's a Mac is told
+		by its touch points. */
+	@:noCompletion
+	public static function systemOf(agent:String, touchPoints:Int):String {
+		if (agent.indexOf("Android") >= 0)
+			return "android";
+		if (~/iPhone|iPad|iPod/.match(agent) || agent.indexOf("Macintosh") >= 0 && touchPoints > 1)
+			return "ios";
+		if (agent.indexOf("CrOS") >= 0)
+			return "chromeos";
+		if (agent.indexOf("Windows") >= 0)
+			return "windows";
+		if (agent.indexOf("Mac OS X") >= 0)
+			return "macos";
+		if (agent.indexOf("Linux") >= 0)
+			return "linux";
+		return "";
+	}
+
 	public function quit():Void
 		quitting = true;
 

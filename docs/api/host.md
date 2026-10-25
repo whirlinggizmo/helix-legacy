@@ -28,6 +28,26 @@ function getString(name:String):Null<String>
 - `get`: The value at name (dotted into nested objects) in the profile, else in the default; null for none. A number, a string, a bool, an array or an object, as the JSON has it.
 - `getString`: The value at name as text: a string as it is, a number or bool as JSON writes it ("1.5", "true"); null for none or an object.
 
+## Device
+
+*class* in [`src/helix/host/Device.hx`](../../src/helix/host/Device.hx), `import helix.host.Device;`
+
+What the game runs on, as far as the platform says (Host.device): a browser or native, the operating system, a touch screen, a fine pointer. For what a game shows by device: touch controls on a phone, "tap" or "click" in a prompt, a landscape lock asked for. A browser can be wrong about a laptop with a touch screen (both a touch screen and a fine pointer), so show touch controls on the first touch too (Input.touches), not by device alone.
+
+```haxe
+final browser:Bool
+final os:String
+final touchScreen:Bool
+final finePointer:Bool
+var mobile(get, never):Bool
+```
+
+- `browser`: Whether it runs in a browser page (true) or natively.
+- `os`: The operating system, lowercase: "windows", "macos", "linux", "android", "ios", "chromeos"; "" when the platform doesn't say.
+- `touchScreen`: Whether it has a touch screen. Natively, false: no host reports one yet.
+- `finePointer`: Whether it has a fine pointer (a mouse, a trackpad, a pen): false on a phone or a tablet alone.
+- `mobile`: A phone or a tablet: a touch screen, and no fine pointer.
+
 ## Host
 
 *class* in [`src/helix/host/Host.hx`](../../src/helix/host/Host.hx), `import helix.host.Host;`
@@ -42,6 +62,7 @@ static function getOption(name:String, fallback:String):String
 static function getOptionBool(name:String, fallback:Bool):Bool
 static function getOptionFloat(name:String, fallback:Float):Float
 static function getOptionInt(name:String, fallback:Int):Int
+static var device(get, never):Device
 static function canQuit():Bool
 static function quit():Void
 static function loadConfig(done:Null<haxe.io.Bytes> -> Void):Void
@@ -54,6 +75,7 @@ static function loadConfig(done:Null<haxe.io.Bytes> -> Void):Void
 - `getOptionBool`: getOption as a bool: 1, true, yes and on are true, 0, false, no and off are false; fallback for anything else.
 - `getOptionFloat`: getOption as a number; fallback for anything that isn't one.
 - `getOptionInt`: getOption as a whole number; fallback for anything that isn't one.
+- `device`: What the program runs on, as far as the platform says (Device).
 - `canQuit`: Whether quitting closes anything, so whether an app should offer a quit key: not in a browser page, where quit stops the program but the page stays.
 - `quit`: Closes after the current frame: cleanup runs. Natively the window closes; in a browser page the frames stop and the canvas keeps its last one.
 - `loadConfig`: Reads the game's config.json, the one beside the program (beside the page on the web, where the page says it has one; beside the executable natively), and gives done its bytes, or null when there is none: none is no error, the defaults stand. Fetched fresh each start, outside the asset cache, so a deployed game's settings change without a build (DECISIONS 131).
@@ -75,6 +97,22 @@ var product(default, null):String
 - `cleanName`: name as one file name every desktop accepts: characters no file system takes (<>:"/\|? *, control characters) become _, leading and trailing dots and spaces go, and a Windows device name (CON, PRN, AUX, NUL, COM1-9, LPT1-9, with any extension) gets a leading _. null for a name that's empty once cleaned, or 128 characters or more (refused, never cut).
 - `company`: The company, cleaned; "DefaultCompany" unless given.
 - `product`: The product, cleaned: the program's own name.
+
+## Orientation
+
+*abstract* in [`src/helix/host/Orientation.hx`](../../src/helix/host/Orientation.hx), `import helix.host.Orientation;`
+
+Which way up a game wants the screen (Window.requestOrientation): its long side across (Landscape), up and down (Portrait), or as the player holds it (Any).
+
+- `Orientation.Any`: As the player holds it: the lock let go.
+- `Orientation.Landscape`: Wider than tall: the long side across.
+- `Orientation.Portrait`: Taller than wide: a phone held upright.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## PresentationMode
 
@@ -177,6 +215,7 @@ static function requestPosition(x:Int, y:Int):Bool
 static function canFullscreen():Bool
 static var fullscreen(get, never):Bool
 static function requestFullscreen(enabled:Bool, ?done:() -> Void, ?failed:String -> Void):Bool
+static function requestOrientation(orientation:Orientation, ?done:() -> Void, ?failed:String -> Void):Bool
 static var visible(get, never):Bool
 static function requestVisible(visible:Bool):Bool
 static var monitorCount(get, never):Int
@@ -204,6 +243,7 @@ static function getMonitorHeight(index:Int):Int
 - `canFullscreen`: Whether requestFullscreen can ask: always natively; on the web, where the page may go fullscreen.
 - `fullscreen`: Whether the window is fullscreen now (the canvas, on the web).
 - `requestFullscreen`: Asks for fullscreen (enabled) or a window; fullscreen answers on a later frame, and done is called once it's granted. On the web the browser grants it only soon after a key press, click or tap: refused (none was recent, or the page may not), failed is called with its reason, or without failed it's traced, and the page stays as it was; natively it's granted. False, calling neither, where it can't ask (canFullscreen).
+- `requestOrientation`: Asks for the screen held a way up (Landscape, Portrait) or as the player holds it (Any, letting a lock go): done once it's locked, failed with the reason when it's refused, or without failed it's traced. Only some browsers lock it (Chrome on Android, and only in fullscreen: ask in requestFullscreen's done), not iOS Safari nor a desktop, so a game also shows "turn your device" when the shape is wrong (Screen's portrait). False, calling neither, where it can't ask: natively, where the window is the window.
 - `visible`: Whether the window is shown (the canvas, on the web).
 - `requestVisible`: Asks to show or hide the window (the canvas, on the web); visible answers on a later frame (natively, once the window manager has shown it). Always asks: true.
 - `monitorCount`: How many monitors there are, at least 1; the web sees one screen.

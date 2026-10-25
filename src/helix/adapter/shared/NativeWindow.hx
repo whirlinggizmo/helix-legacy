@@ -77,6 +77,9 @@ class NativeWindow implements IWindow {
 		return true;
 	}
 
+	public function requestOrientation(orientation:helix.host.Orientation, ?done:Void->Void, ?failed:String->Void):Bool
+		return false;
+
 	public function canFullscreen():Bool
 		return true;
 

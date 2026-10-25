@@ -12,7 +12,7 @@ Generated from the code's doc comments by `tools/gen_apidoc.py` (the same source
 - [`helix.font`](font.md): Font, Fonts, Glyph
 - [`helix.graphics`](graphics.md): AlphaMode, BlendMode, ClipFlip, Color, DepthTest, Graphics, PostProcess, ScreenEffect, ScreenFrame, ScreenshotResult, Screenshots, Shader, ShaderParameter, ShaderParameters, Shaders, SpriteEffect
 - [`helix`](helix.md): App, AppOptions
-- [`helix.host`](host.md): Config, Host, Identity, PresentationMode, Screen, ScreenShape, Window, WindowOptions
+- [`helix.host`](host.md): Config, Device, Host, Identity, Orientation, PresentationMode, Screen, ScreenShape, Window, WindowOptions
 - [`helix.input`](input.md): Actions, Anchor, Binding, Gamepad, IInput, Input, InputState, Key, MouseButton, PadAxis, PadButton, PointerGestures, StickArea, StickAxis, Touch
 - [`helix.math`](math.md): Bounds2D, Bounds3D, Curve, CurveKind, Interpolate, Point2D, Point3D, Random, Trig
 - [`helix.particle`](particle.md): Emitter, ParticlePreset
