@@ -21,83 +21,135 @@ class CollisionTests {
 
 	static function main():Void {
 		// Overlaps.
-		check(Collide2D.rectRect(0, 0, 10, 10, 5, 5, 10, 10)
-			&& !Collide2D.rectRect(0, 0, 10, 10, 10, 0, 10, 10)
-			&& !Collide2D.rectRect(0, 0, 10, 10, 11, 0, 1, 1),
+		check(Collide2D.isRectOverlappingRect(0, 0, 10, 10, 5, 5, 10, 10)
+			&& !Collide2D.isRectOverlappingRect(0, 0, 10, 10, 10, 0, 10, 10)
+			&& !Collide2D.isRectOverlappingRect(0, 0, 10, 10, 11, 0, 1, 1),
 			"Rectangles overlap, not when touching");
-		check(Collide2D.circleCircle(0, 0, 5, 8, 0, 4) && !Collide2D.circleCircle(0, 0, 5, 9, 0, 4), "Circles overlap, not when touching");
-		check(Collide2D.rectCircle(0, 0, 10, 10, 12, 5, 3)
-			&& !Collide2D.rectCircle(0, 0, 10, 10, 13, 5, 3)
-			&& Collide2D.rectCircle(0, 0, 10, 10, 5, 5, 1),
-			"A rectangle and a circle: by the nearest point, and a circle inside");
-		check(!Collide2D.rectCircle(0, 0, 10, 10, 12, 12, 2.8)
-			&& Collide2D.rectCircle(0, 0, 10, 10, 12, 12, 2.9), "at a corner, by distance (sqrt 8 away)");
-		check(Collide2D.pointInRect(0, 0, 0, 0, 10, 10)
-			&& !Collide2D.pointInRect(10, 5, 0, 0, 10, 10)
-			&& Collide2D.pointInCircle(3, 4, 0, 0, 5.1)
-			&& !Collide2D.pointInCircle(3, 4, 0, 0, 5),
+		check(Collide2D.isCircleOverlappingCircle(0, 0, 5, 8, 0, 4) && !Collide2D.isCircleOverlappingCircle(0, 0, 5, 9, 0, 4),
+			"Circles overlap, not when touching");
+		check(Collide2D.isCircleOverlappingRect(12, 5, 3, 0, 0, 10, 10)
+			&& !Collide2D.isCircleOverlappingRect(13, 5, 3, 0, 0, 10, 10)
+			&& Collide2D.isCircleOverlappingRect(5, 5, 1, 0, 0, 10, 10),
+			"A circle and a rectangle: by the nearest point, and a circle inside");
+		check(!Collide2D.isCircleOverlappingRect(12, 12, 2.8, 0, 0, 10, 10)
+			&& Collide2D.isCircleOverlappingRect(12, 12, 2.9, 0, 0, 10, 10),
+			"at a corner, by distance (sqrt 8 away)");
+		var pushed = new Hit2D();
+		check(Collide2D.isCircleOverlappingCircle(8, 0, 4, 0, 0, 5, pushed)
+			&& near(pushed.normalX, 1)
+			&& near(pushed.normalY, 0)
+			&& near(pushed.depth, 1)
+			&& near(pushed.x, 5),
+			"Circles: the first pushed out of the second along the line between them, by the overlap, from b's rim");
+		check(Collide2D.isCircleOverlappingRect(12, 5, 3, 0, 0, 10, 10, pushed)
+			&& near(pushed.normalX, 1)
+			&& near(pushed.depth, 1)
+			&& near(pushed.x, 10)
+			&& near(pushed.y, 5),
+			"A circle on a rectangle's side: pushed out right by 1, the side's point");
+		check(Collide2D.isCircleOverlappingRect(12, 12, 3, 0, 0, 10, 10, pushed)
+			&& near(pushed.normalX, Math.sqrt(.5))
+			&& near(pushed.normalY, Math.sqrt(.5))
+			&& near(pushed.depth, 3 - Math.sqrt(8)),
+			"At a corner, out along the diagonal");
+		check(Collide2D.isCircleOverlappingRect(5, 2, 1, 0, 0, 10, 10, pushed)
+			&& near(pushed.normalY, -1)
+			&& near(pushed.depth, 3)
+			&& near(pushed.y, 0),
+			"A circle inside, out across the nearest edge (the top), the radius and the way to it");
+		check(Collide2D.isCircleOverlappingSegment(5, 1, 2, 0, 0, 10, 0, pushed)
+			&& near(pushed.normalY, 1)
+			&& near(pushed.depth, 1)
+			&& near(pushed.x, 5)
+			&& !Collide2D.isCircleOverlappingSegment(5, 2, 2, 0, 0, 10, 0)
+			&& Collide2D.isCircleOverlappingSegment(11, 1, 1.5, 0, 0, 10, 0, pushed)
+			&& near(pushed.x, 10),
+			"A circle on a wall: off it along its normal, not when touching; past its end, off the end point");
+		check(Collide2D.isPointInRect(0, 0, 0, 0, 10, 10)
+			&& !Collide2D.isPointInRect(10, 5, 0, 0, 10, 10)
+			&& Collide2D.isPointInCircle(3, 4, 0, 0, 5.1)
+			&& !Collide2D.isPointInCircle(3, 4, 0, 0, 5),
 			"Points in a rectangle (its left and top edges in, right and bottom out) and a circle");
 		var square = [0., 0, 10, 0, 10, 10, 0, 10],
 			arrow = [0., 0, 10, 5, 0, 10, 4, 5];
-		check(Collide2D.pointInPolygon(5, 5, square)
-			&& !Collide2D.pointInPolygon(15, 5, square)
-			&& Collide2D.pointInPolygon(6, 5, arrow)
-			&& Collide2D.pointInPolygon(1.5, 1, arrow)
-			&& !Collide2D.pointInPolygon(1, 5, arrow)
-			&& !Collide2D.pointInPolygon(3, 1, arrow),
+		check(Collide2D.isPointInPolygon(5, 5, square)
+			&& !Collide2D.isPointInPolygon(15, 5, square)
+			&& Collide2D.isPointInPolygon(6, 5, arrow)
+			&& Collide2D.isPointInPolygon(1.5, 1, arrow)
+			&& !Collide2D.isPointInPolygon(1, 5, arrow)
+			&& !Collide2D.isPointInPolygon(3, 1, arrow),
 			"Points in polygons, concave too");
 		var hit = new Hit2D();
 		var diamond = [13., 3, 18, 8, 13, 13, 8, 8];
-		check(Collide2D.polygonPolygon(square, [8., 8, 18, 8, 18, 18, 8, 18])
-			&& !Collide2D.polygonPolygon(square, [10., 0, 20, 0, 20, 10, 10, 10])
-			&& Collide2D.polygonPolygon(square, diamond)
-			&& !Collide2D.polygonPolygon(square, [5., 10, 15, 20, 5, 30, -5, 20]),
+		check(Collide2D.isPolygonOverlappingPolygon(square, [8., 8, 18, 8, 18, 18, 8, 18])
+			&& !Collide2D.isPolygonOverlappingPolygon(square, [10., 0, 20, 0, 20, 10, 10, 10])
+			&& Collide2D.isPolygonOverlappingPolygon(square, diamond)
+			&& !Collide2D.isPolygonOverlappingPolygon(square, [5., 10, 15, 20, 5, 30, -5, 20]),
 			"Convex polygons overlap by the separating axis theorem; a diamond's tip in, or just touching, out");
-		Collide2D.polygonPolygon(square, [8., 0, 18, 0, 18, 10, 8, 10], hit);
+		Collide2D.isPolygonOverlappingPolygon(square, [8., 0, 18, 0, 18, 10, 8, 10], hit);
 		check(near(hit.depth, 2) && near(hit.normalX, -1) && near(hit.normalY, 0), "The least move apart, out of the other");
-		check(Collide2D.polygonCircle(square, 12, 5, 3)
-			&& !Collide2D.polygonCircle(square, 13.5, 5, 3)
-			&& Collide2D.polygonCircle(square, 5, 5, 1),
-			"A polygon and a circle: by its edges, and a circle inside");
-		check(Collide2D.rectPolygon(0, 0, 10, 10, diamond)
-			&& !Collide2D.rectPolygon(0, 0, 10, 10, [20., 0, 30, 0, 25, 10]), "A rectangle and a polygon");
+		check(Collide2D.isCircleOverlappingPolygon(12, 5, 3, square)
+			&& !Collide2D.isCircleOverlappingPolygon(13.5, 5, 3, square)
+			&& Collide2D.isCircleOverlappingPolygon(5, 5, 1, square),
+			"A circle and a polygon: by its edges, and a circle inside");
+		check(Collide2D.isCircleOverlappingPolygon(12, 5, 3, square, pushed) && near(pushed.normalX, 1) && near(pushed.depth, 1),
+			"A circle on a polygon's edge: out of it");
+		check(Collide2D.isCircleOverlappingPolygon(3, 5, 1, arrow, pushed) && Collide2D.isCircleOverlappingPolygon(5, 5, 1, arrow, pushed),
+			"A concave polygon: its notch's edges, and inside it");
+		check(Collide2D.isCircleOverlappingPolygon(8, 5, 1, square, pushed)
+			&& near(pushed.normalX, 1)
+			&& near(pushed.depth, 3)
+			&& near(pushed.x, 10),
+			"Inside: out across the nearest edge");
+		check(Collide2D.isRectOverlappingPolygon(0, 0, 10, 10, diamond)
+			&& !Collide2D.isRectOverlappingPolygon(0, 0, 10, 10, [20., 0, 30, 0, 25, 10]),
+			"A rectangle and a polygon");
 
 		// Segments and rays.
-		check(Collide2D.segmentSegment(0, 0, 10, 10, 0, 10, 10, 0, hit) && near(hit.time, .5) && near(hit.x, 5) && near(hit.y, 5),
+		check(Collide2D.isSegmentCrossingSegment(0, 0, 10, 10, 0, 10, 10, 0, hit)
+			&& near(hit.time, .5)
+			&& near(hit.x, 5)
+			&& near(hit.y, 5),
 			"Crossing segments, where along the first");
 		check(near(hit.normalX, -Math.sqrt(.5)) && near(hit.normalY, -Math.sqrt(.5)), "The crossed segment's normal faces the first's start");
-		check(!Collide2D.segmentSegment(0, 0, 10, 0, 0, 1, 10, 1) && !Collide2D.segmentSegment(0, 0, 10, 0, 5, 0, 5, 10),
+		check(!Collide2D.isSegmentCrossingSegment(0, 0, 10, 0, 0, 1, 10, 1)
+			&& !Collide2D.isSegmentCrossingSegment(0, 0, 10, 0, 5, 0, 5, 10),
 			"Parallel, or only touching: no crossing");
-		check(Collide2D.rayRect(-5, 5, 20, 0, 0, 0, 10, 10, hit)
+		check(Collide2D.isRayHittingRect(-5, 5, 20, 0, 0, 0, 10, 10, hit)
 			&& near(hit.time, .25)
 			&& near(hit.x, 0)
 			&& near(hit.y, 5)
 			&& hit.normalX == -1
 			&& hit.normalY == 0,
 			"A ray meets a rectangle's left side with its normal");
-		check(Collide2D.rayRect(5, 20, 0, -30, 0, 0, 10, 10, hit)
+		check(Collide2D.isRayHittingRect(5, 20, 0, -30, 0, 0, 10, 10, hit)
 			&& near(hit.time, 1 / 3)
 			&& hit.normalY == 1, "from below, the bottom's normal");
-		check(!Collide2D.rayRect(-5, 15, 20, 0, 0, 0, 10, 10, hit)
-			&& !Collide2D.rayRect(-5, 5, 2, 0, 0, 0, 10, 10, hit), "A miss, and a ray too short");
-		check(Collide2D.rayRect(5, 5, 20, 0, 0, 0, 10, 10, hit) && hit.time == 0 && hit.normalX == 0, "From inside: time 0, no normal");
-		check(Collide2D.rayCircle(-10, 0, 20, 0, 0, 0, 5, hit) && near(hit.time, .25) && near(hit.x, -5) && near(hit.normalX, -1),
+		check(!Collide2D.isRayHittingRect(-5, 15, 20, 0, 0, 0, 10, 10, hit) && !Collide2D.isRayHittingRect(-5, 5, 2, 0, 0, 0, 10, 10, hit),
+			"A miss, and a ray too short");
+		check(Collide2D.isRayHittingRect(5, 5, 20, 0, 0, 0, 10, 10, hit)
+			&& hit.time == 0
+			&& hit.normalX == 0, "From inside: time 0, no normal");
+		check(Collide2D.isRayHittingCircle(-10, 0, 20, 0, 0, 0, 5, hit)
+			&& near(hit.time, .25)
+			&& near(hit.x, -5)
+			&& near(hit.normalX, -1),
 			"A ray meets a circle with its normal");
-		check(!Collide2D.rayCircle(-10, 6, 20, 0, 0, 0, 5, hit)
-			&& !Collide2D.rayCircle(-10, 0, 4, 0, 0, 0, 5, hit), "A miss, and too short");
-		check(Collide2D.rayCircle(1, 1, 20, 0, 0, 0, 5, hit) && hit.time == 0, "From inside: time 0");
+		check(!Collide2D.isRayHittingCircle(-10, 6, 20, 0, 0, 0, 5, hit)
+			&& !Collide2D.isRayHittingCircle(-10, 0, 4, 0, 0, 0, 5, hit), "A miss, and too short");
+		check(Collide2D.isRayHittingCircle(1, 1, 20, 0, 0, 0, 5, hit) && hit.time == 0, "From inside: time 0");
 
 		// Sweeps.
-		check(Collide2D.sweepRectRect(0, 0, 4, 4, 20, 0, 10, 0, 4, 4, hit)
+		check(Collide2D.isSweptRectHittingRect(0, 0, 4, 4, 20, 0, 10, 0, 4, 4, hit)
 			&& near(hit.time, .3)
 			&& near(hit.x, 6)
 			&& hit.normalX == -1,
 			"A rectangle swept into another stops at its side");
-		check(!Collide2D.sweepRectRect(0, 0, 4, 4, 20, 0, 10, 5, 4, 4, hit)
-			&& Collide2D.sweepRectRect(0, 0, 4, 4, 20, 0, 2, 2, 4, 4, hit)
+		check(!Collide2D.isSweptRectHittingRect(0, 0, 4, 4, 20, 0, 10, 5, 4, 4, hit)
+			&& Collide2D.isSweptRectHittingRect(0, 0, 4, 4, 20, 0, 2, 2, 4, 4, hit)
 			&& hit.time == 0,
 			"A sweep that misses, and one already overlapping");
-		check(Collide2D.sweepCircleCircle(0, 0, 2, 20, 0, 10, 0, 3, hit) && near(hit.time, .25) && near(hit.x, 5),
+		check(Collide2D.isSweptCircleHittingCircle(0, 0, 2, 20, 0, 10, 0, 3, hit) && near(hit.time, .25) && near(hit.x, 5),
 			"Circles swept together meet at their radii");
 
 		// Move and slide over tiles: a floor at row 2 (y 20 to 30), a wall at column 5 (x 50 to 60).

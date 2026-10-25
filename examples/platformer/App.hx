@@ -30,7 +30,7 @@ import helix.time.Time;
 	  low hops in step with its speed, stretched rising and rounder falling, breathing and blinking while it stands
 	- a CameraFollow2D following where it's drawn, moving the view's camera: a dead zone, catching up smoothly, kept inside the level;
 	  shaken by a hard landing, a bumped head and a gear collected, K for a big one
-	- gears spinning (Sprite2D.setFrame), collected by touching them (Collide2D.rectCircle)
+	- gears spinning (Sprite2D.setFrame), collected by touching them (Collide2D.isCircleOverlappingRect)
 	- a save (helix.asset.Saves, "platformer.json"): the gears collected and where the player stood, written at each gear and read at the
 	  start, so a visit goes on where the last left off; R starts again, removing it
 	The arrows or A and D move, Space, Up, W or Z jump. Escape quits where quitting means anything. */
@@ -207,7 +207,7 @@ class App extends helix.App {
 			follow.shake(.8);
 		var i = gears.length;
 		while (i-- > 0)
-			if (Collide2D.rectCircle(player.x, player.y, player.width, player.height, gears[i].x, gears[i].y, .4)) {
+			if (Collide2D.isCircleOverlappingRect(gears[i].x, gears[i].y, .4, player.x, player.y, player.width, player.height)) {
 				gears.splice(i, 1);
 				collected++;
 				follow.shake(.15);

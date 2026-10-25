@@ -171,6 +171,8 @@ var visible(default, null):Bool
 var points(default, null):Array<Float>
 var gid(default, null):Int
 var properties(default, null):TiledProperties2D
+var closed(get, never):Bool
+function computePoints(?out:Array<Float>):Array<Float>
 ```
 
 - `id`: Its id, unique in its map.
@@ -186,6 +188,8 @@ var properties(default, null):TiledProperties2D
 - `points`: A polygon's or a polyline's points relative to x, y, x and y in turn; empty for the other shapes.
 - `gid`: A tile object's global id, flip bits and all (TiledMap2D.GID_MASK takes them off); 0 for the other shapes.
 - `properties`: Its custom properties.
+- `closed`: Whether its outline (computePoints) is closed: true for every shape but a polyline (and a point, a single point).
+- `computePoints`: Its outline as points in the map's pixels, x and y in turn, turned by its rotation: ready to collide against (Collide2D) or draw (Drawing2D.polyline, polygonLines), with no sums of the game's own. A rectangle, a tile and a text give their four corners, a polygon and a polyline their points, an ellipse 16 points round it, and a point itself. Map pixels are the TiledInstance2D's own units, so with the instance placed elsewhere, add its position; an object layer's offset isn't in them. Fills out (resized) and returns it when given (nothing allocated), else a new array.
 
 ## TiledProperties2D
 

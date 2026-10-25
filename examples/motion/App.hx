@@ -175,7 +175,7 @@ class App extends helix.App {
 			spark.node.setPosition(floorX + spark.x, floorY - FLOOR_Y + spark.y);
 			spark.node.color = Color.withAlpha(spark.color, Math.round(spark.alpha * 255));
 			// On the floor: a circle against the floor's rectangle.
-			if (Collide2D.rectCircle(floorX, floorY, FLOOR_WIDTH, 6, spark.node.x, spark.node.y, 5))
+			if (Collide2D.isCircleOverlappingRect(spark.node.x, spark.node.y, 5, floorX, floorY, FLOOR_WIDTH, 6))
 				caught++;
 		}
 

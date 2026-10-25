@@ -107,7 +107,7 @@ class App extends helix.App {
 		var i = coins.length;
 		while (i-- > 0) {
 			var coin = coins[i], r = coin.width / 2;
-			if (coin.visible && Collide2D.pointInCircle(x, y, coin.x, coin.y - r, r))
+			if (coin.visible && Collide2D.isPointInCircle(x, y, coin.x, coin.y - r, r))
 				return coin;
 		}
 		return null;

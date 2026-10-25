@@ -162,11 +162,11 @@ Browsers start sound only after the player's first click or key.
 ```haxe
 import helix.collision.Collide2D;
 
-if (Collide2D.circleCircle(px, py, 12, cx, cy, 8)) collect();
-if (Collide2D.rectRect(ax, ay, aw, ah, bx, by, bw, bh)) hit();
+if (Collide2D.isCircleOverlappingCircle(px, py, 12, cx, cy, 8)) collect();
+if (Collide2D.isRectOverlappingRect(ax, ay, aw, ah, bx, by, bw, bh)) hit();
 ```
 
-Also `rectCircle`, `pointInRect`, `pointInCircle`, `polygonPolygon`, rays and sweeps. For a platformer on tiles, `helix.collision.Body2D`
+Also `isCircleOverlappingRect`, `isCircleOverlappingSegment`, `isCircleOverlappingPolygon` (each with a `Hit2D` saying how to push the circle out), `isPointInRect`, `isPointInCircle`, `isPolygonOverlappingPolygon`, rays and sweeps. For a platformer on tiles, `helix.collision.Body2D`
 (gravity, `step(dt, tileSize, solid)`, `grounded`) and `Collide2D.moveAndSlide`.
 
 ## Timers, tweens, random
@@ -274,7 +274,9 @@ TiledMap2D.load("level.tmj", map -> {           // Tiled's JSON map (.tmj), tile
 });
 ```
 
-Objects have `name`, `className`, `x`, `y`, `width`, `height` and `properties` (`getString`, `getFloat`, ...). Animated tiles play by
+Objects have `name`, `className`, `x`, `y`, `width`, `height` and `properties` (`getString`, `getFloat`, ...). `computePoints()` gives an
+object's outline in the map's pixels, turned as in Tiled (a rectangle's corners, a polygon's or polyline's points; `closed` says which),
+for walls to collide against. Animated tiles play by
 themselves; `setTile` changes a cell.
 
 ## Your own files, read again as you save them

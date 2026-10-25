@@ -1,41 +1,102 @@
 package helix.collision;
 
-/** 2D collision tests in floats, the same on every target (sums, products and square roots round alike everywhere; nothing transcendental):
-	overlaps of rectangles (x, y the top-left, width and height), circles and convex polygons (points as flat x, y pairs, in either winding);
-	points inside them; segments and rays against them, with where and the normal (Hit2D); sweeps, a shape moved by dx, dy until it meets
-	another; and a box moved and slid over a grid of solid tiles (Move2D). Touching edges don't overlap. Polygon tests are the separating axis
-	theorem, so a concave polygon is split into convex ones first. A SpatialHash2D narrows which pairs to test. */
+/** 2D collision tests on plain numbers: rectangles (x, y the top-left, then width and height), circles, segments, rays and polygons
+	(points as x, y pairs in either winding). Each says what it answers: isCircleOverlappingRect, isSegmentCrossingSegment, isPointInRect,
+	isRayHittingCircle. The first shape is the one a Hit2D says how to move.
+
+	Shapes overlap when they share some area; shapes that only touch, edge to edge, don't. A box resting on a floor or standing in a grid
+	of tiles isn't overlapping its neighbors. A point on a rectangle's left or top edge is in it, and on its right or bottom edge isn't, so
+	a point on a shared edge is in one tile.
+
+	A test given a Hit2D fills it: for an overlap, the way to move the first shape out (normal), how far (depth) and the second's point
+	nearest it; for a ray or a sweep, where along it (time), the point and the surface's normal. The tests are in floats with nothing
+	transcendental, so they give the same answers on every target. Polygon against polygon needs convex ones (split a concave one first);
+	a circle against a polygon takes any that doesn't cross itself. moveAndSlide moves a box over a grid of solid tiles; a SpatialHash2D
+	narrows which pairs to test. */
 class Collide2D {
 	/** Whether two rectangles overlap. */
-	public static function rectRect(ax:Float, ay:Float, aw:Float, ah:Float, bx:Float, by:Float, bw:Float, bh:Float):Bool
+	public static function isRectOverlappingRect(ax:Float, ay:Float, aw:Float, ah:Float, bx:Float, by:Float, bw:Float, bh:Float):Bool
 		return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 
-	/** Whether two circles overlap. */
-	public static function circleCircle(ax:Float, ay:Float, ar:Float, bx:Float, by:Float, br:Float):Bool {
-		var dx = bx - ax, dy = by - ay, r = ar + br;
-		return dx * dx + dy * dy < r * r;
+	/** Whether circle a and circle b overlap. With hit: its normal is the way to move a out of b, depth how far, and x, y the point of b
+		nearest a's center (a's center on b's: moved up). */
+	public static function isCircleOverlappingCircle(ax:Float, ay:Float, ar:Float, bx:Float, by:Float, br:Float, ?hit:Hit2D):Bool {
+		var dx = ax - bx, dy = ay - by, r = ar + br, d2 = dx * dx + dy * dy;
+		if (d2 >= r * r)
+			return false;
+		if (hit != null) {
+			var d = Math.sqrt(d2),
+				nx = d > 0 ? dx / d : 0.,
+				ny = d > 0 ? dy / d : -1.;
+			fill(hit, bx + nx * br, by + ny * br, nx, ny, r - d);
+		}
+		return true;
 	}
 
-	/** Whether a rectangle and a circle overlap. */
-	public static function rectCircle(rx:Float, ry:Float, rw:Float, rh:Float, cx:Float, cy:Float, r:Float):Bool {
+	/** Whether the circle and the rectangle overlap. With hit: its normal is the way to move the circle out of the rectangle, depth how far,
+		and x, y the rectangle's point nearest the circle's center (with the center inside, the nearest edge's, the move out across it). */
+	public static function isCircleOverlappingRect(cx:Float, cy:Float, r:Float, rx:Float, ry:Float, rw:Float, rh:Float, ?hit:Hit2D):Bool {
 		var nx = cx < rx ? rx : cx > rx + rw ? rx + rw : cx,
 			ny = cy < ry ? ry : cy > ry + rh ? ry + rh : cy;
-		var dx = cx - nx, dy = cy - ny;
-		return dx * dx + dy * dy < r * r;
+		var dx = cx - nx, dy = cy - ny, d2 = dx * dx + dy * dy;
+		var inside = cx > rx && cx < rx + rw && cy > ry && cy < ry + rh;
+		if (!inside && d2 >= r * r)
+			return false;
+		if (hit != null) {
+			if (!inside) {
+				var d = Math.sqrt(d2);
+				fill(hit, nx, ny, dx / d, dy / d, r - d);
+			} else {
+				// The nearest edge: out across it.
+				var left = cx - rx, right = rx + rw - cx, top = cy - ry, bottom = ry + rh - cy;
+				var least = Math.min(Math.min(left, right), Math.min(top, bottom));
+				if (least == left)
+					fill(hit, rx, cy, -1, 0, left + r);
+				else if (least == right)
+					fill(hit, rx + rw, cy, 1, 0, right + r);
+				else if (least == top)
+					fill(hit, cx, ry, 0, -1, top + r);
+				else
+					fill(hit, cx, ry + rh, 0, 1, bottom + r);
+			}
+		}
+		return true;
+	}
+
+	/** Whether the circle and the segment from ax, ay to bx, by overlap (a wall, a polyline's piece). With hit: its normal is the way to move
+		the circle off the segment, depth how far, and x, y the segment's point nearest the circle's center (on it: moved off to the
+		segment's left, as it runs). */
+	public static function isCircleOverlappingSegment(cx:Float, cy:Float, r:Float, ax:Float, ay:Float, bx:Float, by:Float, ?hit:Hit2D):Bool {
+		var ex = bx - ax, ey = by - ay, len2 = ex * ex + ey * ey;
+		var t = len2 == 0 ? 0 : ((cx - ax) * ex + (cy - ay) * ey) / len2;
+		t = t < 0 ? 0 : t > 1 ? 1 : t;
+		var qx = ax + ex * t, qy = ay + ey * t, dx = cx - qx, dy = cy - qy, d2 = dx * dx + dy * dy;
+		if (d2 >= r * r)
+			return false;
+		if (hit != null) {
+			var d = Math.sqrt(d2);
+			if (d > 0)
+				fill(hit, qx, qy, dx / d, dy / d, r - d);
+			else {
+				var len = Math.sqrt(len2);
+				fill(hit, qx, qy, len > 0 ? ey / len : 0, len > 0 ? -ex / len : -1, r);
+			}
+		}
+		return true;
 	}
 
 	/** Whether the point is inside the rectangle (on its left or top edge counts, its right or bottom doesn't). */
-	public static function pointInRect(px:Float, py:Float, rx:Float, ry:Float, rw:Float, rh:Float):Bool
+	public static function isPointInRect(px:Float, py:Float, rx:Float, ry:Float, rw:Float, rh:Float):Bool
 		return px >= rx && px < rx + rw && py >= ry && py < ry + rh;
 
 	/** Whether the point is inside the circle. */
-	public static function pointInCircle(px:Float, py:Float, cx:Float, cy:Float, r:Float):Bool {
+	public static function isPointInCircle(px:Float, py:Float, cx:Float, cy:Float, r:Float):Bool {
 		var dx = px - cx, dy = py - cy;
 		return dx * dx + dy * dy < r * r;
 	}
 
 	/** Whether the point is inside the polygon (convex or not, by crossings). */
-	public static function pointInPolygon(px:Float, py:Float, points:Array<Float>):Bool {
+	public static function isPointInPolygon(px:Float, py:Float, points:Array<Float>):Bool {
 		var n = points.length >> 1, inside = false, j = n - 1;
 		for (i in 0...n) {
 			var xi = points[i * 2],
@@ -51,7 +112,7 @@ class Collide2D {
 
 	/** Whether two convex polygons overlap (the separating axis theorem). With hit, its normal is the way to move a out of b by its depth, the
 		least such move. */
-	public static function polygonPolygon(a:Array<Float>, b:Array<Float>, ?hit:Hit2D):Bool {
+	public static function isPolygonOverlappingPolygon(a:Array<Float>, b:Array<Float>, ?hit:Hit2D):Bool {
 		var least = Math.POSITIVE_INFINITY, nx = 0., ny = 0.;
 		for (pass in 0...2) {
 			var edges = pass == 0 ? a : b, n = edges.length >> 1;
@@ -108,22 +169,68 @@ class Collide2D {
 		return true;
 	}
 
-	/** Whether a convex polygon and a circle overlap. */
-	public static function polygonCircle(points:Array<Float>, cx:Float, cy:Float, r:Float):Bool {
-		if (pointInPolygon(cx, cy, points))
-			return true;
-		var n = points.length >> 1;
+	/** Whether the circle and the polygon overlap (convex or not, as long as its edges don't cross). With hit: its normal is the way to move
+		the circle out of the polygon, depth how far, and x, y the polygon's edge point nearest the circle's center (with the center inside,
+		the move out across that edge). */
+	public static function isCircleOverlappingPolygon(cx:Float, cy:Float, r:Float, points:Array<Float>, ?hit:Hit2D):Bool {
+		var inside = isPointInPolygon(cx, cy, points);
+		// The edge point nearest the center.
+		var n = points.length >> 1, best = Math.POSITIVE_INFINITY, qx = 0., qy = 0., ex = 0., ey = 0.;
 		for (i in 0...n) {
-			var j = (i + 1) % n;
-			if (segmentDistanceSquared(points[i * 2], points[i * 2 + 1], points[j * 2], points[j * 2 + 1], cx, cy) < r * r)
-				return true;
+			var j = (i + 1) % n,
+				ax = points[i * 2],
+				ay = points[i * 2 + 1],
+				bx = points[j * 2],
+				by = points[j * 2 + 1];
+			var sx = bx - ax, sy = by - ay, len2 = sx * sx + sy * sy;
+			var t = len2 == 0 ? 0 : ((cx - ax) * sx + (cy - ay) * sy) / len2;
+			t = t < 0 ? 0 : t > 1 ? 1 : t;
+			var px = ax + sx * t,
+				py = ay + sy * t,
+				d2 = (cx - px) * (cx - px) + (cy - py) * (cy - py);
+			if (d2 < best) {
+				best = d2;
+				qx = px;
+				qy = py;
+				ex = sx;
+				ey = sy;
+			}
 		}
-		return false;
+		if (!inside && best >= r * r)
+			return false;
+		if (hit != null && n > 0) {
+			var d = Math.sqrt(best);
+			if (d > 0)
+				// Outside, away from the edge; inside, toward it and across.
+				fill(hit, qx, qy, (inside ? qx - cx : cx - qx) / d, (inside ? qy - cy : cy - qy) / d, inside ? r + d : r - d);
+			else {
+				// On the edge: its normal that points out of the polygon.
+				var len = Math.sqrt(ex * ex + ey * ey),
+					nx = len > 0 ? ey / len : 0.,
+					ny = len > 0 ? -ex / len : -1.;
+				if (isPointInPolygon(qx + nx * 1e-6, qy + ny * 1e-6, points)) {
+					nx = -nx;
+					ny = -ny;
+				}
+				fill(hit, qx, qy, nx, ny, r);
+			}
+		}
+		return true;
+	}
+
+	// hit filled with a point, a normal and a depth, its time 0.
+	static function fill(hit:Hit2D, x:Float, y:Float, normalX:Float, normalY:Float, depth:Float):Void {
+		hit.reset();
+		hit.x = x;
+		hit.y = y;
+		hit.normalX = normalX;
+		hit.normalY = normalY;
+		hit.depth = depth;
 	}
 
 	/** Whether a rectangle and a convex polygon overlap. */
-	public static function rectPolygon(rx:Float, ry:Float, rw:Float, rh:Float, points:Array<Float>, ?hit:Hit2D):Bool
-		return polygonPolygon([rx, ry, rx + rw, ry, rx + rw, ry + rh, rx, ry + rh], points, hit);
+	public static function isRectOverlappingPolygon(rx:Float, ry:Float, rw:Float, rh:Float, points:Array<Float>, ?hit:Hit2D):Bool
+		return isPolygonOverlappingPolygon([rx, ry, rx + rw, ry, rx + rw, ry + rh, rx, ry + rh], points, hit);
 
 	/** The square of the distance from a point to a segment. */
 	public static function segmentDistanceSquared(ax:Float, ay:Float, bx:Float, by:Float, px:Float, py:Float):Float {
@@ -136,7 +243,7 @@ class Collide2D {
 
 	/** Whether segment a to b crosses segment c to d (not when they only touch or lie along each other); with hit, where along a to b (time)
 		and the point. */
-	public static function segmentSegment(ax:Float, ay:Float, bx:Float, by:Float, cx:Float, cy:Float, dx:Float, dy:Float, ?hit:Hit2D):Bool {
+	public static function isSegmentCrossingSegment(ax:Float, ay:Float, bx:Float, by:Float, cx:Float, cy:Float, dx:Float, dy:Float, ?hit:Hit2D):Bool {
 		var rx = bx - ax, ry = by - ay, sx = dx - cx, sy = dy - cy;
 		var cross = rx * sy - ry * sx;
 		if (cross == 0)
@@ -165,7 +272,7 @@ class Collide2D {
 
 	/** Whether the ray from ox, oy along dx, dy (its whole length: time 1 is its end) meets the rectangle: into hit the time, point and
 		normal (0, 0 and time 0 from inside). */
-	public static function rayRect(ox:Float, oy:Float, dx:Float, dy:Float, rx:Float, ry:Float, rw:Float, rh:Float, hit:Hit2D):Bool {
+	public static function isRayHittingRect(ox:Float, oy:Float, dx:Float, dy:Float, rx:Float, ry:Float, rw:Float, rh:Float, hit:Hit2D):Bool {
 		var tMin = 0., tMax = 1., nx = 0., ny = 0.;
 		for (axis in 0...2) {
 			var o = axis == 0 ? ox : oy,
@@ -205,7 +312,7 @@ class Collide2D {
 
 	/** Whether the ray from ox, oy along dx, dy (time 1 its end) meets the circle: into hit the time, point and normal (time 0 and no normal
 		from inside). */
-	public static function rayCircle(ox:Float, oy:Float, dx:Float, dy:Float, cx:Float, cy:Float, r:Float, hit:Hit2D):Bool {
+	public static function isRayHittingCircle(ox:Float, oy:Float, dx:Float, dy:Float, cx:Float, cy:Float, r:Float, hit:Hit2D):Bool {
 		var fx = ox - cx, fy = oy - cy;
 		if (fx * fx + fy * fy < r * r) {
 			hit.reset();
@@ -234,20 +341,21 @@ class Collide2D {
 
 	/** Whether rectangle a, moved by dx, dy, meets rectangle b on the way: into hit the time of the meeting, a's top-left then, and the normal
 		(a already overlapping b: time 0, no normal). */
-	public static function sweepRectRect(ax:Float, ay:Float, aw:Float, ah:Float, dx:Float, dy:Float, bx:Float, by:Float, bw:Float, bh:Float, hit:Hit2D):Bool {
-		if (rectRect(ax, ay, aw, ah, bx, by, bw, bh)) {
+	public static function isSweptRectHittingRect(ax:Float, ay:Float, aw:Float, ah:Float, dx:Float, dy:Float, bx:Float, by:Float, bw:Float, bh:Float,
+			hit:Hit2D):Bool {
+		if (isRectOverlappingRect(ax, ay, aw, ah, bx, by, bw, bh)) {
 			hit.reset();
 			hit.x = ax;
 			hit.y = ay;
 			return true;
 		}
 		// a's corner as a ray against b grown by a's size (their Minkowski sum).
-		return rayRect(ax, ay, dx, dy, bx - aw, by - ah, bw + aw, bh + ah, hit);
+		return isRayHittingRect(ax, ay, dx, dy, bx - aw, by - ah, bw + aw, bh + ah, hit);
 	}
 
 	/** Whether circle a, moved by dx, dy, meets circle b on the way: into hit the time, a's center then, and the normal. */
-	public static function sweepCircleCircle(ax:Float, ay:Float, ar:Float, dx:Float, dy:Float, bx:Float, by:Float, br:Float, hit:Hit2D):Bool
-		return rayCircle(ax, ay, dx, dy, bx, by, ar + br, hit);
+	public static function isSweptCircleHittingCircle(ax:Float, ay:Float, ar:Float, dx:Float, dy:Float, bx:Float, by:Float, br:Float, hit:Hit2D):Bool
+		return isRayHittingCircle(ax, ay, dx, dy, bx, by, ar + br, hit);
 
 	/** Moves the box at x, y (its top-left), width by height, by dx, dy over a grid of tiles of tileSize, each solid or not by solid(column,
 		row), sliding along what it meets: first across, stopped at a solid tile's side, then down or up the same; into out the place it ended and

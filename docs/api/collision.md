@@ -62,42 +62,44 @@ function step(dt:Float, tileSize:Float, solid:(Int, Int) -> Bool):Void
 
 *class* in [`src/helix/collision/Collide2D.hx`](../../src/helix/collision/Collide2D.hx), `import helix.collision.Collide2D;`
 
-2D collision tests in floats, the same on every target (sums, products and square roots round alike everywhere; nothing transcendental): overlaps of rectangles (x, y the top-left, width and height), circles and convex polygons (points as flat x, y pairs, in either winding); points inside them; segments and rays against them, with where and the normal (Hit2D); sweeps, a shape moved by dx, dy until it meets another; and a box moved and slid over a grid of solid tiles (Move2D). Touching edges don't overlap. Polygon tests are the separating axis theorem, so a concave polygon is split into convex ones first. A SpatialHash2D narrows which pairs to test.
+2D collision tests on plain numbers: rectangles (x, y the top-left, then width and height), circles, segments, rays and polygons (points as x, y pairs in either winding). Each says what it answers: isCircleOverlappingRect, isSegmentCrossingSegment, isPointInRect, isRayHittingCircle. The first shape is the one a Hit2D says how to move. Shapes overlap when they share some area; shapes that only touch, edge to edge, don't. A box resting on a floor or standing in a grid of tiles isn't overlapping its neighbors. A point on a rectangle's left or top edge is in it, and on its right or bottom edge isn't, so a point on a shared edge is in one tile. A test given a Hit2D fills it: for an overlap, the way to move the first shape out (normal), how far (depth) and the second's point nearest it; for a ray or a sweep, where along it (time), the point and the surface's normal. The tests are in floats with nothing transcendental, so they give the same answers on every target. Polygon against polygon needs convex ones (split a concave one first); a circle against a polygon takes any that doesn't cross itself. moveAndSlide moves a box over a grid of solid tiles; a SpatialHash2D narrows which pairs to test.
 
 ```haxe
-static function rectRect(ax:Float, ay:Float, aw:Float, ah:Float, bx:Float, by:Float, bw:Float, bh:Float):Bool
-static function circleCircle(ax:Float, ay:Float, ar:Float, bx:Float, by:Float, br:Float):Bool
-static function rectCircle(rx:Float, ry:Float, rw:Float, rh:Float, cx:Float, cy:Float, r:Float):Bool
-static function pointInRect(px:Float, py:Float, rx:Float, ry:Float, rw:Float, rh:Float):Bool
-static function pointInCircle(px:Float, py:Float, cx:Float, cy:Float, r:Float):Bool
-static function pointInPolygon(px:Float, py:Float, points:Array<Float>):Bool
-static function polygonPolygon(a:Array<Float>, b:Array<Float>, ?hit:Hit2D):Bool
-static function polygonCircle(points:Array<Float>, cx:Float, cy:Float, r:Float):Bool
-static function rectPolygon(rx:Float, ry:Float, rw:Float, rh:Float, points:Array<Float>, ?hit:Hit2D):Bool
+static function isRectOverlappingRect(ax:Float, ay:Float, aw:Float, ah:Float, bx:Float, by:Float, bw:Float, bh:Float):Bool
+static function isCircleOverlappingCircle(ax:Float, ay:Float, ar:Float, bx:Float, by:Float, br:Float, ?hit:Hit2D):Bool
+static function isCircleOverlappingRect(cx:Float, cy:Float, r:Float, rx:Float, ry:Float, rw:Float, rh:Float, ?hit:Hit2D):Bool
+static function isCircleOverlappingSegment(cx:Float, cy:Float, r:Float, ax:Float, ay:Float, bx:Float, by:Float, ?hit:Hit2D):Bool
+static function isPointInRect(px:Float, py:Float, rx:Float, ry:Float, rw:Float, rh:Float):Bool
+static function isPointInCircle(px:Float, py:Float, cx:Float, cy:Float, r:Float):Bool
+static function isPointInPolygon(px:Float, py:Float, points:Array<Float>):Bool
+static function isPolygonOverlappingPolygon(a:Array<Float>, b:Array<Float>, ?hit:Hit2D):Bool
+static function isCircleOverlappingPolygon(cx:Float, cy:Float, r:Float, points:Array<Float>, ?hit:Hit2D):Bool
+static function isRectOverlappingPolygon(rx:Float, ry:Float, rw:Float, rh:Float, points:Array<Float>, ?hit:Hit2D):Bool
 static function segmentDistanceSquared(ax:Float, ay:Float, bx:Float, by:Float, px:Float, py:Float):Float
-static function segmentSegment(ax:Float, ay:Float, bx:Float, by:Float, cx:Float, cy:Float, dx:Float, dy:Float, ?hit:Hit2D):Bool
-static function rayRect(ox:Float, oy:Float, dx:Float, dy:Float, rx:Float, ry:Float, rw:Float, rh:Float, hit:Hit2D):Bool
-static function rayCircle(ox:Float, oy:Float, dx:Float, dy:Float, cx:Float, cy:Float, r:Float, hit:Hit2D):Bool
-static function sweepRectRect(ax:Float, ay:Float, aw:Float, ah:Float, dx:Float, dy:Float, bx:Float, by:Float, bw:Float, bh:Float, hit:Hit2D):Bool
-static function sweepCircleCircle(ax:Float, ay:Float, ar:Float, dx:Float, dy:Float, bx:Float, by:Float, br:Float, hit:Hit2D):Bool
+static function isSegmentCrossingSegment(ax:Float, ay:Float, bx:Float, by:Float, cx:Float, cy:Float, dx:Float, dy:Float, ?hit:Hit2D):Bool
+static function isRayHittingRect(ox:Float, oy:Float, dx:Float, dy:Float, rx:Float, ry:Float, rw:Float, rh:Float, hit:Hit2D):Bool
+static function isRayHittingCircle(ox:Float, oy:Float, dx:Float, dy:Float, cx:Float, cy:Float, r:Float, hit:Hit2D):Bool
+static function isSweptRectHittingRect(ax:Float, ay:Float, aw:Float, ah:Float, dx:Float, dy:Float, bx:Float, by:Float, bw:Float, bh:Float, hit:Hit2D):Bool
+static function isSweptCircleHittingCircle(ax:Float, ay:Float, ar:Float, dx:Float, dy:Float, bx:Float, by:Float, br:Float, hit:Hit2D):Bool
 static function moveAndSlide(x:Float, y:Float, width:Float, height:Float, dx:Float, dy:Float, tileSize:Float, solid:(Int, Int) -> Bool, out:Move2D):Move2D
 ```
 
-- `rectRect`: Whether two rectangles overlap.
-- `circleCircle`: Whether two circles overlap.
-- `rectCircle`: Whether a rectangle and a circle overlap.
-- `pointInRect`: Whether the point is inside the rectangle (on its left or top edge counts, its right or bottom doesn't).
-- `pointInCircle`: Whether the point is inside the circle.
-- `pointInPolygon`: Whether the point is inside the polygon (convex or not, by crossings).
-- `polygonPolygon`: Whether two convex polygons overlap (the separating axis theorem). With hit, its normal is the way to move a out of b by its depth, the least such move.
-- `polygonCircle`: Whether a convex polygon and a circle overlap.
-- `rectPolygon`: Whether a rectangle and a convex polygon overlap.
+- `isRectOverlappingRect`: Whether two rectangles overlap.
+- `isCircleOverlappingCircle`: Whether circle a and circle b overlap. With hit: its normal is the way to move a out of b, depth how far, and x, y the point of b nearest a's center (a's center on b's: moved up).
+- `isCircleOverlappingRect`: Whether the circle and the rectangle overlap. With hit: its normal is the way to move the circle out of the rectangle, depth how far, and x, y the rectangle's point nearest the circle's center (with the center inside, the nearest edge's, the move out across it).
+- `isCircleOverlappingSegment`: Whether the circle and the segment from ax, ay to bx, by overlap (a wall, a polyline's piece). With hit: its normal is the way to move the circle off the segment, depth how far, and x, y the segment's point nearest the circle's center (on it: moved off to the segment's left, as it runs).
+- `isPointInRect`: Whether the point is inside the rectangle (on its left or top edge counts, its right or bottom doesn't).
+- `isPointInCircle`: Whether the point is inside the circle.
+- `isPointInPolygon`: Whether the point is inside the polygon (convex or not, by crossings).
+- `isPolygonOverlappingPolygon`: Whether two convex polygons overlap (the separating axis theorem). With hit, its normal is the way to move a out of b by its depth, the least such move.
+- `isCircleOverlappingPolygon`: Whether the circle and the polygon overlap (convex or not, as long as its edges don't cross). With hit: its normal is the way to move the circle out of the polygon, depth how far, and x, y the polygon's edge point nearest the circle's center (with the center inside, the move out across that edge).
+- `isRectOverlappingPolygon`: Whether a rectangle and a convex polygon overlap.
 - `segmentDistanceSquared`: The square of the distance from a point to a segment.
-- `segmentSegment`: Whether segment a to b crosses segment c to d (not when they only touch or lie along each other); with hit, where along a to b (time) and the point.
-- `rayRect`: Whether the ray from ox, oy along dx, dy (its whole length: time 1 is its end) meets the rectangle: into hit the time, point and normal (0, 0 and time 0 from inside).
-- `rayCircle`: Whether the ray from ox, oy along dx, dy (time 1 its end) meets the circle: into hit the time, point and normal (time 0 and no normal from inside).
-- `sweepRectRect`: Whether rectangle a, moved by dx, dy, meets rectangle b on the way: into hit the time of the meeting, a's top-left then, and the normal (a already overlapping b: time 0, no normal).
-- `sweepCircleCircle`: Whether circle a, moved by dx, dy, meets circle b on the way: into hit the time, a's center then, and the normal.
+- `isSegmentCrossingSegment`: Whether segment a to b crosses segment c to d (not when they only touch or lie along each other); with hit, where along a to b (time) and the point.
+- `isRayHittingRect`: Whether the ray from ox, oy along dx, dy (its whole length: time 1 is its end) meets the rectangle: into hit the time, point and normal (0, 0 and time 0 from inside).
+- `isRayHittingCircle`: Whether the ray from ox, oy along dx, dy (time 1 its end) meets the circle: into hit the time, point and normal (time 0 and no normal from inside).
+- `isSweptRectHittingRect`: Whether rectangle a, moved by dx, dy, meets rectangle b on the way: into hit the time of the meeting, a's top-left then, and the normal (a already overlapping b: time 0, no normal).
+- `isSweptCircleHittingCircle`: Whether circle a, moved by dx, dy, meets circle b on the way: into hit the time, a's center then, and the normal.
 - `moveAndSlide`: Moves the box at x, y (its top-left), width by height, by dx, dy over a grid of tiles of tileSize, each solid or not by solid(column, row), sliding along what it meets: first across, stopped at a solid tile's side, then down or up the same; into out the place it ended and which sides met a solid. A box starting inside a solid tile is left where it is on that axis.
 
 ## Hit2D
