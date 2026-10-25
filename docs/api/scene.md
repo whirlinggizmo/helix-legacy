@@ -38,7 +38,7 @@ function run(x:Float, y:Float, target:Node2D, ?arrived:Int -> Void, ?done:() -> 
 
 *class* in [`src/helix/scene/Loader.hx`](../../src/helix/scene/Loader.hx), `import helix.scene.Loader;`
 
-A group of loads with one progress: a scene's files gathered so a loading screen shows how far they are (progress, from how many have ended) and the scene starts once they're done (done), with what failed by name (failures). Each load goes through the service it always did, its own lambdas kept (a failure with no failed lambda logged with its path, as the service would); the loader only counts. wrap counts any other load the game makes. Nothing here cancels: a scene that exits early cancels its own requests, and a cancelled load is never counted as ended.
+A group of loads with one progress: a scene's files gathered so a loading screen shows how far they are (progress, from how many have ended) and the scene starts once they're done (done), with what failed by name (failures). Each load goes through the service it always did, its own lambdas kept (a failure with no failed lambda logged with its path, as the service would); the loader only counts: loader.loadTexture(path, Linear, texture -> ...). countLoad counts any other load the game makes. Nothing here cancels: a scene that exits early cancels its own requests, and a cancelled load is never counted as ended.
 
 ```haxe
 function new()
@@ -47,13 +47,13 @@ var doneCount(get, never):Int
 var progress(get, never):Float
 var done(get, never):Bool
 var failures(get, never):Array<String>
-function wrap(name:String, complete:T -> Void, failed:T -> Null<String>):T -> Void
-function asset(path:String, loaded:haxe.io.Bytes -> Void, ?failed:String -> Void):IRequest
-function texture(path:String, filter:Filter, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
-function clip(path:String, loaded:AudioClip -> Void, ?failed:String -> Void):IRequest
-function stream(path:String, loaded:AudioStream -> Void, ?failed:String -> Void):IRequest
-function environment(path:String, loaded:EnvironmentMap3D -> Void, ?failed:String -> Void):IRequest
-function model(path:String, loaded:ModelFile3D -> Void, ?failed:String -> Void, ?models:ModelCache3D):IRequest
+function countLoad(name:String, complete:T -> Void, failed:T -> Null<String>):T -> Void
+function loadAsset(path:String, loaded:haxe.io.Bytes -> Void, ?failed:String -> Void):IRequest
+function loadTexture(path:String, filter:Filter, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
+function loadClip(path:String, loaded:AudioClip -> Void, ?failed:String -> Void):IRequest
+function loadStream(path:String, loaded:AudioStream -> Void, ?failed:String -> Void):IRequest
+function loadEnvironment(path:String, loaded:EnvironmentMap3D -> Void, ?failed:String -> Void):IRequest
+function loadModel(path:String, loaded:ModelFile3D -> Void, ?failed:String -> Void, ?models:ModelCache3D):IRequest
 ```
 
 - `new`: No loads yet: done, at progress 1.
@@ -62,13 +62,13 @@ function model(path:String, loaded:ModelFile3D -> Void, ?failed:String -> Void, 
 - `progress`: How far along, 0 to 1 (1 with nothing to load).
 - `done`: Whether every load has ended.
 - `failures`: What failed, each as its name and the reason.
-- `wrap`: Counts a load the game makes itself: wrap its completion, naming it; failed gives the reason for a result that failed, or null.
-- `asset`: An asset's bytes through Assets.
-- `texture`: A texture through Textures, filtered by filter (Linear smooth, with mipmaps; Nearest sharp, for pixel art).
-- `clip`: A sound clip through Audio.
-- `stream`: A sound stream through Audio.
-- `environment`: An environment through Environments3D (loaded once it's prepared).
-- `model`: A model file through Models3D (or models, a cache of a test's).
+- `countLoad`: Counts a load the game makes itself, named name: returns its completion to call with the result in place of complete, which it calls in turn; failed gives the reason for a result that failed, or null.
+- `loadAsset`: An asset's bytes through Assets.
+- `loadTexture`: A texture through Textures, filtered by filter (Linear smooth, with mipmaps; Nearest sharp, for pixel art).
+- `loadClip`: A sound clip through Audio.
+- `loadStream`: A sound stream through Audio.
+- `loadEnvironment`: An environment through Environments3D (loaded once it's prepared).
+- `loadModel`: A model file through Models3D (or models, a cache of a test's).
 
 ## Loading
 

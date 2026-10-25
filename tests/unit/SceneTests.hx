@@ -135,8 +135,8 @@ class SceneTests {
 
 		// The loading screen: shown until its loader is done, then off, then called.
 		var loader = new Loader();
-		loader.asset("a.txt", _ -> {});
-		loader.asset("b.txt", _ -> {});
+		loader.loadAsset("a.txt", _ -> {});
+		loader.loadAsset("b.txt", _ -> {});
 		var loading = new Loading(loader), started = false;
 		check(loading.show(() -> started = true) && loading.shown && !loading.show(() -> {}), "Shown, once");
 		frame(1 / 60);
@@ -236,7 +236,7 @@ class SceneTests {
 		var loader = new Loader();
 		check(loader.done && loader.progress == 1 && loader.count == 0, "An empty loader is done");
 		var got:Null<String> = null;
-		var complete = loader.wrap("thing", (v:Int) -> got = 'got $v', v -> v < 0 ? "negative" : null);
+		var complete = loader.countLoad("thing", (v:Int) -> got = 'got $v', v -> v < 0 ? "negative" : null);
 		check(!loader.done && loader.count == 1, "wrap counts a load");
 		complete(-1);
 		check(loader.done && got == "got -1" && loader.failures[0] == "thing: negative", "its completion runs and a failure is named");

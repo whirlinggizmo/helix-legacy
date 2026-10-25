@@ -232,8 +232,8 @@ class Play extends Page {
 		tiles.setPivot(.5, .5);
 		addChild(logo);
 		addChild(tiles);
-		loader.texture("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> logo.texture = texture);
-		loader.texture("textures/tiles.png", Nearest, texture -> tiles.texture = texture);
+		loader.loadTexture("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> logo.texture = texture);
+		loader.loadTexture("textures/tiles.png", Nearest, texture -> tiles.texture = texture);
 	}
 
 	/** dt seconds of play. */
