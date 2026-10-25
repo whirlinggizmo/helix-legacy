@@ -6,7 +6,7 @@
 
 *class* in [`src/helix/scene/Collect2D.hx`](../../src/helix/scene/Collect2D.hx), `import helix.scene.Collect2D;`
 
-Things collected flying to where they count: a chest's coins to the score, gems to a counter, hearts to the health bar. Sprites of a texture burst out from a point on the stage, scatter for a moment, then each curves in to a target node, one after another, a callback as each arrives (a ding, a score tick) and another once all have. It runs itself (run), on the frames' time as a Transition does, and takes itself off the stage when done; from a 3D world, the point is a View3D's project of where the chest is. In the stage's units.
+Things collected flying to where they count: a chest's coins to the score, gems to a counter, hearts to the health bar. Sprites of a texture burst out from a point on the stage, scatter for a moment, then each curves in to a target node, one after another, a callback as each arrives (a ding, a score tick) and another once all have. It runs itself (run), on the frames' time as a Transition does, and takes itself off the stage when done; from a 3D world, the point is a View3D's project of where the chest is (Collect3D flies them through the world instead). In the stage's units.
 
 ```haxe
 function new(texture:Texture2D, ?count:Int = 12)
@@ -34,11 +34,43 @@ function run(x:Float, y:Float, target:Node2D, ?arrived:Int -> Void, ?done:() -> 
 - `running`: Whether it's running now.
 - `run`: Bursts them from x, y (the stage's units) to target, each flying to where target's bounds' center is as it arrives (its position when it has none: a group), arrived (when given) called as each arrives with its index, done (when given) once all have. False, running nothing, while it's running already. With the run option quick=1, they arrive at once.
 
+## Collect3D
+
+*class* in [`src/helix/scene/Collect3D.hx`](../../src/helix/scene/Collect3D.hx), `import helix.scene.Collect3D;`
+
+Things collected flying to where they count, in a 3D world: a chest's coins to the player, gems to a pedestal. Sprites of a texture burst up and out from a point, scatter for a moment, then each arcs in to a target node, one after another, with a callback as each arrives (a ding, a score tick) and another once all have. It runs itself (run), on the frames' time as a Transition does, and takes its sprites out of the world when done. Positions and sizes are in world units of the tree the target is in. To fly to something on the stage (a counter on the HUD), use Collect2D from a View3D's project of the point instead.
+
+```haxe
+function new(texture:Texture2D, ?count:Int = 12)
+var texture(default, null):Texture2D
+var count(default, null):Int
+var size:Float
+var tint:Int
+var scatter:Float
+var scatterSeconds:Float
+var flySeconds:Float
+var stagger:Float
+var running(default, null):Bool
+function run(x:Float, y:Float, z:Float, target:Node3D, ?arrived:Int -> Void, ?done:() -> Void):Bool
+```
+
+- `new`: Sprites of texture, count of them (at least 1).
+- `texture`: Their texture.
+- `count`: How many fly.
+- `size`: Each sprite's size in world units, square: .25 by default.
+- `tint`: Their tint, 0xAARRGGBB: white (the texture as it is) by default.
+- `scatter`: How far they scatter from the point before they fly, in world units: 1 by default.
+- `scatterSeconds`: Seconds they scatter for: .35 by default.
+- `flySeconds`: Seconds each takes to fly in once it sets off: .6 by default.
+- `stagger`: Seconds between one setting off and the next: .05 by default.
+- `running`: Whether it's running now.
+- `run`: Bursts them from x, y, z to target and calls arrived (when given) with each one's index as it arrives, and done (when given) once all have. The point is in the units of the topmost node above target (the level the game puts in a View3D), and the sprites go under that node while they fly. Each flies to the center of target's bounds as it is when it arrives, or to target's position when it has no bounds (a group). Returns false, running nothing, while it's running already. With the run option quick=1, they arrive at once.
+
 ## Flow
 
 *class* in [`src/helix/scene/Flow.hx`](../../src/helix/scene/Flow.hx), `import helix.scene.Flow;`
 
-Runs a step once a frame until it says it's done, so a thing can run itself without the game updating it. Transitions, the loading and splash screens, Collect2D, particles and decals' fading all use it, and a game's own screen or effect can too. For example, a banner fading out over two seconds: `var left = 2.; Flow.run(dt -> { left -= dt; banner.alpha = Math.max(0, left / 2); return left > 0; });`. A step is called after the game's update and before the frame is drawn, with the frame's seconds. That's real time, not the game's clock, so it goes on while the game is paused; read Time.clock.delta in the step to stop with the game.
+Runs a step once a frame until it says it's done, so a thing can run itself without the game updating it. Transitions, the loading and splash screens, Collect2D and Collect3D, particles and decals' fading all use it, and a game's own screen or effect can too. For example, a banner fading out over two seconds: `var left = 2.; Flow.run(dt -> { left -= dt; banner.alpha = Math.max(0, left / 2); return left > 0; });`. A step is called after the game's update and before the frame is drawn, with the frame's seconds. That's real time, not the game's clock, so it goes on while the game is paused; read Time.clock.delta in the step to stop with the game.
 
 ```haxe
 static var quick(get, never):Bool

@@ -10,7 +10,7 @@ import helix.texture.Texture2D;
 /** Things collected flying to where they count: a chest's coins to the score, gems to a counter, hearts to the health bar. Sprites of a
 	texture burst out from a point on the stage, scatter for a moment, then each curves in to a target node, one after another, a callback
 	as each arrives (a ding, a score tick) and another once all have. It runs itself (run), on the frames' time as a Transition does, and
-	takes itself off the stage when done; from a 3D world, the point is a View3D's project of where the chest is. In the stage's units. */
+	takes itself off the stage when done; from a 3D world, the point is a View3D's project of where the chest is (Collect3D flies them through the world instead). In the stage's units. */
 class Collect2D {
 	/** Sprites of texture, count of them (at least 1), each texture's size unless sized (size). */
 	public function new(texture:Texture2D, count = 12) {

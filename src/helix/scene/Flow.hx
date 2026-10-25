@@ -1,7 +1,7 @@
 package helix.scene;
 
 /** Runs a step once a frame until it says it's done, so a thing can run itself without the game updating it. Transitions, the loading
-	and splash screens, Collect2D, particles and decals' fading all use it, and a game's own screen or effect can too. For example, a banner
+	and splash screens, Collect2D and Collect3D, particles and decals' fading all use it, and a game's own screen or effect can too. For example, a banner
 	fading out over two seconds: `var left = 2.; Flow.run(dt -> { left -= dt; banner.alpha = Math.max(0, left / 2); return left > 0; });`.
 	A step is called after the game's update and before the frame is drawn, with the frame's seconds. That's real time, not the game's
 	clock, so it goes on while the game is paused; read Time.clock.delta in the step to stop with the game. */

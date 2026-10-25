@@ -43,7 +43,8 @@ import helix.render3d.Orbit3D;
 	example's own sprite shader, shaders/heat.glsl (packed into an .hxshader asset and loaded at run time, new SpriteEffect(shader)), its
 	parameters set by name.
 	C collects: coins fly from the coin on the ground to the counter at the top right (helix.scene.Collect2D, from where View3D.project sees
-	the coin on the stage), the count rising as each lands. Dragging the pointer over the ground leaves a trail of decals (Decals3D: where its
+	the coin on the stage), the count rising as each lands. G gathers: sparks burst from the coin and arc through the world to the bobbing
+	logo (helix.scene.Collect3D), the logo flashing as each lands. Dragging the pointer over the ground leaves a trail of decals (Decals3D: where its
 	ray meets the ground, View3D.computeRay and Ray3D.hitHeight), each fading out after 4 seconds on the game's clock, and the oldest sooner
 	as the pool comes round to them. O stops the camera; Escape quits where quitting means anything. Options: autopilot (a script under assets/: the time and the camera are then
 	held, the stage's with it (Stage.heldTime), the window the autopilot's page's size, so its samples of the frame compare across targets)
@@ -57,6 +58,8 @@ class App extends helix.App {
 	var counter = new helix.render2d.Text2D("coins 0", 20, 0xffffd25a);
 	var coins = 0;
 	var flight:Null<helix.scene.Collect2D>;
+	// Sparks from the coin to the logo, through the world.
+	var sparks:Null<helix.scene.Collect3D>;
 	// The decals a drag leaves on the ground, and where the last went (NaN: none this drag).
 	var decals:Decals3D;
 	var ray = new Ray3D();
@@ -275,6 +278,8 @@ class App extends helix.App {
 				flash.trigger(0xffffffff, .4);
 			if (Input.isFramePressed(Key.C))
 				collect();
+			if (Input.isFramePressed(Key.G))
+				gather();
 			if (Input.pointerDown)
 				addDecal();
 			else
@@ -298,7 +303,7 @@ class App extends helix.App {
 		var y = vy + 36, title = "HeliX sprite3d: sprites facing the camera, upright, flat and free; masked, blended and added";
 		y += hud.drawTextWrapped(title, vx + 12, y, 18, vw - 24, 0xfff5f5f5) + 4;
 		var on = (value:Bool) -> value ? "on" : "off";
-		hud.drawTextWrapped('${view.drawnNodeCount} models and sprites in ${view.drawCallCount} draws   O: the camera  [1] outline ${on(outlined)}  [2] dissolve ${on(dissolving)}  [3] heat ${on(shimmering)}  [F] flash  [C] collect  [LMB] add decal',
+		hud.drawTextWrapped('${view.drawnNodeCount} models and sprites in ${view.drawCallCount} draws   O: the camera  [1] outline ${on(outlined)}  [2] dissolve ${on(dissolving)}  [3] heat ${on(shimmering)}  [F] flash  [C] collect  [G] gather  [LMB] add decal',
 			vx
 			+ 12, y, 16, vw
 			- 24, 0xffc8c8c8);
@@ -338,5 +343,14 @@ class App extends helix.App {
 			flight.tint = 0xffffd25a;
 		}
 		flight.run(seen.x, seen.y, counter, _ -> counter.text = 'coins ${++coins}');
+	}
+
+	// Sparks from the coin on the ground to the logo, in the world: each arcs to where the logo is as it lands, and flashes it.
+	function gather():Void {
+		if (sparks == null) {
+			sparks = new helix.scene.Collect3D(helix.particle.Emitter.getDot(), 10);
+			sparks.tint = 0xffffd25a;
+		}
+		sparks.run(-2, .1, 1.5, logo, _ -> flash.trigger(0xffffffff, .15));
 	}
 }

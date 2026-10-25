@@ -259,6 +259,31 @@ class SceneTests {
 		check(got.join(",") == "0,1,2,3,4" && finished && !coins.running && Stage.childCount == before, "All in, in turn: done, off the stage");
 		Stage.removeChild(score);
 
+		// In 3D: they burst from a point in the level's units (the level placed off the origin), go under the level while they fly, and arc
+		// in to the target (a group: its position) one after another.
+		var level3 = new helix.render3d.Node3D(),
+			chest = new helix.render3d.Node3D();
+		level3.setPosition(10, 0, 0);
+		chest.setPosition(0, 2, 0);
+		level3.addChild(chest);
+		var got3 = [], finished3 = false;
+		var gems = new helix.scene.Collect3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), Nearest, -1, -1, false,
+			new Render2DTests.CountingGraphics()), 3);
+		check(gems.run(0, 0, 5, chest, i -> got3.push(i), () -> finished3 = true) && !gems.run(0, 0, 0, chest), "3D: running, once");
+		check(level3.childCount == 2, "3D: its sprites under the level");
+		var first = level3.getChild(1).getChild(0);
+		frame(gems.scatterSeconds);
+		check(first.y > 0
+			&& Math.abs(first.x) + Math.abs(first.z - 5) <= gems.scatter
+			&& got3.length == 0, "3D: scattered up and out, none in yet");
+		frame(gems.flySeconds - .001);
+		check(Math.abs(first.x) < .1 && Math.abs(first.y - 2) < .1 && Math.abs(first.z) < .1, "3D: the first nearly at the target, in the level's units");
+		frame(.002);
+		check(got3.join(",") == "0", "3D: the first in");
+		for (_ in 0...4)
+			frame(gems.stagger);
+		check(got3.join(",") == "0,1,2" && finished3 && !gems.running && level3.childCount == 1, "3D: all in, in turn: done, out of the level");
+
 		// The wipes, drawn into a cover over a 100 x 50 area at a progress, judged by what they cover.
 		var cover = new helix.render2d.Drawing2D(),
 			seen = new helix.math.Bounds2D();

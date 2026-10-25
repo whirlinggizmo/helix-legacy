@@ -38,7 +38,7 @@ class Game extends helix.App {
   which it is while the window is in the background (`AppOptions.pauseOnBlur`, on unless set off) or when the game says
   (`Time.clock.pause()`, `resume()`; `Time.clock.timeScale = .5` for slow motion). Move the game, its timers and tweens by
   `Time.clock.delta`, so they stop together; a pause menu's own animation by `dt`.
-- **What runs itself, and what you update:** particles, decals' fading, Tiled's animated tiles, transitions, `Collect2D` and the
+- **What runs itself, and what you update:** particles, decals' fading, Tiled's animated tiles, transitions, `Collect2D`, `Collect3D` and the
   `FullscreenButton2D` run by themselves once on the stage or started. A `SpriteAnimator2D`, `Tweens`, `Timers`, a `CameraFollow2D`
   (`update` then `apply`), an `FpsOverlay` and a `Ui` you update in `update`, each once a frame. Forgetting one compiles and does nothing.
   Something of your own can run itself the same way: `Flow.run(dt -> { ...; return stillGoing; })` calls it once a frame until it
@@ -233,7 +233,8 @@ marks.place(x, y, angle, 16);
 marks.lifeSeconds = 5;  marks.fadeSeconds = 1;
 ```
 
-`helix.scene.Collect2D` flies sprites from a point to a node (coins to the score); a `CameraFollow2D`'s `follow.shake(.5)` shakes the
+`helix.scene.Collect2D` flies sprites from a point to a node (coins to the score), and `Collect3D` does the same through a 3D world
+(`sparks.run(x, y, z, target)`, a gem to a pedestal); a `CameraFollow2D`'s `follow.shake(.5)` shakes the
 view it follows with (below).
 
 ## A scrolling world

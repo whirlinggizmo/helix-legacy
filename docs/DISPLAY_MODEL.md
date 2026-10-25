@@ -78,7 +78,7 @@ inside another tree. Its behaviors start with it. 2D maps come from Tiled (`heli
 - Nodes have no update, no events and no listeners. Logic lives in `App.update`, or in behaviors (`helix.behavior.Behavior`) that scene
   files and code attach to nodes; the runner runs the behaviors on the stage's trees each frame, skipping paused and disabled subtrees.
 - Some things advance on the game's clock by themselves once they're on the stage or started: particles, decals' fading, Tiled's animated
-  tiles, transitions, `Collect2D`, the `FullscreenButton2D`. Others the game moves in `update`: `SpriteAnimator2D.update`,
+  tiles, transitions, `Collect2D` and `Collect3D`, the `FullscreenButton2D`. Others the game moves in `update`: `SpriteAnimator2D.update`,
   `Tweens.update`, `Timers.update`, `CameraFollow2D.update` and `apply`, `Ui.update` (GUIDE.md says which with each).
 
 ### Screens
