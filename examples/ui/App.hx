@@ -1,15 +1,11 @@
 import haxe.io.Bytes;
-import helix.asset.Assets;
 import helix.asset.Storage;
 import helix.audio.Audio;
 import helix.audio.AudioClip;
 import helix.audio.AudioPlayback;
 import helix.audio.AudioStream;
 import helix.audio.Bus;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
-import helix.graphics.Screenshots;
 import helix.host.Host;
 import helix.host.Screen;
 import helix.host.Window;
@@ -58,24 +54,6 @@ import helix.host.ScreenShape;
 	bindingsScrolled (how far the bindings are scrolled, as a share of how far they can be, in hundredths: 0 at the top, 1 at the end, whatever
 	the layout's sizes), quality (the chosen quality's text) and qualityOpen (whether its list is open). */
 class App extends helix.App {
-	static final PROBES = [
-		"screen",
-		"focus",
-		"loaded",
-		"jump",
-		"capturing",
-		"jumpDown",
-		"masterVolume",
-		"musicVolume",
-		"effectsVolume",
-		"musicMuted",
-		"background",
-		"backgroundText",
-		"bindingsScrolled",
-		"quality",
-		"qualityOpen"
-	];
-
 	// The background to start, and the autopilot's window (its browser page's size), so its samples compare across targets.
 	static inline var BACKGROUND = 0xff14161c;
 	// The room the panels keep clear, in design units: the help line's at the top, the status's and the bar's at the bottom.
@@ -138,8 +116,6 @@ class App extends helix.App {
 	var backgroundUnsaved = false;
 	var song:Null<AudioPlayback>;
 	var click:Null<AudioClip>;
-	var pilot:Null<Autopilot>;
-	var published = false;
 
 	override public function init():Void {
 		Window.title = "HeliX ui";
@@ -148,24 +124,26 @@ class App extends helix.App {
 			Audio.loadStream("audio/music/a_hero_is_born.mp3", stream -> playMusic(stream));
 			Audio.loadClip("audio/sfx/click_004.ogg", clip -> click = clip);
 		}
-		var script = Host.getOption("autopilot", "");
-		if (script == "") {
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window and a run of its own: its saves apart from a
+		// player's, and gone before it starts, so every run begins from the defaults.
+		if (autopilot == null)
 			Window.requestSize(1000, 600);
-			build();
-		} else {
+		else {
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			Assets.load(script, bytes -> {
-				pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), name -> ui.press(name),
-					(points, done, failed) -> Screenshots.sample(points, done, failed), (target, part, x, y, out) -> ui.computePoint(target, part, x, y, out));
-				// A run of its own: its saves apart from a player's, and gone before it starts, so every run begins from the defaults.
-				actionsKey = "autopilot-actions";
-				busesKey = "autopilot-audio";
-				backgroundKey = "autopilot-background";
-				qualityKey = "autopilot-quality";
-				build();
-			}, message -> throw 'Autopilot load failed: ' + message);
+			actionsKey = "autopilot-actions";
+			busesKey = "autopilot-audio";
+			backgroundKey = "autopilot-background";
+			qualityKey = "autopilot-quality";
 		}
+		build();
 	}
+
+	// An autopilot's clicks press the menus' widgets by name, and its points on them are found by the UI.
+	override public function pressWidget(name:String):Bool
+		return ui != null && ui.press(name);
+
+	override public function locateWidget(target:String, part:String, x:Float, y:Float, out:Array<Float>):Bool
+		return ui != null && ui.computePoint(target, part, x, y, out);
 
 	// The music opened: played on the music bus, looping, the playback holding the stream.
 	function playMusic(stream:AudioStream):Void {
@@ -330,7 +308,7 @@ class App extends helix.App {
 			layout.add(w.layout);
 		show("main");
 
-		if (pilot != null)
+		if (autopilot != null)
 			Storage.remove(actionsKey, _ -> Storage.remove(busesKey, _ -> Storage.remove(backgroundKey, _ -> Storage.remove(qualityKey, _ -> loadSettings()))));
 		else
 			loadSettings();
@@ -409,7 +387,7 @@ class App extends helix.App {
 		return [for (b in actions.bindings(action)) Actions.describe(b)].join(", ");
 
 	// A named value for the autopilot, and the final game it publishes.
-	function probe(name:String):Dynamic
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "screen": screen;
 			case "focus": ui.focusedName;
@@ -439,15 +417,6 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		// The autopilot's script still loading: the stage empty.
-		if (ui == null)
-			return;
-		// The autopilot's tick, none while a sample waits for its frame: the UI then isn't updated, as no input was played.
-		var waiting = false;
-		if (pilot != null && !pilot.done) {
-			pilot.advance(name -> probe(name));
-			waiting = pilot.awaitingFrame;
-		}
 		// The design for the window's shape, grown to its edges: the layout arranged into all that's visible.
 		ScreenShape.update();
 		var vx = Screen.visibleX,
@@ -463,7 +432,7 @@ class App extends helix.App {
 		settingsBody.layout.heightSizing = Fixed(Math.max(80, Math.min(settingsBody.content.height, room - rest)));
 		Layout2D.arrange(layout, vx, vy, vw, vh, ui.font);
 		// While a rebind waits for its press, the screen waits too: the press is the binding's, not the menu's.
-		if (!actions.capturing && !waiting) {
+		if (!actions.capturing) {
 			ui.update();
 			// Asked, never told: what happened this frame.
 			switch screen {
@@ -549,15 +518,6 @@ class App extends helix.App {
 		var pixel = Window.pixelRatio / Screen.scaleX;
 		fps.size = 16 * pixel;
 		fps.setPosition(vx + 12 * pixel, vy + 10 * pixel);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			var game:Dynamic = {};
-			for (name in PROBES)
-				Reflect.setField(game, name, probe(name));
-			TestHarness.publish({game: game, autopilot: pilot.snapshot});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	// Waits for the next press for the row's action: the row reads "Press a key or button..." until it's taken (then saved) or Escape

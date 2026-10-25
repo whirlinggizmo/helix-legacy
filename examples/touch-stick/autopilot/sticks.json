@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "seed": 1,
+  "commands": [
+    {"op": "wait", "probe": "mode", "equals": "1 stick", "seconds": 10},
+    {"op": "touch", "ticks": 30, "fingers": [{"from": [640, 500], "to": [720, 500]}]},
+    {"op": "assert", "probe": "x", "atLeast": 700},
+    {"op": "touch", "ticks": 1, "fingers": [{"from": [166, -40], "to": [166, -40]}]},
+    {"op": "wait", "probe": "mode", "equals": "2 sticks", "timeout": 10},
+    {"op": "touch", "ticks": 30, "fingers": [
+      {"from": [300, 700], "to": [380, 700]},
+      {"from": [1000, 700], "to": [1000, 620], "start": 5, "end": 25}
+    ]},
+    {"op": "assert", "probe": "aimUp", "equals": true}
+  ]
+}

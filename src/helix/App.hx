@@ -59,15 +59,53 @@ class App {
 		(init doesn't run again), or rebuild what it changed. Only between init and cleanup. Nothing by default. */
 	public function afterReload():Void {}
 
+	/** A named value of the game for an autopilot script (helix.debug.Autopilot) to wait on and assert, and to publish as the game's final
+		state, which tools/example.py and tools/autopilot.cjs compare between the browser and natively. Overriding it makes the game
+		scriptable: run with the option autopilot naming a script under assets/ (?autopilot=autopilot/run.json in the page's URL,
+		HELIX_AUTOPILOT natively), HeliX loads it before init, so every run starts alike, then plays it as the input a tick of 1/60 s at a
+		time, each tick an update(1 / 60) (up to 120 a frame with fast=1, a press ending the frame's ticks), and once it's done publishes the
+		probes it names, and quits with autoclose=1. Throw for a name it doesn't know: the script fails, naming it. */
+	public function probe(name:String):Dynamic
+		return null;
+
+	/** Presses the widget named name for a script's click (Ui.press, say): false while there's none to press, which the script waits for.
+		False to start. */
+	public function pressWidget(name:String):Bool
+		return false;
+
+	/** The framebuffer pixel at x, y fractions of the widget named target, or of its part named part, into out, for a script's point naming
+		a widget (Ui.computePoint, say): false while there's none, which the script waits for. False to start. */
+	public function locateWidget(target:String, part:String, x:Float, y:Float, out:Array<Float>):Bool
+		return false;
+
+	/** The autopilot script playing (its seed for the game's random numbers), from init on, or null without one (probe). */
+	public var autopilot(default, null):Null<helix.debug.Autopilot>;
+
 	// What the subclass's hot statics call: the development extras (AppOptions) around the app's own callbacks. Final, so init, update,
 	// cleanup and the reload hooks are the only overrides.
 	final function runInit():Void {
+		attachAutopilot();
+		if (autopilotStart != null)
+			autopilotStart(() -> runStart());
+		else
+			runStart();
+	}
+
+	final function runStart():Void {
 		running = true;
 		init();
 	}
 
-	// Between init and cleanup: when the reload hooks run.
+	// Between init and cleanup: when update and the reload hooks run.
 	var running = false;
+
+	// Set by the autopilot's driver (helix.debug.AutopilotDriver, attached by helix.macro.AppBuild to a game with probes) when a script is
+	// asked for: it starts it, calling go once it's in, and plays each frame's updates, true when it did.
+	var autopilotStart:Null<(go:Void->Void)->Void>;
+	var autopilotFrame:Null<Float->Bool>;
+
+	// Written by helix.macro.AppBuild into a subclass with probes: attaches the driver.
+	function attachAutopilot():Void {}
 
 	final function runBeforeReload():Void
 		if (running)
@@ -78,12 +116,16 @@ class App {
 			afterReload();
 
 	final function runUpdate(dt:Float):Void {
+		// The autopilot's script still loading: the game not started.
+		if (!running)
+			return;
 		if (options.devKeys && Input.isFramePressed(Key.F9))
 			Screenshots.take(null, result -> switch result {
 				case Saved(where, _): trace('Screenshot saved: $where');
 				case Failed(message): trace('Screenshot failed: $message');
 			});
-		update(dt);
+		if (autopilotFrame == null || !autopilotFrame(dt))
+			update(dt);
 		if (options.pauseOnBlur)
 			followFocus();
 		if (options.pageState)

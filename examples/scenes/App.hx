@@ -1,7 +1,3 @@
-import helix.asset.Assets;
-import helix.debug.Autopilot;
-import helix.debug.TestHarness;
-import helix.graphics.Screenshots;
 import helix.host.Host;
 import helix.host.Screen;
 import helix.host.Window;
@@ -45,9 +41,6 @@ class App extends helix.App {
 	/** Every screen entered, in order: what the autopilot's run is judged by. Kept across a hot reload (@:hot). */
 	@:hot public static var visited:Array<String> = [];
 
-	var pilot:Null<Autopilot>;
-	var fast = false;
-	var published = false;
 	// Which screen is up ("" before the first, "Splash", "Title", "Play" or "Pause"), and the screens.
 	var state = "";
 	var title:Page;
@@ -63,17 +56,6 @@ class App extends helix.App {
 		Stage.color = 0xff14161c;
 		title = new Page("Title", 0xff1c1e26, "HeliX scenes", "Enter or tap: play" + (Host.canQuit() ? "   Escape: quit" : ""));
 		pause = new Page("Pause", 0xff262c3c, "Paused", "Escape: resume   T: title");
-		var script = Host.getOption("autopilot", "");
-		fast = Host.getOption("fast", "0") == "1";
-		if (script != "")
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
-		else
-			start();
-	}
-
-	// The autopilot's script in: the pilot made, then the game started.
-	function startPilot(bytes:haxe.io.Bytes):Void {
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name));
 		start();
 	}
 
@@ -172,7 +154,7 @@ class App extends helix.App {
 		}
 	}
 
-	function probe(name:String):Dynamic {
+	override public function probe(name:String):Dynamic {
 		return switch name {
 			case "scene": state;
 			case "count": state == "Pause" ? 2 : state == "" ? 0 : 1;
@@ -186,33 +168,16 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		if (pilot != null && !pilot.done && state != "") {
-			// The script's ticks, each a sixtieth of a second, many a frame when fast; none until the splash is up (its logo loads first). Each
-			// tick's presses are consumed as the next begins, and a press ends the frame's ticks: the splash, the loading screen and the
-			// transitions run once a frame, after this, and read the press then.
-			for (_ in 0...(fast ? 120 : 1)) {
-				pilot.input.consume();
-				pilot.advance(name -> probe(name));
-				if (pilot.done)
-					break;
-				step(1 / 60);
-				if (Input.anyFramePressed)
-					break;
-			}
-		} else
-			step(Time.clock.delta);
+		// A step of the screens: under an autopilot, one of its ticks (dt a sixtieth of a second, App.probe), many a frame when fast; a press
+		// ends the frame's ticks, so the splash, the loading screen and the transitions, which run once a frame after this, read it. Otherwise
+		// the game's clock's step (held while it's paused).
+		step(autopilot != null && !autopilot.done ? dt : Time.clock.delta);
 		// The screens drawn again for the visible area as it is now.
 		ScreenShape.update();
 		title.layout();
 		pause.layout();
 		if (play != null)
 			play.layout();
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({game: {scene: probe("scene"), visited: visited}, autopilot: pilot.snapshot});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 }
 

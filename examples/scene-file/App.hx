@@ -1,10 +1,6 @@
-import helix.asset.Assets;
 import helix.behavior.Behavior;
 import helix.behavior.BehaviorPass;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
-import helix.graphics.Screenshots;
 import helix.host.Host;
 import helix.host.Screen;
 import helix.host.Window;
@@ -41,31 +37,17 @@ class App extends helix.App {
 
 	var play:Play;
 	var ticker:Ticker;
-	var pilot:Null<Autopilot>;
-	var fast = false;
-	var published = false;
 
 	override public function init():Void {
 		Window.title = "HeliX scene-file";
 		Window.requestSize(1200, 675);
 		ticker = new Ticker();
 		ticker.maxSteps = 6;
-		fast = Host.getOption("fast", "0") == "1";
-		var script = Host.getOption("autopilot", "");
-		if (script != "")
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
-		else
-			play = new Play();
-	}
-
-	// The autopilot's script in: the pilot made, then the game started.
-	function startPilot(bytes:haxe.io.Bytes):Void {
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name));
 		play = new Play();
 	}
 
 	// A named value of the game for the autopilot, and the final game it publishes.
-	function probe(name:String):Dynamic {
+	override public function probe(name:String):Dynamic {
 		var race = play == null ? null : play.race,
 			car = play == null ? null : play.car;
 		return switch name {
@@ -96,39 +78,13 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		if (pilot != null && !pilot.done) {
-			// The script's ticks, each a sixtieth of a second to the game, many a frame when fast.
-			for (_ in 0...(fast ? 120 : 1)) {
-				pilot.advance(name -> probe(name));
-				if (pilot.done)
-					break;
-				tick();
-				Input.consume();
-			}
-		} else
+		// Under an autopilot each update is one of its ticks (App.probe); otherwise the ticks the clock's time makes.
+		if (autopilot != null && !autopilot.done)
+			tick();
+		else
 			ticker.advance(Time.clock.elapsed, () -> tick());
 		if (play != null)
 			play.update(dt);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			var game:Dynamic = {};
-			for (name in [
-				"loaded",
-				"state",
-				"lap",
-				"checkpoint",
-				"passed",
-				"lapTime",
-				"bestLap",
-				"carX",
-				"carZ",
-				"speed"
-			])
-				Reflect.setField(game, name, probe(name));
-			TestHarness.publish({game: game, autopilot: pilot.snapshot});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	override public function cleanup():Void {

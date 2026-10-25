@@ -292,6 +292,37 @@ Saves.write("level1-land", haxe.Json.stringify(land.getTiles()));
 Saves.read("level1-land", text -> land.setTiles(haxe.Json.parse(text)));   // after instantiate
 ```
 
+## Playing a script (autopilot)
+
+A game that says what it's doing can be played by a script, the same on every run and on every target:
+
+```haxe
+override public function probe(name:String):Dynamic {
+	return switch name {
+		case "screen": screen;                  // what a script waits on and checks
+		case "score": score;
+		default: throw 'Unknown probe $name';
+	}
+}
+```
+
+```json
+{"version": 1, "seed": 1, "commands": [
+	{"op": "wait", "probe": "screen", "equals": "title", "seconds": 10},
+	{"op": "press", "key": "Enter"},
+	{"op": "touch", "ticks": 30, "fingers": [{"from": [640, 500], "to": [720, 500]}]},
+	{"op": "assert", "probe": "score", "atLeast": 1}
+]}
+```
+
+Put the script under `assets/` (`assets/autopilot/run.json`) and open the page with `?autopilot=autopilot/run.json` (natively, set
+`HELIX_AUTOPILOT`). HeliX loads it before `init`, plays it as the input one tick of 1/60 s a frame, each tick an `update(1 / 60)`
+(`&fast=1` for up to 120 a frame), and when it's done publishes the probes it named (`window.result` in a browser; `&autoclose=1` quits).
+A failed `assert` or `wait` is published as `{failed: ...}`. Commands: `press`, `hold` (keys), `click` (a widget by name, with
+`pressWidget`), `drag` (the pointer), `touch` (fingers), `type` (text), `wait`, `assert`, `sample` (the frame's colors), `screenshot`;
+`helix.debug.Autopilot` says each. Wait on state, never on time, so a slow load doesn't change the run. `autopilot.seed` seeds the game's
+random numbers.
+
 ## Building and shipping
 
 ```console

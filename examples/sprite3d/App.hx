@@ -1,8 +1,4 @@
-import helix.asset.Assets;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
-import helix.graphics.Screenshots;
 import helix.graphics.Shader;
 import helix.graphics.Shaders;
 import helix.graphics.SpriteEffect;
@@ -84,10 +80,6 @@ class App extends helix.App {
 	var heat:Null<SpriteEffect>;
 	var shimmering = true;
 	var loaded = 0;
-	var pilot:Null<Autopilot>;
-	// Whether an autopilot was asked for: the camera is held from the first frame, before its script is in.
-	var piloted = false;
-	var published = false;
 
 	// The time the autopilot holds the level at, and its window's size (the autopilot's browser page's), so its samples compare across targets.
 	static inline var HELD_TIME = 2.;
@@ -110,13 +102,11 @@ class App extends helix.App {
 		dissolve = new SpriteDissolve();
 		flash = new SpriteFlash();
 		Window.title = "HeliX sprite3d";
-		var script = Host.getOption("autopilot", "");
-		if (script != "") {
-			piloted = true;
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window, and the stage drawn at the held time too: its
+		// effects' clock.
+		if (autopilot != null) {
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			// The stage drawn at the held time too: its effects' clock.
 			Stage.heldTime = HELD_TIME;
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
 		} else
 			Window.requestSize(1000, 600);
 		// Framed for 16:9: the pedestal and the trees around it on a phone held upright too.
@@ -212,11 +202,7 @@ class App extends helix.App {
 		for (flame in flames)
 			flame.effect = shimmering ? heat : null;
 
-	// The autopilot's script in: the input it plays from now on.
-	function startPilot(bytes:haxe.io.Bytes):Void
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), null, (points, done, failed) -> Screenshots.sample(points, done, failed));
-
-	function probe(name:String):Dynamic
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "ready": loaded == 4;
 			case "outline": outlined;
@@ -266,9 +252,8 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		// Read the program's input (the autopilot's while it plays: a tick a frame, none while a sample waits for its frame, none once done).
-		var reading = pilot == null || (!pilot.done && pilot.advance(name -> probe(name)) != null && !pilot.awaitingFrame);
-		if (reading) {
+		// The program's input (the autopilot's while it plays, a tick an update).
+		{
 			if (Host.canQuit() && Input.isFramePressed(Key.Escape))
 				Host.quit();
 			if (Input.isFramePressed(Key.O))
@@ -296,8 +281,8 @@ class App extends helix.App {
 				lastDecalX = Math.NaN;
 		}
 		// The game's clock: paused, the motion stops; held under the autopilot, the camera with it.
-		var time = piloted ? HELD_TIME : Time.clock.time;
-		orbit.update(piloted ? 0 : dt);
+		var time = autopilot != null ? HELD_TIME : Time.clock.time;
+		orbit.update(autopilot != null ? 0 : dt);
 		// Half gone at the autopilot's held time, coming and going.
 		dissolve.amount = .5 + .45 * Math.sin((time - HELD_TIME) * .9);
 		fps.update(dt, Time.frameCpu);
@@ -319,15 +304,6 @@ class App extends helix.App {
 			- 24, 0xffc8c8c8);
 		fps.setPosition(vx + 12, vy + 10);
 		counter.setPosition(vx + vw - 12, vy + 10);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({
-				game: {outline: outlined, dissolving: dissolving, shimmering: shimmering},
-				autopilot: pilot.snapshot
-			});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	override public function cleanup():Void {

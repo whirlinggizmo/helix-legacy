@@ -16,6 +16,10 @@ function update(dt:Float):Void
 function cleanup():Void
 function beforeReload():Void
 function afterReload():Void
+function probe(name:String):Dynamic
+function pressWidget(name:String):Bool
+function locateWidget(target:String, part:String, x:Float, y:Float, out:Array<Float>):Bool
+var autopilot(default, null):Null<Autopilot>
 ```
 
 - `new`: Starts HeliX with this app, with options (the defaults when not given): the profile of the build's backend runs, binds the services, calls init once the game's config.json (if any) has come, then update once a display refresh, and cleanup when the window closes (the page goes away). Throws for an identity (product, company) that isn't a file name. Natively returns when the window has closed.
@@ -25,6 +29,10 @@ function afterReload():Void
 - `cleanup`: Once, when the window closes (on the web, at the page's pagehide). Nothing by default.
 - `beforeReload`: Just before a hot reload swaps in the new code, still running the old: let go of what afterReload will build again. Only between init and cleanup. Nothing by default.
 - `afterReload`: Just after a hot reload: this is the same object, its fields kept, now running the new code. Build here what an edit added to init (init doesn't run again), or rebuild what it changed. Only between init and cleanup. Nothing by default.
+- `probe`: A named value of the game for an autopilot script (helix.debug.Autopilot) to wait on and assert, and to publish as the game's final state, which tools/example.py and tools/autopilot.cjs compare between the browser and natively. Overriding it makes the game scriptable: run with the option autopilot naming a script under assets/ (?autopilot=autopilot/run.json in the page's URL, HELIX_AUTOPILOT natively), HeliX loads it before init, so every run starts alike, then plays it as the input a tick of 1/60 s at a time, each tick an update(1 / 60) (up to 120 a frame with fast=1, a press ending the frame's ticks), and once it's done publishes the probes it names, and quits with autoclose=1. Throw for a name it doesn't know: the script fails, naming it.
+- `pressWidget`: Presses the widget named name for a script's click (Ui.press, say): false while there's none to press, which the script waits for. False to start.
+- `locateWidget`: The framebuffer pixel at x, y fractions of the widget named target, or of its part named part, into out, for a script's point naming a widget (Ui.computePoint, say): false while there's none, which the script waits for. False to start.
+- `autopilot`: The autopilot script playing (its seed for the game's random numbers), from init on, or null without one (probe).
 
 ## AppOptions
 

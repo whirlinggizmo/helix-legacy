@@ -73,6 +73,8 @@ class AppTests {
 		// A native reload migrates the object held in hotApp and re-points the statics: the same router reaches the new object.
 		var migrated = empty();
 		migrated.options = game.options;
+		// It was running when the reload carried it over.
+		migrated.running = true;
 		@:privateAccess Game.hotApp = migrated;
 		router.update(.25);
 		check(game.updates == 1 && migrated.updates == 1 && migrated.lastDt == .25, "The router reaches the app hotApp holds now");

@@ -23,6 +23,8 @@ import haxe.macro.Expr;
 	  choices, and an `sdl3-gpu` build without `helix_sdl3_gpu` (the define the programs carry SDL_GPU's dialects under; `-lib helix`
 	  defines it from the backend, helix.macro.Haxelib, and the repository's builds pass it) too.
 
+	- In a subclass declaring probe (App.probe), `attachAutopilot()`, attaching helix.debug.AutopilotDriver, which plays a script the run
+	  asks for; a game without probes links none of it.
 	A subclass can't declare a field of those names. */
 @:noCompletion
 class AppBuild {
@@ -54,7 +56,8 @@ class AppBuild {
 		"hotBeforeReload",
 		"hotAfterReload",
 		"hotAppRouter",
-		"hotStart"
+		"hotStart",
+		"attachAutopilot"
 	];
 
 	#if macro
@@ -120,6 +123,12 @@ class AppBuild {
 				@:afterHotReload static function hotAfterReload():Void
 					if (hotApp != null)
 						hotApp.runAfterReload();
+			}).fields);
+		if (Lambda.exists(fields, f -> f.name == "probe"))
+			made = made.concat((macro class {
+				/** Attaches the autopilot's driver: the class has probes. Written by helix.macro.AppBuild. */
+				override function attachAutopilot():Void
+					helix.debug.AutopilotDriver.attach(this);
 			}).fields);
 		for (field in made)
 			field.pos = pos;

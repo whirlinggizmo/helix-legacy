@@ -1,8 +1,4 @@
-import helix.asset.Assets;
-import helix.debug.Autopilot;
-import helix.debug.TestHarness;
 import helix.debug.FpsOverlay;
-import helix.graphics.Screenshots;
 import helix.host.Host;
 import helix.host.Screen;
 import helix.host.Window;
@@ -162,19 +158,13 @@ class App extends helix.App {
 	// What she holds, the box around it as posed (for the hand's framing), and one model's (computeBounds's).
 	var heldBox = new Bounds3D();
 	var box = new Bounds3D();
-	// The autopilot: whether one was asked for (the scene held from the first frame, before its script is in), and its final game published.
-	var pilot:Null<Autopilot>;
-	var piloted = false;
-	var published = false;
 
 	override public function init():Void {
 		Window.title = "HeliX dressing room";
-		var script = Host.getOption("autopilot", "");
-		if (script != "") {
-			piloted = true;
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window; the scene held from the first frame.
+		if (autopilot != null)
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
-		} else
+		else
 			Window.requestSize(1280, 720);
 		Stage.color = 0xff14161c;
 		for (tree in [room, studio]) {
@@ -417,7 +407,7 @@ class App extends helix.App {
 		var playing = animator.clip,
 			idles = [animations.getClip("Idle")].concat([for (h in HELD) animations.getClip('Idle_$h')]);
 		if (playing != null && idles.indexOf(playing) >= 0)
-			animator.play(idle, true, piloted ? 0 : .25);
+			animator.play(idle, true, autopilot != null ? 0 : .25);
 		else if (animator.queued != null)
 			animator.queue(idle, true, .25);
 	}
@@ -549,7 +539,7 @@ class App extends helix.App {
 		camera.lensShiftY = (height / 2 - (y0 + y1) / 2) / (height / 2);
 		// Far enough that the framing's height fits the free area's height and its breadth its width (a pixel is as tall as it is wide), from
 		// the nearest she comes.
-		var framed = piloted ? "Body" : framing,
+		var framed = autopilot != null ? "Body" : framing,
 			slope = Math.tan(ROOM_FOV / 2);
 		// How far a framing's height and breadth fit.
 		function fitting(frame:Array<Float>):Float
@@ -562,10 +552,10 @@ class App extends helix.App {
 			lookY = heldBox.centerY;
 			lookZ = heldBox.centerZ;
 		}
-		focusX = piloted ? lookX : Interpolate.damp(focusX, lookX, 6, dt);
-		focus = piloted ? lookY : Interpolate.damp(focus, lookY, 6, dt);
-		focusZ = piloted ? lookZ : Interpolate.damp(focusZ, lookZ, 6, dt);
-		distance = piloted ? fit * zoom : Interpolate.damp(distance, fit * zoom, 6, dt);
+		focusX = autopilot != null ? lookX : Interpolate.damp(focusX, lookX, 6, dt);
+		focus = autopilot != null ? lookY : Interpolate.damp(focus, lookY, 6, dt);
+		focusZ = autopilot != null ? lookZ : Interpolate.damp(focusZ, lookZ, 6, dt);
+		distance = autopilot != null ? fit * zoom : Interpolate.damp(distance, fit * zoom, 6, dt);
 		camera.setView(focusX, focus + distance * .12, focusZ + distance, focusX, focus, focusZ);
 		// The shadows reach a little past her, however far back the camera is (5 units near, the map's texels as fine as before).
 		key.shadowDistance = Math.max(5, distance + 2);
@@ -612,18 +602,17 @@ class App extends helix.App {
 			loop = looping.on;
 		if (clip == null)
 			return;
-		animator.play(clip, loop, piloted ? 0 : .25);
+		animator.play(clip, loop, autopilot != null ? 0 : .25);
 		if (!loop && idle != null)
 			animator.queue(idle, true, .25);
 	}
 
-	// The autopilot's script in: it waits and samples the frame, its points on the wardrobe's widgets found by the UI, and presses nothing.
-	function startPilot(bytes:haxe.io.Bytes):Void
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), null, (points, done, failed) -> Screenshots.sample(points, done, failed),
-			(target, part, x, y, out) -> ui != null && ui.computePoint(target, part, x, y, out));
+	// An autopilot's points on the wardrobe's widgets, found by the UI (it waits and samples the frame, and presses nothing).
+	override public function locateWidget(target:String, part:String, x:Float, y:Float, out:Array<Float>):Bool
+		return ui != null && ui.computePoint(target, part, x, y, out);
 
 	// A named value for the autopilot. ready: she, her outfit, the light and the open slot's pictures are all in.
-	function probe(name:String):Dynamic
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "ready": character != null && environment != null && !outfit.pending && isPictured();
 			case "slot": slot;
@@ -643,9 +632,6 @@ class App extends helix.App {
 		open(SLOTS[(SLOTS.indexOf(slot) + direction + SLOTS.length) % SLOTS.length]);
 
 	override public function update(dt:Float):Void {
-		// The autopilot's tick: it presses nothing, only waits and samples the frame.
-		if (pilot != null && !pilot.done)
-			pilot.advance(name -> probe(name));
 		var width = Window.framebufferWidth, height = Window.framebufferHeight;
 		var wanted = ScreenShape.update();
 		if (wanted != shaped)
@@ -703,7 +689,7 @@ class App extends helix.App {
 			return portrait ? Screen.toUnitsY(y) < panelLayout.y : Screen.toUnitsX(x) < panelLayout.x;
 		if (Input.pointerFramePressed && inRoom(Input.pointerX, Input.pointerY))
 			dragFrom = Input.pointerX;
-		if (gestures.doubleTapped && !piloted && inRoom(gestures.startX, gestures.startY))
+		if (gestures.doubleTapped && autopilot == null && inRoom(gestures.startX, gestures.startY))
 			focusAt(gestures.x, gestures.y);
 		if (!Input.pointerDown)
 			dragFrom = null;
@@ -716,7 +702,7 @@ class App extends helix.App {
 		var pinch = Input.getTouchGestureScale(true);
 		// Held to its limits as the room is framed.
 		zoom = zoom * Math.pow(.9, notches) / (pinch > 0 ? pinch : 1);
-		if (piloted) {
+		if (autopilot != null) {
 			// Held under the autopilot: the turntable where it starts, the camera at the slot's framing, her pose at its first frame.
 			turn = .35;
 			zoom = 1;
@@ -725,7 +711,7 @@ class App extends helix.App {
 		if (character != null)
 			character.setRotation(0, turn, 0);
 		if (animator != null)
-			animator.update(piloted ? 0 : dt);
+			animator.update(autopilot != null ? 0 : dt);
 		takePictures();
 		var loading = Models3D.loadingCount;
 		status = character == null ? "Loading her" : loading > 0 ? 'Loading $loading part${loading == 1 ? "" : "s"}' : 'Dressing: $slot';
@@ -747,12 +733,6 @@ class App extends helix.App {
 		var ratio = Window.pixelRatio;
 		fps.setPosition(Screen.toUnitsX(width - 130 * ratio), Screen.toUnitsY(8 * ratio));
 		fps.setScale(ratio / Screen.scaleX, ratio / Screen.scaleY);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({game: {slot: slot}, autopilot: pilot.snapshot});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	// A line of text at x, y (its top left), size tall, on a band of the theme's panel color, a little see-through, rounded as its widgets are and

@@ -24,7 +24,8 @@ import helix.ui.TouchStick2D;
 	  takes neither.
 	The buttons aren't the sticks' (Actions.touchStickBlocked): a tap on one presses it. A faint ring says where each stick's thumb goes
 	while none holds it. The arrow keys and a pad's left stick steer the dot too (and the pad's right stick aims), all read as one direction
-	held to a circle (Actions.direction), so a diagonal of keys is no faster than straight. Escape quits where quitting means anything. */
+	held to a circle (Actions.direction), so a diagonal of keys is no faster than straight. Escape quits where quitting means anything.
+	Its probes (mode, x, y, aimUp) make it scriptable: its autopilot taps the buttons and plays thumbs on the sticks (App.probe). */
 class App extends helix.App {
 	static inline var SPEED = 420.;
 	static inline var RADIUS = 80.;
@@ -112,6 +113,16 @@ class App extends helix.App {
 		// A thumb landing on a button presses it, not a stick.
 		actions.touchStickBlocked = (x, y) -> buttonAt(x, y) != null;
 		moveStick.actions = aimStick.actions = actions;
+	}
+
+	override public function probe(name:String):Dynamic {
+		return switch name {
+			case "mode": mode;
+			case "x": Math.round(dot.x);
+			case "y": Math.round(dot.y);
+			case "aimUp": aimY < -.5;
+			default: throw 'Unknown probe $name';
+		}
 	}
 
 	// Whether the layout has an aiming stick.

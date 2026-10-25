@@ -2,7 +2,7 @@
   "version": 1,
   "seed": 1,
   "commands": [
-    {"op": "assert", "probe": "scene", "equals": "Splash"},
+    {"op": "wait", "probe": "scene", "equals": "Splash", "seconds": 10},
     {"op": "assert", "probe": "activated", "equals": false},
     {"op": "press", "key": "ENTER"},
     {"op": "assert", "probe": "activated", "equals": true},

@@ -1,8 +1,4 @@
-import helix.asset.Assets;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
-import helix.graphics.Screenshots;
 import helix.graphics.Shader;
 import helix.graphics.Shaders;
 import helix.host.Host;
@@ -77,8 +73,6 @@ class App extends helix.App {
 	var waterOn = true;
 	var status = "loading";
 	var unlit:Unlit;
-	var pilot:Null<Autopilot>;
-	var published = false;
 	var checkered = false;
 	// The car's copy and its outlines.
 	var carPlaced = false;
@@ -106,10 +100,9 @@ class App extends helix.App {
 
 	override public function init():Void {
 		Window.title = "HeliX shaders";
-		var script = Host.getOption("autopilot", "");
-		if (script != "") {
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window and held time.
+		if (autopilot != null) {
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
 		} else
 			Window.requestSize(1000, 600);
 		Stage.color = 0xff14161c;
@@ -184,11 +177,7 @@ class App extends helix.App {
 		shaders.load("shaders/checker.hxshader", shader -> useChecker(shader), message -> status = message);
 	}
 
-	// The autopilot's script in: the input it plays from now on.
-	function startPilot(bytes:haxe.io.Bytes):Void
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), null, (points, done, failed) -> Screenshots.sample(points, done, failed));
-
-	function probe(name:String):Dynamic
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "ready": carPlaced && checkered && character != null && worn == PARTS.length;
 			case "sun": sun.visible;
@@ -292,9 +281,8 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		// Read the program's input (the autopilot's while it plays: a tick a frame, none while a sample waits for its frame, none once done).
-		var reading = pilot == null || (!pilot.done && pilot.advance(name -> probe(name)) != null && !pilot.awaitingFrame);
-		if (reading) {
+		// The program's input: the autopilot's while it plays, a tick an update.
+		{
 			if (Host.canQuit() && Input.isFramePressed(Key.Escape))
 				Host.quit();
 			if (Input.isFramePressed(Key.Digit1))
@@ -320,7 +308,7 @@ class App extends helix.App {
 				else
 					sea.setShader(null);
 			}
-			if (pilot != null && Input.isFramePressed(Key.T))
+			if (autopilot != null && Input.isFramePressed(Key.T))
 				heldTime += .5;
 			if (Input.isFramePressed(Key.C)) {
 				closeUp = !closeUp;
@@ -331,11 +319,11 @@ class App extends helix.App {
 					flash.trigger(0xffff3020, .25);
 		}
 		// The game's clock: paused, the motion stops; held under the autopilot, her pose with it.
-		var time = pilot != null ? heldTime : Time.clock.time;
+		var time = autopilot != null ? heldTime : Time.clock.time;
 		// What the stage draws at: the shaders' waves and dissolve held with the rest.
-		Stage.heldTime = pilot != null ? heldTime : null;
+		Stage.heldTime = autopilot != null ? heldTime : null;
 		if (animator != null)
-			animator.update(pilot != null ? 0 : dt);
+			animator.update(autopilot != null ? 0 : dt);
 		// Half gone at the autopilot's held time.
 		dissolve.amount = dissolving ? .5 + .45 * Math.sin((time - HELD_TIME) * .9) : 0;
 		fps.update(dt, Time.frameCpu);
@@ -366,22 +354,5 @@ class App extends helix.App {
 			+ 4;
 		if (status != "")
 			hud.drawTextWrapped(status, vx + 12, y, 16, vw - 24, 0xffff8080);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({
-				game: {
-					sun: sun.visible,
-					lamp: lamp.visible,
-					outlines: probe("outlines"),
-					silhouette: probe("silhouette"),
-					dissolving: dissolving,
-					toon: toonOn,
-					water: waterOn
-				},
-				autopilot: pilot.snapshot
-			});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 }

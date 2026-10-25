@@ -27,7 +27,8 @@ import helix.input.InputState;
 	`{"op": "touch", "ticks": n, "fingers": [{"from": [x, y], "to": [x, y]}, {"from": ..., "to": ..., "start": 5, "end": 15}]}`, 1 to 10
 	fingers, their ids 1, 2 ... in the order listed. Each lands at from on its start tick (0 when not given), moves a straight line to reach
 	to on its end tick (ticks when not given; start to end within 0 to ticks), and lifts there on the tick after; the command ends once every
-	finger has lifted. Its points are a drag's (the design's units, or a widget's, found again every tick).
+	finger has lifted. Its points are a drag's (the design's units, or a widget's, found again every tick). The fingers are a touch screen's:
+	the first down is the pointer too (a tap clicks), a second lets the pointer go (a pinch clicks nothing).
 
 	A `drag` is the pointer held down at one point and moved to another: `{"op": "drag", "from": [x, y], "to": [x, y], "ticks": n}`, the
 	points in the design's units (Screen's; as given without a runner, in a test), pressed at from on its first tick, moved a straight line to
@@ -59,6 +60,17 @@ class Autopilot {
 		limit, and thrown, as before. */
 	public var failure(default, null):Null<String>;
 
+	/** The probes the script names (its waits' and asserts'), each once, in the script's order: what a game's final state is published as. */
+	public var probeNames(get, never):Array<String>;
+
+	function get_probeNames():Array<String> {
+		var names = [];
+		for (command in commands)
+			if (Reflect.hasField(command, "probe") && names.indexOf(command.probe) < 0)
+				names.push(command.probe);
+		return names;
+	}
+
 	/** Ticks the commands have run so far. */
 	public var tickCount(get, never):Int;
 
@@ -81,7 +93,10 @@ class Autopilot {
 	var commands:Array<Dynamic>;
 	var index = 0;
 	var elapsed = 0;
-	var state = new InputState();
+	// The script's input, made as a platform's is (InputRouter): its fingers through the router, so the first finger down is the pointer and
+	// a second lets it go, as on a touch screen.
+	var router = new helix.input.InputRouter();
+	var state:InputState;
 	var screenshot:Null<Null<String>->Void>;
 	var press:Null<String->Bool>;
 	var sample:Null<(points:Array<Array<Float>>, done:Array<Array<Int>>->Void, failed:String->Void) -> Void>;
@@ -114,6 +129,7 @@ class Autopilot {
 	public function new(json:String, ?screenshot:Null<String>->Void, ?press:String->Bool,
 			?sample:(points:Array<Array<Float>>, done:Array<Array<Int>>->Void, failed:String->Void) -> Void,
 			?locate:(target:String, part:String, x:Float, y:Float, out:Array<Float>) -> Bool) {
+		state = @:privateAccess router.state;
 		this.screenshot = screenshot;
 		this.press = press;
 		this.sample = sample;
@@ -479,9 +495,9 @@ class Autopilot {
 									throw 'Autopilot touch at command ' + index + ' lost ' + describe(!resolve(f.from, from, true) ? f.from : f.to);
 								if (step <= end) {
 									var t = end > start ? (step - start) / (end - start) : 1.;
-									state.touchEvent(i + 1, from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t, true);
+									router.touch(i + 1, from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t, true);
 								} else
-									state.touchEvent(i + 1, to[0], to[1], false);
+									router.touch(i + 1, to[0], to[1], false);
 							}
 					}
 				case "type":

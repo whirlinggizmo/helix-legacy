@@ -1,11 +1,7 @@
 import haxe.io.Bytes;
-import helix.asset.Assets;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
 import helix.graphics.Color;
 import helix.graphics.PostProcess;
-import helix.graphics.Screenshots;
 import helix.graphics.SpriteEffect;
 import helix.host.Host;
 import helix.host.Screen;
@@ -202,23 +198,17 @@ class App extends helix.App {
 	var worn = 0;
 	var animator:Null<Animator3D>;
 	var logos = 0;
-	var pilot:Null<Autopilot>;
-	// Whether an autopilot was asked for: the time, her pose and the camera are held from the first frame, before its script is in.
-	var piloted = false;
-	var published = false;
 
 	override public function init():Void {
 		Window.title = "HeliX shader gallery";
-		var script = Host.getOption("autopilot", "");
-		if (script != "") {
-			piloted = true;
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window.
+		if (autopilot != null)
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
-		} else
+		else
 			Window.requestSize(1100, 640);
 		// Under the autopilot the stage is drawn at a held time from the start, so what moves with it (the water's waves) is drawn the same
 		// on every target.
-		if (piloted)
+		if (autopilot != null)
 			Stage.heldTime = HELD_TIME;
 		Stage.color = 0xff14161c;
 		post = new PostProcess();
@@ -339,10 +329,8 @@ class App extends helix.App {
 		rowSprites[2].effect = creatureColors;
 		Stage.addChild(hud);
 		Stage.addChild(fps);
-		// The menu over all of it, outside the effects, read from the program's input (an autopilot's menu waits for its script, whose input is
-		// the program's while it plays).
-		if (!piloted)
-			build();
+		// The menu over all of it, outside the effects, read from the program's input (an autopilot's while it plays).
+		build();
 	}
 
 	// A grade, as an artist would make one from the identity strip: shadows toward teal, highlights toward orange, a little more contrast.
@@ -364,16 +352,14 @@ class App extends helix.App {
 		return pixels;
 	}
 
-	// The autopilot's script in: the menu reads its input (the program's while it plays), its clicks choose shaders by name or use the menu's widgets by theirs, and its points
-	// on the widgets are found by the UI.
-	function startPilot(bytes:Bytes):Void {
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), name -> choose(name) || ui != null && ui.press(name),
-			(points, done, failed) -> Screenshots.sample(points, done, failed),
-			(target, part, x, y, out) -> ui != null && ui.computePoint(target, part, x, y, out));
-		build();
-	}
+	// An autopilot's click names a shader (None or Chain), choosing it, or one of the menu's widgets; its points on widgets are the UI's.
+	override public function pressWidget(name:String):Bool
+		return choose(name) || ui != null && ui.press(name);
 
-	function probe(name:String):Dynamic
+	override public function locateWidget(target:String, part:String, x:Float, y:Float, out:Array<Float>):Bool
+		return ui != null && ui.computePoint(target, part, x, y, out);
+
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "ready": carPlaced && character != null && worn == PARTS.length && logos == 2 && ui != null;
 			case "chosen": chosen < 0 ? "None" : entries[chosen].name;
@@ -410,7 +396,7 @@ class App extends helix.App {
 		passesFor();
 	}
 
-	// Her skeleton in: on the right behind the wall, holding her idle clip's first pose (playing it unless piloted), wearing the parts in.
+	// Her skeleton in: on the right behind the wall, holding her idle clip's first pose (playing it unless autopilot != null), wearing the parts in.
 	function placeCharacter(file:ModelFile3D):Void {
 		var node = file.instantiate("character");
 		node.setPosition(2.15, FLOOR_Y, .55);
@@ -861,8 +847,6 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		// Read the program's input (the autopilot's while it plays: a tick a frame, none while a sample waits for its frame, none once done).
-		var reading = pilot == null || (!pilot.done && pilot.advance(name -> probe(name)) != null && !pilot.awaitingFrame);
 		// The design for the window's shape, the menu laid out in what's visible of it.
 		ScreenShape.update();
 		var vx = Screen.visibleX,
@@ -871,7 +855,8 @@ class App extends helix.App {
 			vh = Screen.visibleHeight;
 		// The effects' view sees the stage's design units, as the stage does.
 		Screen.apply(sceneCamera);
-		if (ui != null && reading) {
+		// The menu, read from the program's input (the autopilot's while it plays, a tick an update).
+		if (ui != null) {
 			helix.ui.Layout2D.arrange(layout, vx, vy, vw, vh, ui.font);
 			ui.update();
 			if (list.changed)
@@ -925,8 +910,8 @@ class App extends helix.App {
 		}
 		// Her pose and the camera: held under the autopilot, as the stage's time is.
 		if (animator != null)
-			animator.update(piloted ? 0 : dt);
-		orbit.update(piloted ? 0 : dt);
+			animator.update(autopilot != null ? 0 : dt);
+		orbit.update(autopilot != null ? 0 : dt);
 		fps.update(dt, Time.frameCpu);
 		orbit.apply(camera);
 
@@ -945,12 +930,6 @@ class App extends helix.App {
 			+ 60, 14, vw
 			- 32, 0xffc8c8c8);
 		fps.setPosition(vx + 16, vy + 10);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({game: {chosen: probe("chosen"), hdr: post.hdr}, autopilot: pilot.snapshot});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	override public function cleanup():Void {

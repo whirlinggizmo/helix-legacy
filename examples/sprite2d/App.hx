@@ -1,10 +1,6 @@
 import haxe.io.Bytes;
-import helix.asset.Assets;
-import helix.debug.Autopilot;
 import helix.debug.FpsOverlay;
-import helix.debug.TestHarness;
 import helix.graphics.Color;
-import helix.graphics.Screenshots;
 import helix.graphics.Shader;
 import helix.graphics.Shaders;
 import helix.graphics.SpriteEffect;
@@ -100,17 +96,14 @@ class App extends helix.App {
 	var swapped = true;
 	var creature:Texture2D;
 	var palette:Texture2D;
-	var pilot:Null<Autopilot>;
-	var published = false;
 
 	override public function init():Void {
 		Window.title = "HeliX sprite2d";
-		var script = Host.getOption("autopilot", "");
-		if (script != "") {
+		// Under an autopilot (its script in before init: App.probe), the autopilot's window, and the stage drawn at the held time too: its
+		// effects' clock.
+		if (autopilot != null) {
 			Window.requestSize(PILOT_WIDTH, PILOT_HEIGHT);
-			// The stage drawn at the held time too: its effects' clock.
 			Stage.heldTime = HELD_TIME;
-			Assets.load(script, bytes -> startPilot(bytes), message -> throw 'Autopilot load failed: ' + message);
 		} else
 			Window.requestSize(900, 520);
 		Stage.color = 0xff1c1e26;
@@ -201,11 +194,7 @@ class App extends helix.App {
 		sprites[2].effect = waving ? wave : null;
 	}
 
-	// The autopilot's script in: the input it plays from now on.
-	function startPilot(bytes:Bytes):Void
-		pilot = new Autopilot(bytes.toString(), name -> Screenshots.take(name), null, (points, done, failed) -> Screenshots.sample(points, done, failed));
-
-	function probe(name:String):Dynamic
+	override public function probe(name:String):Dynamic
 		return switch name {
 			case "ready": logo != null && whiteLogo && wave != null;
 			case "outline": outlined;
@@ -243,9 +232,8 @@ class App extends helix.App {
 	}
 
 	override public function update(dt:Float):Void {
-		// Read the program's input (the autopilot's while it plays: a tick a frame, none while a sample waits for its frame, none once done).
-		var reading = pilot == null || (!pilot.done && pilot.advance(name -> probe(name)) != null && !pilot.awaitingFrame);
-		if (reading) {
+		// The program's input (the autopilot's while it plays, a tick an update).
+		{
 			if (Host.canQuit() && Input.isFramePressed(Key.Escape))
 				Host.quit();
 			if (Input.isFramePressed(Key.Digit1)) {
@@ -270,7 +258,7 @@ class App extends helix.App {
 				flash.trigger(0xffff3020, .4);
 		}
 		// The game's clock: paused, the motion stops; held under the autopilot.
-		var time = pilot != null ? HELD_TIME : Time.clock.time;
+		var time = autopilot != null ? HELD_TIME : Time.clock.time;
 		// Half gone at the autopilot's held time, coming and going.
 		dissolve.amount = .5 + .45 * Math.sin((time - HELD_TIME) * .9);
 		fps.update(dt, Time.frameCpu);
@@ -311,7 +299,7 @@ class App extends helix.App {
 		var x = camera.screenToWorldX(Input.pointerX),
 			y = camera.screenToWorldY(Input.pointerY);
 		// A decal where the left button drags, once it's moved far enough from the last, turned along the way it went.
-		if (pilot == null && Input.pointerDown) {
+		if (autopilot == null && Input.pointerDown) {
 			var dx = x - lastDecalX, dy = y - lastDecalY;
 			if (Math.isNaN(dx) || dx * dx + dy * dy >= 18 * 18) {
 				decals.place(x, y, Math.isNaN(dx) ? 0 : Math.atan2(dy, dx));
@@ -321,7 +309,7 @@ class App extends helix.App {
 		} else
 			lastDecalX = Math.NaN;
 		hovered = -1;
-		if (pilot == null && Input.pointerX >= 0) {
+		if (autopilot == null && Input.pointerX >= 0) {
 			var i = sprites.length;
 			while (i-- > 0 && hovered < 0)
 				if (isOver(i, x, y))
@@ -357,21 +345,6 @@ class App extends helix.App {
 		drawing.drawTextWrapped('pointer (${Std.int(x)}, ${Std.int(y)})  hover: ${hovered < 0 ? "nothing" : NAMES[hovered]}  sheet frame $sheetFrame',
 			vx + 12, line, 16, vw - 96, 0xffc8c8c8);
 		fps.setPosition(vx + 12, vy + 10);
-		if (pilot != null && pilot.done && !published) {
-			published = true;
-			TestHarness.publish({
-				game: {
-					outline: outlined,
-					dissolving: dissolving,
-					palette: swapped,
-					row: swap.row,
-					waving: waving
-				},
-				autopilot: pilot.snapshot
-			});
-			if (Host.getOption("autoclose", "0") == "1")
-				Host.quit();
-		}
 	}
 
 	override public function cleanup():Void {
