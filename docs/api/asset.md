@@ -49,6 +49,8 @@ static var host(get, never):Null<String>
 static function setHost(host:Null<String>):Bool
 static var cacheMode(get, set):AssetCacheMode
 static function clearCache(complete:StorageWriteResult -> Void):IRequest
+static function subscribe(path:String, target:IReloadable):Void
+static function unsubscribe(path:String, target:IReloadable):Void
 static var busy(get, never):Bool
 ```
 
@@ -58,6 +60,8 @@ static var busy(get, never):Bool
 - `setHost`: Downloads from host from now on (a "/" is added if it has none), or reads the packaged files with null. The cache keeps each host's files apart. False for an empty host.
 - `cacheMode`: How downloaded copies no manifest lists are treated (AssetCacheMode); Revalidate by default.
 - `clearCache`: Forgets every downloaded file, so the next load downloads it again, and what was read of the manifests, so the root is asked about again. complete runs once, on the host thread.
+- `subscribe`: Tells target each time path's file changes while the game runs in the dev loop: the file is loaded again and target.reloaded gets its new bytes. That's how a game reloads its own files, such as a level or a JSON of tuning values, the way HeliX reloads textures and sounds. Load the file as usual first; subscribing doesn't load it. Outside the dev loop nothing changes, so it's never called. A target is told once per change however often it subscribed. For example, a class implementing IReloadable calls `Assets.subscribe("tuning.json", this)` and reads the bytes in its `reloaded`.
+- `unsubscribe`: Stops telling target about path's changes. Does nothing if it wasn't subscribed.
 - `busy`: Whether a load is under way or its completion not yet run (Host.busy asks it, with the decoders).
 
 ## EnsureOptions
@@ -160,13 +164,13 @@ How a fetch ended: a response of any HTTP status, a transport failure message, o
 
 *class* in [`src/helix/asset/IReloadable.hx`](../../src/helix/asset/IReloadable.hx), `import helix.asset.IReloadable;`
 
-Told when a subscribed asset's file changed and was loaded again (IAssets.subscribe). Called through the object, so after a hot reload its new code runs.
+Told when a file it subscribed to (Assets.subscribe) changed and was loaded again. It's an object rather than a function so that after a hot reload of the code, its new code runs: a function kept from before would run the old.
 
 ```haxe
 function reloaded(path:String, bytes:haxe.io.Bytes):Void
 ```
 
-- `reloaded`: path's file changed and loaded again as bytes, already in the cache; runs on the host thread. A throw is recorded as a failed reload.
+- `reloaded`: path's file changed, and bytes are its new contents. A throw is said as a failed reload, and the next change is tried again.
 
 ## IRequest
 

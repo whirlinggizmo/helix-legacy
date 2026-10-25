@@ -73,12 +73,14 @@ interface IAssets {
 	@:noCompletion
 	function streamSource(path:String, located:AudioLocation->Void, ?failed:String->Void, download:Bool = false):IRequest;
 
-	/** Tell target when path's file changes and has loaded again (development hot reload). One target per path once. */
-	@:noCompletion
+	/** Tells target each time path's file changes while the game runs in the dev loop: the file is loaded again and target.reloaded gets
+		its new bytes. That's how a game reloads its own files, such as a level or a JSON of tuning values, the way HeliX reloads textures
+		and sounds. Load the file as usual first; subscribing doesn't load it. Outside the dev loop nothing changes, so it's never called.
+		A target is told once per change however often it subscribed. For example, a class implementing IReloadable calls
+		`Assets.subscribe("tuning.json", this)` and reads the bytes in its `reloaded`. */
 	function subscribe(path:String, target:IReloadable):Void;
 
-	/** Stops telling target about path's changes; does nothing if it was not subscribed. */
-	@:noCompletion
+	/** Stops telling target about path's changes. Does nothing if it wasn't subscribed. */
 	function unsubscribe(path:String, target:IReloadable):Void;
 
 	/** Whether a load is under way or its completion not yet run (Host.busy asks it, with the decoders). */

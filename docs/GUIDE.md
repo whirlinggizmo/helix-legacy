@@ -277,6 +277,35 @@ TiledMap2D.load("level.tmj", map -> {           // Tiled's JSON map (.tmj), tile
 Objects have `name`, `className`, `x`, `y`, `width`, `height` and `properties` (`getString`, `getFloat`, ...). Animated tiles play by
 themselves; `setTile` changes a cell.
 
+## Your own files, read again as you save them
+
+HeliX reads textures, sounds, fonts, shaders and Tiled maps again when you save them in the dev loop. A file of the game's own (a
+level, a JSON of tuning values) can be too: subscribe an object to it, and it's told each time the file changes.
+
+```haxe
+import helix.asset.Assets;
+import helix.asset.IReloadable;
+
+class Tuning implements IReloadable {
+	public var speed = 200.;
+
+	public function new() {
+		Assets.load("tuning.json", read);          // assets/tuning.json
+		Assets.subscribe("tuning.json", this);      // and again each time it's saved
+	}
+
+	public function reloaded(path:String, bytes:haxe.io.Bytes):Void
+		read(bytes);
+
+	function read(bytes:haxe.io.Bytes):Void {
+		var data:Dynamic = haxe.Json.parse(bytes.toString());
+		speed = data.speed;
+	}
+}
+```
+
+Outside the dev loop it's read once. It's an object, not a function, so that after a reload of the code its new `reloaded` runs.
+
 ## Saving
 
 ```haxe
