@@ -115,6 +115,18 @@ class TiledTests {
 			&& things[3].className == "Coin"
 			&& things[4].shape == Ellipse,
 			"Objects of every shape, classes, turns");
+		var rounded = (points:Array<Float>) -> points.map(v -> Math.round(v)).join(",");
+		var scratch = [];
+		check(rounded(things[1].computePoints()) == "48,0,48,16,16,16,16,0"
+			&& things[1].closed
+			&& rounded(things[2].computePoints()) == "0,0,10,5"
+			&& !things[2].closed
+			&& rounded(things[3].computePoints()) == "32,32,48,32,48,48,32,48"
+			&& rounded(things[0].computePoints()) == "24,40"
+			&& things[4].computePoints(scratch) == scratch
+			&& scratch.length == 32
+			&& rounded(scratch.slice(0, 2)) == "8,2",
+			"Objects' outlines in the map's pixels: a rectangle turned about its corner, a polyline open, a tile up from its bottom, a point, an ellipse into an out");
 		check(map.findLayer("clouds").image == "maps/clouds.png" && !map.findLayer("clouds").visible && map.findLayer("sky").kind == Group,
 			"A group's image layer, found through it");
 
