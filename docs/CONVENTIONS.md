@@ -58,7 +58,38 @@ One unit per kind of value across the API, so nothing has to be converted at a c
 Code is written to be read, by people and agents, not packed.
 
 - **Formatted by the tool, not by hand.** Haxe source is laid out by haxe-formatter (`formatter` on lib.haxe.org) with the repository's `hxformat.json`: one statement per line, indented blocks. Formatting is checked with the other checks, so dense one-line classes and functions don't come back.
-- **Every public type and member has a doc comment** (`/** ... */`) saying what it is or does, in the units it uses, with its ranges and every refusal ("False for ..."). Private code gets a comment where the reason isn't plain from the code.
+- **Every public type and member has a doc comment** (`/** ... */`), written as reference documentation. Private code gets a comment where the reason isn't plain from the code.
+- **Doc comments follow C#'s XML documentation conventions, in Haxe's tag syntax.** The structure and the voice are C#'s; the tags are the Javadoc-style ones dox and `tools/gen_apidoc.py` read:
+
+  | C# | HeliX |
+  |---|---|
+  | `<summary>` | the first paragraph |
+  | `<param name="x">` | `@param x` |
+  | `<returns>` | `@return` |
+  | `<value>` (a property) | the first line |
+  | `<remarks>` | the paragraphs after the tags |
+  | `<example>` | a fenced code block in the remarks |
+  | `<exception>` | `@throws` |
+  | `<see cref="X"/>` | `` `X` `` |
+
+  - **The summary** is one sentence, standing alone (completion and the reference's index show it alone). A method starts with a third-person verb: "Returns ...", "Sets ...", "Finds ...", "Adds ...". A property: "Gets or sets the ...", "Gets the ..." when read-only, "Gets or sets a value indicating whether ..." for a Bool; its unit, range and default follow. A class: "Represents a ...", or "Provides ..." for a static service. An interface: "Defines ...". An enum: "Specifies ...".
+  - **The parameters and the return** come last in the source, after the remarks (Javadoc's order: dox reads a tag's text up to the next tag, so text after a tag would be taken as its), one per line, in order; the reference renders them under the summary. A parameter is a noun phrase: "The x coordinate, in framebuffer pixels from the left." An optional parameter starts "Optional." A return: "The node, or null if there is none."; a method that can refuse: "False when ...". A property has neither.
+  - **The remarks** are plain paragraphs, impersonal, present tense: how it is used (a class: the sequence of calls), what is skipped or ignored, what state it reads, limits, and a fenced example where a call's shape isn't obvious from its signature. A fact that changes what the reader does belongs here ("A browser plays no sound until the player has pressed a key."); the design's reasons, its history and comparisons to other frameworks don't (docs/DISPLAY_MODEL.md, DECISIONS and the guide hold those).
+  - **Standard words.** Never "you". "Optional", "provided", "omitted", "receives", "defaults to", "must be", "skipped", "ignored", "clamped to", "unchanged", "local units", "its subtree": not "when given", "left out", "held to", "says", "as it was", "the node's own units", "what's under it".
+  - **Sample**, `Stage.pick`:
+
+        /** Returns the topmost node under a framebuffer pixel.
+
+            2D nodes are tested before 3D nodes. Nodes under a `View2D` count as 2D. A node whose `visible` or `pickable` is false is
+            skipped together with its subtree, and the test continues to the nodes behind it. Paused nodes and nodes with an alpha of 0
+            are picked. The test uses the positions from the last frame drawn.
+
+            @param x  The x coordinate, in framebuffer pixels from the left.
+            @param y  The y coordinate, in framebuffer pixels from the top.
+            @param hit  Optional. When a 3D node is picked, receives the hit.
+            @return  The node, or null if there is none. */
+
+  `tools/gen_apidoc.py` renders the tags as a list under the summary, the remarks after.
 - **Generated API documentation.** The doc comments are the API reference: dox (`dox` on lib.haxe.org) generates it from them, so what a developer or an agent reads is what the code says.
 - **The API reference is what a game writes against, and nothing else.** A developer or an agent given only the reference and a hello world should be able to build any game, and not be put off by machinery. Haxe has no internal, so what another package of the engine must reach is public, and the engine's own is marked:
   - **A type a game never makes, names, sets or gets back** (an adapter or profile, a renderer or batch, the pipeline cache, a decoder, the asset cache's records, a job, the runner, a service behind a static class such as `StorageService` behind `Storage`, a contract the adapters implement such as `IGraphics`) carries `@:noCompletion`: out of the language server's completion and out of the reference (dox and `tools/gen_apidoc.py` skip it). It still compiles when named.

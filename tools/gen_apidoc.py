@@ -9,6 +9,7 @@ conditional, so both must describe the same types with the same public members, 
 the Markdown in memory and fails when docs/api differs, so a change to a doc comment is committed with its reference
 (helix.py test runs it)."""
 import json
+import re
 import os
 from pathlib import Path
 import shutil
@@ -76,7 +77,7 @@ def same_on_both(js,cpp):
     differ=[f'{p}: only on {"js" if p in a else "cpp"}' for p in sorted(set(a)^set(b))]
     for path in sorted(set(a)&set(b)):
         known=set(a)
-        ma={m for m in (member_lines(c,known) for c in a[path]) if m};mb={m for m in (member_lines(c,known) for c in b[path]) if m}
+        ma={m[:2] for m in (member_lines(c,known) for c in a[path]) if m};mb={m[:2] for m in (member_lines(c,known) for c in b[path]) if m}
         differ+=[f'{path}: {sig} only on {"js" if (sig,d) in ma else "cpp"}' for sig,d in sorted(ma^mb)]
     if differ:
         sys.exit('gen_apidoc: js and cpp describe the API differently (engine code has no target conditional):\n  '+'\n  '.join(differ))
@@ -110,10 +111,54 @@ def type_text(node,known):
         return '{'+', '.join(f'{c.tag}:{type_text(list(c)[0],known)}' for c in node if len(c))+'}'
     return node.tag
 
-def doc_text(node):
-    """A doc comment's text as one paragraph."""
+TAG=re.compile(r'^\s*@(param|return|returns|throws|exception|see|since|deprecated)\s+(.*)$')
+
+def doc_parts(node):
+    """A doc comment as (summary, remarks, tags): the first paragraph, the paragraphs after it (fenced code kept as written, prose
+    joined), and the Javadoc-style tags at the end, each (name, value, text); value is the parameter's name for param and throws."""
     d=node.find('haxe_doc')
-    return ' '.join((d.text or '').split()) if d is not None else ''
+    if d is None or not (d.text or '').strip():return '','',[]
+    lines=[l.strip() for l in d.text.strip().split('\n')]
+    tags=[];body=[]
+    for line in lines:
+        m=TAG.match(line)
+        if m:
+            name,text=m.groups();value=None
+            if name in ('param','throws','exception'):
+                value,_,text=text.partition(' ');text=text.strip()
+            tags.append((name,value,text))
+        elif tags and line:tags[-1]=(tags[-1][0],tags[-1][1],tags[-1][2]+' '+line)
+        else:body.append(line)
+    # Paragraphs: blank lines apart; a fenced block is one paragraph, its lines kept.
+    paragraphs=[];fence=False
+    for line in body:
+        if line.startswith('```'):
+            fence=not fence
+            if fence:paragraphs.append([line])
+            else:paragraphs[-1].append(line)
+        elif fence:paragraphs[-1].append(line)
+        elif not line:
+            if paragraphs and paragraphs[-1]:paragraphs.append([])
+        else:
+            if not paragraphs:paragraphs.append([])
+            paragraphs[-1].append(line)
+    paragraphs=['\n'.join(p) if p and p[0].startswith('```') else ' '.join(p) for p in paragraphs if p]
+    return (paragraphs[0] if paragraphs else ''),'\n\n'.join(paragraphs[1:]),tags
+
+def doc_text(node):
+    """A doc comment's summary, one paragraph."""
+    return doc_parts(node)[0]
+
+def tag_lines(tags):
+    """The tags as Markdown list items: a parameter by name, the return as 'returns'."""
+    return [f'- `{v}`: {t}' if n in ('param','throws','exception') else f'- {"returns" if n in ("return","returns") else n}: {t}' for n,v,t in tags]
+
+def doc_lines(node,indent=''):
+    """A doc comment as Markdown lines after its summary: the tags as a list, then the remarks, each line indented."""
+    _,remarks,tags=doc_parts(node)
+    lines=tag_lines(tags)
+    if remarks:lines+=(['']+remarks.split('\n') if lines else remarks.split('\n'))
+    return [indent+l if l else '' for l in lines]
 
 def member_lines(member,known,instance=()):
     """A public member as a Haxe signature and its doc, or None for a private one or the meta; instance names an abstract's properties,
@@ -149,7 +194,7 @@ def member_lines(member,known,instance=()):
         # A constant: inline, read-only.
         if (get,setter)==('inline','null'):final_,access='inline var ',''
         sig=f'{static}{final_}{name}{access}:{type_text(t,known)}'
-    return sig,doc_text(member)
+    return sig,doc_text(member),member
 
 def markdown(xml):
     """The Markdown files from a target's XML description: {relative path: text}."""
@@ -165,7 +210,10 @@ def markdown(xml):
         # The import that names it: its own path, as each shown type is its own file (checked above).
         lines=[f'## {header}','',f'*{kind}* in [`{source}`](../../{source})'+f', `import {path};`','']
         doc=doc_text(node)
-        if doc:lines+=[doc,'']
+        if doc:
+            lines+=[doc,'']
+            more=doc_lines(node)
+            if more:lines+=more+['']
         file=package_file(path)
         # An abstract's values and members are its implementation class's statics: an enum abstract's values (:enum) listed by name, the
         # rest as a class's members.
@@ -189,10 +237,12 @@ def markdown(xml):
             members.sort(key=lambda m:0 if m[0].split('(')[0].endswith(' new') else 1)
             if members:
                 lines.append('```haxe')
-                for sig,_ in members:lines.append(sig)
+                for sig,_,_ in members:lines.append(sig)
                 lines.append('```');lines.append('')
-                for sig,d in members:
-                    if d:lines.append(f'- `{sig.split("(")[0].split(":")[0].split()[-1]}`: {d}')
+                for sig,d,node_ in members:
+                    if d:
+                        lines.append(f'- `{sig.split("(")[0].split(":")[0].split()[-1]}`: {d}')
+                        lines+=doc_lines(node_,'  ')
                 lines.append('')
         elif node.tag=='enum':
             for c in node:

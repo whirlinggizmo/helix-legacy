@@ -443,7 +443,13 @@ A value as a .scene3d file holds it: a kind's property, a behavior's prop, or on
 
 *class* in [`src/helix/scene/SplashScreen.hx`](../../src/helix/scene/SplashScreen.hx), `import helix.scene.SplashScreen;`
 
-A splash screen: your logo, centered on the theme's background, before the game starts. Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key, clicks or taps, showing `prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you gave) and calls next at the transition's middle; put your title screen on the stage there. Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't count, because browsers ignore it for that. To go on without a press, set maxWait to a number of seconds. To fade it in, set entrance (new Fade()). An Iris as its exit closes on the logo (logoX, logoY say where it is). The splash runs itself; you don't update it. The run option quick=1 skips its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md).
+A splash screen: your logo, centered on the theme's background, before the game starts.
+
+Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key, clicks or taps, showing `prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you gave) and calls next at the transition's middle; put your title screen on the stage there.
+
+Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't count, because browsers ignore it for that.
+
+To go on without a press, set maxWait to a number of seconds. To fade it in, set entrance (new Fade()). An Iris as its exit closes on the logo (logoX, logoY say where it is). The splash runs itself; you don't update it. The run option quick=1 skips its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md).
 
 ```haxe
 function new(logo:Null<Texture2D>, seconds:Float, ?transition:Transition)

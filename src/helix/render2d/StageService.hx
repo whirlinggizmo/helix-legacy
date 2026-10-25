@@ -138,10 +138,16 @@ class StageService {
 	function get_drawnNodeCount():Int
 		return tree.drawnNodeCount;
 
-	/** The topmost node under framebuffer pixel x, y (from the top-left, as the pointer is): a 2D node, or one a View2D shows, before
-		anything 3D (3D draws under the 2D); else a 3D view's node under it, hit (a helix.render3d.PickHit3D, when given) filled with where. A
-		hidden (visible false) or unpickable (pickable false) node and what's under it aren't picked, the pick going on to what's behind; a
-		paused one is picked, and one faded to alpha 0. Null for none. As last drawn: views pick where they were shown. */
+	/** Returns the topmost node under a framebuffer pixel.
+
+		2D nodes are tested before 3D nodes. Nodes under a `View2D` count as 2D. A node whose `visible` or `pickable` is false is skipped
+		together with its subtree, and the test continues to the nodes behind it. Paused nodes and nodes with an alpha of 0 are picked. The
+		test uses the positions from the last frame drawn.
+
+		@param x  The x coordinate, in framebuffer pixels from the left.
+		@param y  The y coordinate, in framebuffer pixels from the top.
+		@param hit  Optional. When a 3D node is picked, receives the hit (a `helix.render3d.PickHit3D`).
+		@return  The node, or null if there is none. */
 	public function pick(x:Float, y:Float, ?hit:Any):Null<helix.scene.Node> {
 		ViewFrame.picks3D.resize(0);
 		var found = tree.pick(camera, x, y);
