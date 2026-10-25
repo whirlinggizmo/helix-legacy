@@ -34,6 +34,20 @@ function run(x:Float, y:Float, target:Node2D, ?arrived:Int -> Void, ?done:() -> 
 - `running`: Whether it's running now.
 - `run`: Bursts them from x, y (the stage's units) to target, each flying to where target's bounds' center is as it arrives (its position when it has none: a group), arrived (when given) called as each arrives with its index, done (when given) once all have. False, running nothing, while it's running already. With the run option quick=1, they arrive at once.
 
+## Flow
+
+*class* in [`src/helix/scene/Flow.hx`](../../src/helix/scene/Flow.hx), `import helix.scene.Flow;`
+
+Runs a step once a frame until it says it's done, so a thing can run itself without the game updating it. Transitions, the loading and splash screens, Collect2D, particles and decals' fading all use it, and a game's own screen or effect can too. For example, a banner fading out over two seconds: `var left = 2.; Flow.run(dt -> { left -= dt; banner.alpha = Math.max(0, left / 2); return left > 0; });`. A step is called after the game's update and before the frame is drawn, with the frame's seconds. That's real time, not the game's clock, so it goes on while the game is paused; read Time.clock.delta in the step to stop with the game.
+
+```haxe
+static var quick(get, never):Bool
+static function run(step:Float -> Bool):Void
+```
+
+- `quick`: Whether waits and transitions should be skipped: true when the game runs with the option quick=1 (a developer's, ?quick=1 in the page's address), so it jumps in as soon as it's loaded. The built-in screens and transitions honor it; a game's own can too.
+- `run`: Calls step once a frame with the frame's seconds, until it returns false. A step added while the steps run starts on the next frame. Outside a running game (a unit test) nothing calls it.
+
 ## Loader
 
 *class* in [`src/helix/scene/Loader.hx`](../../src/helix/scene/Loader.hx), `import helix.scene.Loader;`

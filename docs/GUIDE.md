@@ -41,6 +41,8 @@ class Game extends helix.App {
 - **What runs itself, and what you update:** particles, decals' fading, Tiled's animated tiles, transitions, `Collect2D` and the
   `FullscreenButton2D` run by themselves once on the stage or started. A `SpriteAnimator2D`, `Tweens`, `Timers`, a `CameraFollow2D`
   (`update` then `apply`), an `FpsOverlay` and a `Ui` you update in `update`, each once a frame. Forgetting one compiles and does nothing.
+  Something of your own can run itself the same way: `Flow.run(dt -> { ...; return stillGoing; })` calls it once a frame until it
+  returns false.
 - **Units:** positions in the design's units (`Screen.set`'s), from the top left, y down; angles in radians, clockwise; times in seconds.
 - **What's on the stage is drawn after each `update`.** Nothing is drawn by hand: add nodes (`Stage.addChild`) and change them.
 - `PresentationMode`: `Fit` (bars to keep the shape), `Expand` (shows more past the design on one axis), `Fill` (crops), `Stretch`,
