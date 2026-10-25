@@ -196,6 +196,9 @@ class App extends helix.App {
 		master = ui.slider("Master", 0, 100, 100, 10, "masterVolume");
 		music = ui.slider("Music", 0, 100, 100, 10, "musicVolume");
 		effects = ui.slider("Effects", 0, 100, 100, 10, "effectsVolume");
+		// One width for the three texts, so their tracks start together.
+		for (volume in [master, music, effects])
+			volume.labelWidth = 80;
 		muteMusic = ui.toggle("Mute music", false, "muteMusic");
 		name = ui.textField("", "your name", 16, "name");
 		var qualityLabel = ui.label("Quality");

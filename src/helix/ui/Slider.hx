@@ -21,6 +21,7 @@ class Slider extends Widget {
 	var readoutSize = -1.;
 	var readoutShown = false;
 	var trackLayout:Layout2D;
+	var labelLayout:Layout2D;
 	var row:Layout2D;
 	var min:Float;
 	var max:Float;
@@ -54,7 +55,8 @@ class Slider extends Widget {
 		row = Layout2D.row();
 		row.setAlign(Start, Center);
 		row.setAnchor(Stretch, Center);
-		row.add(Layout2D.of(label));
+		labelLayout = Layout2D.of(label);
+		row.add(labelLayout);
 		row.add(trackLayout);
 		readoutLayout = Layout2D.of(readout);
 		readoutLayout.themeSizing(Fixed(0), Fit);
@@ -71,6 +73,16 @@ class Slider extends Widget {
 	function set_value(v:Float):Float {
 		value = snap(v);
 		return v;
+	}
+
+	/** How wide its text is given room for, the track starting after it (the stage's units), or 0 for as wide as the text (to start). Give
+		sliders one under another the same, wide enough for the longest of their texts, and their tracks line up. */
+	public var labelWidth(default, set):Float = 0;
+
+	function set_labelWidth(value:Float):Float {
+		labelWidth = value > 0 ? value : 0;
+		labelLayout.widthSizing = labelWidth > 0 ? Fixed(labelWidth) : Fit;
+		return value;
 	}
 
 	/** Whether its value is shown as a number after its track, to as many decimals as its step has (2 without steps, 3 at most). (False to

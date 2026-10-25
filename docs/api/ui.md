@@ -459,12 +459,14 @@ A value from min to max in steps (0: any), beside a line of text: dragged along 
 
 ```haxe
 var value(default, set):Float
+var labelWidth(default, set):Float
 var valueShown:Bool
 function formatValue():String
 var changed(default, null):Bool
 ```
 
 - `value`: Its value.
+- `labelWidth`: How wide its text is given room for, the track starting after it (the stage's units), or 0 for as wide as the text (to start). Give sliders one under another the same, wide enough for the longest of their texts, and their tracks line up.
 - `valueShown`: Whether its value is shown as a number after its track, to as many decimals as its step has (2 without steps, 3 at most). (False to start.)
 - `formatValue`: Its value as valueShown writes it.
 - `changed`: Whether its value changed this frame.
