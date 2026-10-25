@@ -453,6 +453,64 @@ class Node3D extends Node {
 		localDirty = true;
 	}
 
+	/** Turns it by angle (radians) about the axis x, y, z, on top of the turn it has, the axis in the world's units when relativeTo is null
+		(a ball rolling along the ground: the axis across its way), or in relativeTo's own units when given: `wheel.rotateOnAxis(1, 0, 0, a,
+		wheel)` spins it about its own x, `rotateOnAxis(0, 1, 0, a, parent)` about its parent's up. The axis needn't be of length 1. False,
+		changing nothing, for an axis of length 0. */
+	public function rotateOnAxis(x:Float, y:Float, z:Float, angle:Float, ?relativeTo:Node3D):Bool {
+		var length = Math.sqrt(x * x + y * y + z * z);
+		if (!(length > 0))
+			return false;
+		// The axis into the parent's units: turned by relativeTo's turn in the world, then back by the parent's.
+		turnBy(relativeTo, x / length, y / length, z / length, false);
+		turnBy(parent, turnedX, turnedY, turnedZ, true);
+		var half = angle / 2, sine = Math.sin(half);
+		var rx = turnedX * sine,
+			ry = turnedY * sine,
+			rz = turnedZ * sine,
+			rw = Math.cos(half);
+		// The turn about it, then the one it had: r * q.
+		var nx = rw * qx + rx * qw + ry * qz - rz * qy,
+			ny = rw * qy - rx * qz + ry * qw + rz * qx,
+			nz = rw * qz + rx * qy - ry * qx + rz * qw,
+			nw = rw * qw - rx * qx - ry * qy - rz * qz;
+		setQuaternion(nx, ny, nz, nw);
+		return true;
+	}
+
+	// The direction x, y, z turned by node's turn in the world (each turn from the top down to it; none for null), or back by it when back,
+	// into turnedX, turnedY, turnedZ.
+	static var turnedX = 0.;
+	static var turnedY = 0.;
+	static var turnedZ = 0.;
+
+	static function turnBy(node:Null<Node3D>, x:Float, y:Float, z:Float, back:Bool):Void {
+		var wx = 0., wy = 0., wz = 0., ww = 1.;
+		var at = node;
+		while (at != null) {
+			// The node's turn, then the world one so far above it, worked from the bottom up: q_at * w.
+			var nx = at.qw * wx + at.qx * ww + at.qy * wz - at.qz * wy,
+				ny = at.qw * wy - at.qx * wz + at.qy * ww + at.qz * wx,
+				nz = at.qw * wz + at.qx * wy - at.qy * wx + at.qz * ww,
+				nw = at.qw * ww - at.qx * wx - at.qy * wy - at.qz * wz;
+			wx = nx;
+			wy = ny;
+			wz = nz;
+			ww = nw;
+			at = at.parent;
+		}
+		if (back) {
+			wx = -wx;
+			wy = -wy;
+			wz = -wz;
+		}
+		// v' = v + 2w(u x v) + 2u x (u x v), u the quaternion's vector part.
+		var cx = wy * z - wz * y, cy = wz * x - wx * z, cz = wx * y - wy * x;
+		turnedX = x + 2 * (ww * cx + wy * cz - wz * cy);
+		turnedY = y + 2 * (ww * cy + wz * cx - wx * cz);
+		turnedZ = z + 2 * (ww * cz + wx * cy - wy * cx);
+	}
+
 	/** Its matrix relative to its parent (16 floats, column-major): its place, turn and scale put together. */
 	public var matrix(get, never):Array<Float>;
 

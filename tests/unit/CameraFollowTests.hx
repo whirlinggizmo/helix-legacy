@@ -70,6 +70,61 @@ class CameraFollowTests {
 		check(a.trauma == 0 && a.shakeX == 0 && a.shakeY == 0 && a.x == 0, "It settles, and the follow never takes the shake");
 		a.shake(5);
 		check(a.trauma == 1, "Trauma is held to 1");
+
+		// In 3D: the point follows past the dead zone; the camera sits at the offset, turned by heading, looking at the point.
+		var eye = new helix.render3d.Camera3D(),
+			world = new helix.render3d.Mat4();
+		var ball = new helix.render3d.CameraFollow3D();
+		ball.smoothing = 0;
+		check(ball.setDeadZone(2, 2, 2) && !ball.setDeadZone(0, -1, 0), "3D: a dead zone, none below 0");
+		ball.update(.5, -.5, .9, 1 / 60);
+		check(ball.x == 0 && ball.y == 0 && ball.z == 0, "3D: inside the dead zone the point stays");
+		ball.update(3, 0, -4, 1 / 60);
+		check(ball.x == 2 && ball.z == -3, "3D: leaving it, the point follows its edge");
+		ball.setOffset(0, 3, 6);
+		ball.apply(eye);
+		check(near(eye.x, 2) && near(eye.y, 3) && near(eye.z, 3), "3D: the camera at the offset from the point");
+		eye.computeWorld(world);
+		check(near(world.get(8), 0) && near(world.get(10), Math.sqrt(.8)), "3D: looking at the point (its -z toward it)");
+		ball.heading = Math.PI / 2;
+		ball.update(2, 0, -3, .1);
+		check(ball.currentHeading > 0 && ball.currentHeading < Math.PI / 2, "3D: it swings round toward a new heading, part of the way");
+		ball.snap(2, 0, -3);
+		check(near(ball.eyeX, 8) && near(ball.eyeZ, -3), "3D: at a quarter the offset is round to +x; snap faces it at once");
+		check(ball.setDistance(10, Math.PI / 6)
+			&& near(ball.offsetY, 5)
+			&& near(ball.offsetZ, Math.sqrt(75))
+			&& !ball.setDistance(-1, 0),
+			"3D: setDistance, 10 away looking down 30 degrees; none below 0");
+
+		// Walls: a box between the point and the seat brings the camera in front of it, the target left out; it eases back out once clear.
+		var level = new helix.render3d.Node3D(),
+			target = new helix.render3d.Model3D(helix.render3d.Mesh3D.sphere(.5), new helix.render3d.Material3D()),
+			wall = new helix.render3d.Model3D(helix.render3d.Mesh3D.cube(4, 4, .2), new helix.render3d.Material3D());
+		wall.setPosition(0, 0, 3);
+		level.addChild(target);
+		level.addChild(wall);
+		var view = new helix.render3d.View3D(level, eye, 0, 0, new Render2DTests.CountingGraphics());
+		var chase = new helix.render3d.CameraFollow3D();
+		chase.setOffset(0, 0, 6);
+		chase.setWalls(view, target);
+		chase.update(0, 0, 0, 1 / 60);
+		check(near(chase.eyeZ, 3 - .1 - chase.wallMargin)
+			&& target.pickable, "3D: in front of the wall, its margin off; the target still pickable");
+		wall.visible = false;
+		chase.update(0, 0, 0, .1);
+		check(chase.eyeZ > 2.7 && chase.eyeZ < 6, "3D: the wall gone, it eases back out");
+		chase.setWalls(null);
+		check(near(chase.eyeZ, 6), "3D: no walls, the whole offset");
+		var smooth = new helix.render3d.CameraFollow3D();
+		smooth.update(10, 0, 0, .1);
+		check(smooth.x > 0 && smooth.x < 10, "3D: smoothed, part of the way");
+		smooth.shake(1);
+		smooth.update(10, 0, 0, .05);
+		smooth.apply(eye);
+		check(smooth.shakeX != 0 || smooth.shakeY != 0, "3D: a shake throws the view");
+		smooth.update(10, 0, 0, 1);
+		check(smooth.trauma == 0 && smooth.shakeX == 0, "3D: and settles");
 		Sys.println(haxe.Json.stringify({passed: true, checks: checks}));
 	}
 }

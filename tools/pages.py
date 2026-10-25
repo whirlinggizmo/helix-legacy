@@ -30,7 +30,7 @@ SITE=BUILD.programs
 # The index's groups, in order; every example is in one, so a new example must be placed.
 GROUPS=[
     ('Games',['asteroids','blocks']),
-    ('3D',['hello3d','meshes','materials','lights','environment','shadows','model','animation','instancing','pick','scene3d','sprite3d','text3d',
+    ('3D',['hello3d','meshes','follow3d','materials','lights','environment','shadows','model','animation','instancing','pick','scene3d','sprite3d','text3d',
            'particles','shaders','postprocess','shader-gallery','render-target','dressing-room','scene-file']),
     ('2D',['app-hello','stage','views','sprite2d','stage2d','motion','tilemap','tiled','sprite-sheet','platformer','font','textures','ui']),
     ('App and services',['app-skeleton','app-tick','app-window','app-gamepad','app-touch','touch-stick','scenes','transitions','audio-music','asset-fetch','asset-force-fetch','quit']),

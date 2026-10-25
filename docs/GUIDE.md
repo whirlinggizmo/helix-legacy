@@ -39,8 +39,8 @@ class Game extends helix.App {
   (`Time.clock.pause()`, `resume()`; `Time.clock.timeScale = .5` for slow motion). Move the game, its timers and tweens by
   `Time.clock.delta`, so they stop together; a pause menu's own animation by `dt`.
 - **What runs itself, and what you update:** particles, decals' fading, Tiled's animated tiles, transitions, `Collect2D`, `Collect3D` and the
-  `FullscreenButton2D` run by themselves once on the stage or started. A `SpriteAnimator2D`, `Tweens`, `Timers`, a `CameraFollow2D`
-  (`update` then `apply`), an `FpsOverlay` and a `Ui` you update in `update`, each once a frame. Forgetting one compiles and does nothing.
+  `FullscreenButton2D` run by themselves once on the stage or started. A `SpriteAnimator2D`, `Tweens`, `Timers`, a `CameraFollow2D` or
+  `CameraFollow3D` (`update` then `apply`), an `FpsOverlay` and a `Ui` you update in `update`, each once a frame. Forgetting one compiles and does nothing.
   Something of your own can run itself the same way: `Flow.run(dt -> { ...; return stillGoing; })` calls it once a frame until it
   returns false.
 - **Units:** positions in the design's units (`Screen.set`'s), from the top left, y down; angles in radians, clockwise; times in seconds.
@@ -260,6 +260,41 @@ follow.apply(camera);
 var worldX = camera.screenToWorldX(Input.pointerX);   // a click, in the world (bars and all), from the view's first frame
 // what's in view: follow.x - Screen.width / 2 .. follow.x + Screen.width / 2 (and y by height): spawn just past it
 ```
+
+## Moving through a 3D world
+
+A 3D world goes in a `View3D`. The ground under something, a wall ahead or a line of sight is a ray through it, and a camera follows from
+behind:
+
+```haxe
+import helix.render3d.CameraFollow3D;
+import helix.render3d.PickHit3D;
+import helix.render3d.Ray3D;
+
+var view = new View3D(level, camera);   // fields
+var follow = new CameraFollow3D();      // follow.setDistance(6, .45): 6 away, looking down about 25 degrees
+                                        // follow.setWalls(view, ball): in front of a wall between it and the ball
+var ray = new Ray3D();
+var hit = new PickHit3D();
+
+// in update:
+ray.set(ball.x, ball.y + 1, ball.z, 0, -1, 0);       // straight down from just above
+if (view.pickAlong(ray, hit) != null)                 // what it meets first: hit.node, hit.distance, hit.getPoint(1), hit.getNormal(1)
+	ball.y = hit.getPoint(1) + radius;
+ball.rotateOnAxis(dz, 0, -dx, distance / radius);     // rolled: about the axis across its way, in the world
+follow.heading = playerHeading;                       // behind the player, swinging round to it (headingSmoothing)
+follow.update(ball.x, ball.y, ball.z, dt);
+follow.apply(camera);
+```
+
+- `pickAlong` sees the tree as a pick does: models by their triangles, and nothing hidden or unpickable. Make the ball itself
+  `pickable = false` so its own ray passes through it.
+- `rotateOnAxis(x, y, z, angle, ?relativeTo)` turns about a world axis, or one in `relativeTo`'s own units: the node itself for its own
+  axle, its parent for the parent's.
+- `addChildInPlace` sticks something to a moving node where it is now in the world: a thing the ball rolls over, picked up by it.
+- The `follow3d` example drives a ball this way, with a second ray ahead to stop at walls and the height set by the slope
+  (`radius / hit.getNormal(1)`). That's rays, not a sphere: a ball over an edge drops once its center is past. A sphere body comes with
+  physics.
 
 ## Maps from Tiled
 

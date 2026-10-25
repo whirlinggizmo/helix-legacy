@@ -33,6 +33,7 @@ class PickTests {
 		skinned();
 		sprites();
 		pointer();
+		along();
 		Sys.println(haxe.Json.stringify({passed: true, checks: checks}));
 	}
 
@@ -246,6 +247,29 @@ class PickTests {
 	}
 
 	// The framebuffer pixel a world point is drawn at, through c.
+	// View3D.pickAlong: any ray through a view's tree, before its first draw too; the ground under a ball, a slope's normal.
+	static function along():Void {
+		var level = new Node3D(), ray = new Ray3D(), hit = new PickHit3D();
+		var floor = new Model3D(Mesh3D.cube(10, 1, 10), new Material3D()),
+			ramp = new Model3D(Mesh3D.cube(2, 1, 2), new Material3D());
+		floor.setPosition(0, -.5, 0);
+		ramp.setPosition(4, 1, 0);
+		ramp.setRotation(0, 0, Math.PI / 4);
+		level.addChild(floor);
+		level.addChild(ramp);
+		var view = new helix.render3d.View3D(level, camera(), 0, 0, new CountingGraphics());
+		ray.set(0, 5, 0, 0, -1, 0);
+		check(view.pickAlong(ray, hit) == hit && hit.node == floor && near(hit.distance, 5) && near(hit.getNormal(1), 1),
+			"Straight down onto the floor, before a draw: its top, 5 below, facing up");
+		ray.set(4, 5, 0, 0, -1, 0);
+		check(view.pickAlong(ray, hit).node == ramp && near(hit.getNormal(0), -Math.sqrt(.5)) && near(hit.getNormal(1), Math.sqrt(.5)),
+			"Onto the ramp: its turned face, the normal along the slope");
+		ray.set(20, 5, 0, 0, -1, 0);
+		check(view.pickAlong(ray) == null, "Past the floor's edge: nothing");
+		ray.set(0, 5, 0, 0, 1, 0);
+		check(view.pickAlong(ray) == null, "Up, away from it all: nothing");
+	}
+
 	static function pixel(c:Camera3D, x:Float, y:Float, z:Float):Array<Float> {
 		var m = c.viewProjection;
 		var cx = m.get(0) * x + m.get(4) * y + m.get(8) * z + m.get(12),

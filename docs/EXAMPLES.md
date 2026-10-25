@@ -23,6 +23,7 @@ The catalog follows the earlier C frameworks' example names. Each example matche
 | `quit` | quitting mid-load: shutdown runs after the frame |
 | `hello3d` | an orbiting 3D camera, depth-tested shapes and lines, a 2D overlay |
 | `meshes` | generated meshes in a `View3D`: lit, instanced models with glTF materials |
+| `follow3d` | a ball driven over a floor, a ramp and a step: the ground under it by a ray down (`View3D.pickAlong`), its roll about a world axis (`Node3D.rotateOnAxis`), a camera following from behind and shaken (`CameraFollow3D`) |
 | `materials` | metallic-roughness steps, unlit, emissive, a normal map, see-through; a sun and a point light |
 | `lights` | directional, point and spot lights on a stage, beside an immediate grid |
 | `animation` | skinned characters (Quaternius's modular women): a skeleton and 24 clips from a file of animations alone, her skinned parts from files of their own bound to it by joint name, crossfades, pausing, posed shadows (dressing her is the dressing room's) |

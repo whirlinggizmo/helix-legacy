@@ -113,6 +113,19 @@ class View3D extends View {
 		return camera.computeRay(px, py, out);
 	}
 
+	/** What ray meets first in its tree, as a pick sees it: the nearest model, sprite or text, into hit (a new one when not given), or null
+		for nothing. The ray is in its tree's world units (Ray3D.set: the ground under a ball, `ray.set(ball.x, ball.y, ball.z, 0, -1, 0)`;
+		a line of sight). The hit says the node, the distance along the ray, the point, and the surface's normal facing back along the ray.
+		Models are met by their triangles as posed now, from either side; a hidden or unpickable node and what's under it are passed over,
+		as Stage.pick passes them; sprites and text face as its camera shows them. Given hit, it allocates nothing. */
+	public function pickAlong(ray:Ray3D, ?hit:PickHit3D):Null<PickHit3D> {
+		if (world == null) {
+			world = new Renderer3D(gpu, content);
+			world.viewed = true;
+		}
+		return world.pickAlong(ray, camera, hit);
+	}
+
 	/** Where the world point x, y, z of its tree is seen, in the stage's units (where a label over a head, an arrow to something off screen
 		or a 2D burst from a 3D chest goes on the stage), into out (a new one when not given), returned, as the view was last drawn; a point
 		off its sides lands off them. Null for a point behind its camera. Given out, it allocates nothing. */

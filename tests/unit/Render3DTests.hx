@@ -227,6 +227,31 @@ class Render3DTests {
 		@:privateAccess looker.update(null, false);
 		check(near(-looker.worldMatrix.get(8), 1) && near(looker.worldMatrix.get(5), 1), "lookAt points -z at the target, y up");
 		check(!parent.addChild(parent) && !child.addChild(parent), "A node can't hold itself or its ancestor");
+		// rotateOnAxis: about a world axis by default, or one in a node's own units; added to the turn the node has.
+		var spun = new Node3D(), turned = new Node3D(), axes = new Mat4();
+		check(spun.rotateOnAxis(0, 2, 0, Math.PI / 2), "rotateOnAxis takes an axis of any length");
+		var same = new Node3D();
+		same.setRotation(0, Math.PI / 2, 0);
+		check(near(spun.matrix[8], same.matrix[8]) && near(spun.matrix[0], same.matrix[0]), "A quarter about y, as setRotation turns it");
+		check(!spun.rotateOnAxis(0, 0, 0, 1), "An axis of length 0 is refused");
+		turned.setRotation(0, Math.PI / 2, 0);
+		inline function yAxis(node:Node3D, x:Float, y:Float, z:Float):Bool {
+			node.computeWorld(axes);
+			return near(axes.get(4), x) && near(axes.get(5), y) && near(axes.get(6), z);
+		}
+		var rolled = new Node3D();
+		turned.addChild(rolled);
+		check(rolled.rotateOnAxis(1, 0, 0, Math.PI / 2)
+			&& yAxis(rolled, 0, 0, 1), "Under a turned parent, about the world's x: its up tips to +z");
+		var wheel = new Node3D();
+		turned.addChild(wheel);
+		check(wheel.rotateOnAxis(1, 0, 0, Math.PI / 2, wheel)
+			&& yAxis(wheel, 1, 0, 0), "About its own x (the world's -z there): its up tips to +x");
+		var other = new Node3D();
+		turned.addChild(other);
+		check(other.rotateOnAxis(1, 0, 0, Math.PI / 2, turned) && yAxis(other, 1, 0, 0), "About its parent's x: the same here");
+		rolled.rotateOnAxis(1, 0, 0, -Math.PI / 2);
+		check(yAxis(rolled, 0, 1, 0), "Turning back undoes it");
 		// attach keeps a node's world place under a moved, turned, scaled parent; parent = keeps its local one.
 		var holder = new Node3D(), held = new Node3D(), world = new Mat4();
 		holder.setPosition(10, 0, 0);

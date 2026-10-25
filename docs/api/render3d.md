@@ -139,6 +139,74 @@ function project(x:Float, y:Float, z:Float, ?out:Point2D):Null<Point2D>
 - `computeRay`: The ray through framebuffer pixel x, y (from the framebuffer's top-left, as the pointer is) into out (a new one when not given), returned: from the near plane, away from the camera, through the same matrices the stage draws with (perspective or orthographic, the viewport's shape). Null, leaving out as it was, for a point outside the viewport area (a pointer off the window, -1, -1, among them). Given out, it allocates nothing.
 - `project`: Where the world point x, y, z is seen in the framebuffer, in pixels from its top-left (as the pointer is), into out (a new one when not given), returned: through the same matrices the stage draws with, within the camera's viewport area (a point off its sides lands off them). Null for a point behind the camera (or on its eye's plane), which no pixel shows. Given out, it allocates nothing.
 
+## CameraFollow3D
+
+*class* in [`src/helix/render3d/CameraFollow3D.hx`](../../src/helix/render3d/CameraFollow3D.hx), `import helix.render3d.CameraFollow3D;`
+
+A 3D camera following a target: it looks at a point that follows the target, the target moving freely inside a dead zone around it and the point catching up smoothly (at the same speed at any frame rate) when it leaves, and sits at an offset from that point, turned about the up axis by heading (behind a player as it turns), swinging round to it smoothly. Given walls (setWalls), it comes in front of what's between it and the point, so a wall behind the player never hides them. It's shaken (shake), a trauma that decays, the view thrown across and up by the square of it. update follows, apply places a camera there. Follow where the target is drawn (between simulation ticks, where it's interpolated), not where it's simulated, or the view jitters against it. The shake is the view's only, never the game's: its random numbers are its own. In world units throughout.
+
+```haxe
+function new(?x:Float = 0., ?y:Float = 0., ?z:Float = 0., ?seed:Int = 1)
+var x(default, null):Float
+var y(default, null):Float
+var z(default, null):Float
+var offsetX:Float
+var offsetY:Float
+var offsetZ:Float
+var heading:Float
+var currentHeading(default, null):Float
+var headingSmoothing:Float
+var wallMargin:Float
+var smoothing:Float
+var shakeDistance:Float
+var shakeRecovery:Float
+var shakeFrequency:Float
+var trauma(default, null):Float
+var shakeX(default, null):Float
+var shakeY(default, null):Float
+function setOffset(x:Float, y:Float, z:Float):Void
+function setDistance(distance:Float, pitch:Float):Bool
+function setWalls(view:Null<View3D>, ?ignore:Node3D):Void
+function setDeadZone(width:Float, height:Float, depth:Float):Bool
+function shake(amount:Float):Void
+function snap(x:Float, y:Float, z:Float):Void
+function update(targetX:Float, targetY:Float, targetZ:Float, dt:Float):Void
+var eyeX(get, never):Float
+var eyeY(get, never):Float
+var eyeZ(get, never):Float
+function apply(camera:Camera3D):Void
+```
+
+- `new`: A follow looking at x, y, z, with no dead zone, from 6 back and 3 up; seed seeds its shake.
+- `x`: The point followed to and looked at, before the shake, x.
+- `y`: The point followed to and looked at, before the shake, y.
+- `z`: The point followed to and looked at, before the shake, z.
+- `offsetX`: Where the camera sits from the point, across, before heading turns it: 0 by default.
+- `offsetY`: Where the camera sits from the point, up: 3 by default.
+- `offsetZ`: Where the camera sits from the point, along z, before heading turns it: 6 by default (behind a target facing -z).
+- `heading`: The way it wants to face, radians about the up axis (the offset turned by it): 0 by default, from +z looking toward -z. Set it to a player's heading to stay behind them; the camera swings round to it at headingSmoothing.
+- `currentHeading`: The way it faces now, radians about the up axis, swinging toward heading.
+- `headingSmoothing`: How quickly it swings round to heading, the shorter way: the rate of Interpolate.dampAngle, per second, 6 by default. 0 or less turns at once.
+- `wallMargin`: How far in front of a wall it stays when it comes in (setWalls), in world units: 0.2 by default.
+- `smoothing`: How quickly the point catches up with the target when it leaves the dead zone: the rate of Interpolate.damp, per second (about a fifth of the way left after 1.6 / rate seconds). 0 or less catches up at once.
+- `shakeDistance`: How far the view is thrown at full trauma, as a share of the camera's distance from the point (0.04: 0.27 of a camera 6.7 away), so a shake looks the same close up or far off.
+- `shakeRecovery`: How much trauma it loses a second: 1 settles a full shake in a second.
+- `shakeFrequency`: How many times a second the shake changes direction.
+- `trauma`: The shake's trauma, 0 (still) to 1, falling by shakeRecovery a second; the view is thrown by its square, so small shakes are gentle.
+- `shakeX`: Where the shake throws the view now, across the view, in world units.
+- `shakeY`: Where the shake throws the view now, up the view, in world units.
+- `setOffset`: Sets where the camera sits from the point (x across, y up, z along before heading turns it).
+- `setDistance`: Sets the offset by how far the camera is from the point and how steeply it looks down at it (radians: 0 level, pi / 2 straight down, which a camera can't look, so keep under it): `setDistance(6, .45)` 6 away, looking down about 25 degrees. False, changing nothing, for a distance below 0.
+- `setWalls`: Makes it come in front of what's in view's tree between the point and where it sits, as View3D.pickAlong meets it, staying wallMargin off it; it comes in at once and goes back out at smoothing. ignore (the target, usually) and what's under it are left out, as the target would otherwise stand in its own way. Null stops it.
+- `setDeadZone`: The target moves freely within width x height x depth world units around the point (0, 0, 0: none, the point always catching up). False, changing nothing, for a size below 0.
+- `shake`: Adds amount to the trauma (held to 1): 0.3 a bump, 1 an explosion.
+- `snap`: Puts the point at x, y, z at once (a respawn, a new level), facing heading.
+- `update`: Follows the target at targetX, targetY, targetZ for dt seconds, and advances the shake.
+- `eyeX`: Where the camera sits now, before the shake, x.
+- `eyeY`: Where the camera sits now, before the shake, y.
+- `eyeZ`: Where the camera sits now, before the shake, z.
+- `apply`: Places camera at its seat, looking at the point, both thrown across and up the view by the shake. Leaves camera as it was when the seat is the point itself or straight above it (an offset of 0, or only up).
+
 ## CubeMap3D
 
 *class* in [`src/helix/render3d/CubeMap3D.hx`](../../src/helix/render3d/CubeMap3D.hx), `import helix.render3d.CubeMap3D;`
@@ -718,6 +786,7 @@ var rotationY(get, never):Float
 var rotationZ(get, never):Float
 function setRotation(x:Float, y:Float, z:Float):Void
 function setQuaternion(x:Float, y:Float, z:Float, w:Float):Void
+function rotateOnAxis(x:Float, y:Float, z:Float, angle:Float, ?relativeTo:Node3D):Bool
 var matrix(get, never):Array<Float>
 function setMatrix(m:Array<Float>):Bool
 function setScale(x:Float, y:Float, z:Float):Void
@@ -755,6 +824,7 @@ var worldMatrix(get, never):Mat4
 - `rotationZ`: Its rotation's angle about z, radians, as rotationX.
 - `setRotation`: Turns it by angles in radians about x, then y, then z, relative to its parent.
 - `setQuaternion`: Turns it by the unit quaternion x, y, z, w, relative to its parent (normalized here; the identity for a zero one).
+- `rotateOnAxis`: Turns it by angle (radians) about the axis x, y, z, on top of the turn it has, the axis in the world's units when relativeTo is null (a ball rolling along the ground: the axis across its way), or in relativeTo's own units when given: `wheel.rotateOnAxis(1, 0, 0, a, wheel)` spins it about its own x, `rotateOnAxis(0, 1, 0, a, parent)` about its parent's up. The axis needn't be of length 1. False, changing nothing, for an axis of length 0.
 - `matrix`: Its matrix relative to its parent (16 floats, column-major): its place, turn and scale put together.
 - `setMatrix`: Places, turns and scales it by a matrix (16 floats, column-major) relative to its parent, taken apart into translation, rotation and scale; a shear is lost. False, changing nothing, for one of the wrong length or with a zero scale.
 - `setScale`: Scales it along its own x, y and z.
@@ -1159,6 +1229,7 @@ var drawCallCount(get, never):Int
 var shadowCasterCount(get, never):Int
 var shadowDrawCallCount(get, never):Int
 function computeRay(x:Float, y:Float, ?out:Ray3D):Null<Ray3D>
+function pickAlong(ray:Ray3D, ?hit:PickHit3D):Null<PickHit3D>
 function project(x:Float, y:Float, z:Float, ?out:Point2D):Null<Point2D>
 function drawToTexture(target:Texture2D, ?clearColor:Int = 0x00000000):Void
 function destroy():Void
@@ -1175,5 +1246,6 @@ function destroy():Void
 - `shadowCasterCount`: How many models cast into the shadow maps the last frame.
 - `shadowDrawCallCount`: How many draws the last frame's shadow maps took.
 - `computeRay`: The ray from its camera's eye through the stage point x, y (the stage's units, as a game holds the pointer: Screen.toUnitsX of its pixels), into out (a new one when not given), returned, as the view was last drawn: with Ray3D.hitHeight and pointAt, where on the ground a click landed. Null for a point outside where it's shown, or before its first draw. Given out, it allocates nothing.
+- `pickAlong`: What ray meets first in its tree, as a pick sees it: the nearest model, sprite or text, into hit (a new one when not given), or null for nothing. The ray is in its tree's world units (Ray3D.set: the ground under a ball, `ray.set(ball.x, ball.y, ball.z, 0, -1, 0)`; a line of sight). The hit says the node, the distance along the ray, the point, and the surface's normal facing back along the ray. Models are met by their triangles as posed now, from either side; a hidden or unpickable node and what's under it are passed over, as Stage.pick passes them; sprites and text face as its camera shows them. Given hit, it allocates nothing.
 - `project`: Where the world point x, y, z of its tree is seen, in the stage's units (where a label over a head, an arrow to something off screen or a 2D burst from a 3D chest goes on the stage), into out (a new one when not given), returned, as the view was last drawn; a point off its sides lands off them. Null for a point behind its camera. Given out, it allocates nothing.
 - `drawToTexture`: Draws its tree through its camera into target (a Texture2D.renderTarget with depth), cleared to clearColor (0xAARRGGBB): a picture taken when asked (a tile's portrait, an inventory icon), not each frame. Its shadows are drawn first. Outside a frame only: in init or update, before the runner opens the frame.
