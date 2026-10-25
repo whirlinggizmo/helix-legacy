@@ -8,21 +8,30 @@ import sys.io.File;
 
 /** `init`: the starter game (templates/starter: src/Main.hx and src/Game.hx, its builds in hxml/, assets/, .gitignore, VS Code's settings for
 	the Haxe extension (.vscode/settings.json, its completion from the browser build), HTTPS for a phone (docker-compose.yml, tls/) and a
-	README with the commands) written into a new or empty directory, each file's {name} the game's (its directory's name) and {title} its title; or one of the
-	library's examples as a game, the starter around it. */
+	README with the commands) written into a directory, each file's {name} the game's (its directory's name, "." the current one's) and
+	{title} its title; or one of the library's examples as a game, the starter around it. The directory may be new, empty, or a repository
+	just made (a .git/, a README, a LICENSE): a .gitignore there gets the starter's lines it lacks, a README the starter's below its own,
+	and any other file the starter has is kept as it is. */
 class Starter {
 	/** The starter written into directory (made when missing) from the library at root, or with example (the name of a directory in the
 		library's examples/) the example as a game: its App in src/ (an example's App.hx or every file of its src/, in place of Game.hx, Main.hx
 		starting App), the examples' shared assets and its own in assets/ (its scripts for the autopilot as assets/autopilot/<example>/, as
-		the examples load them), its shaders/ and its config.json. Refuses a directory with anything in it, and an example the library hasn't,
-		listing those it has. Returns the files written, relative to directory. */
-	public static function write(root:String, directory:String, ?example:String):Array<String> {
-		if (FileSystem.exists(directory) && (!FileSystem.isDirectory(directory) || FileSystem.readDirectory(directory).length > 0))
-			throw new CommandError('init: $directory is not empty; a starter goes in a new or empty directory');
+		the examples load them), its shaders/ and its config.json. Refuses a file, a directory that already has a game's parts (src/, hxml/,
+		assets/, shaders/ or config.json), and an example the library hasn't, listing those it has. Returns the files written (and added to),
+		and those kept as they were, relative to directory. */
+	public static function write(root:String, directory:String, ?example:String):{written:Array<String>, kept:Array<String>} {
+		if (Files.isFile(directory))
+			throw new CommandError('init: $directory is a file; a starter goes in a directory');
+		var taken = [
+			for (part in ["src", "hxml", "assets", "shaders", "config.json"])
+				if (FileSystem.exists(Path.join([directory, part]))) part
+		];
+		if (taken.length > 0)
+			throw new CommandError('init: $directory already has ${taken.join(", ")}; a starter goes in a new directory, or one with only a repository\'s files (.git/, a README, a LICENSE)');
 		var source = example != null ? exampleSource(root, example) : null;
 		var name = Path.withoutDirectory(Files.resolve(Sys.getCwd(), directory));
 		var template = Path.join([root, "templates", "starter"]);
-		var written = [];
+		var written = [], kept = [];
 		for (relative in Files.listFiles(template)) {
 			if (source != null && relative == "src/Game.hx")
 				continue;
@@ -31,7 +40,22 @@ class Starter {
 				text = ~/\bGame\b/g.replace(text, "App");
 			if (source != null && relative == "README.md")
 				text = StringTools.replace(text, "`src/Game.hx` is the game", '`src/App.hx` is the game (HeliX\'s example $example)');
-			Files.writeText(Path.join([directory, relative]), text);
+			var target = Path.join([directory, relative]);
+			if (Files.isFile(target)) {
+				var mine = File.getContent(target);
+				if (relative == ".gitignore") {
+					// The starter's lines the game's lacks, added.
+					var lines = mine.split("\n").map(StringTools.trim);
+					var missing = [for (line in text.split("\n")) if (line != "" && lines.indexOf(line) < 0) line];
+					text = missing.length == 0 ? mine : (StringTools.endsWith(mine, "\n") || mine == "" ? mine : mine + "\n") + missing.join("\n") + "\n";
+				} else if (relative == "README.md")
+					text = StringTools.rtrim(mine) + "\n\n" + text;
+				else {
+					kept.push(relative);
+					continue;
+				}
+			}
+			Files.writeText(target, text);
 			written.push(relative);
 		}
 		// The game's files go in assets/, empty to begin with (the README says so): nothing in it ships that isn't the game's.
@@ -66,7 +90,7 @@ class Starter {
 		for (file in written)
 			if (unique.indexOf(file) < 0)
 				unique.push(file);
-		return unique;
+		return {written: unique, kept: kept};
 	}
 
 	/** The library's examples at root: the directories of its examples/ holding an App.hx, or a src/App.hx; none when it has no examples. */

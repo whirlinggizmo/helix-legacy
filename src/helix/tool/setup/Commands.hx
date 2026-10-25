@@ -11,7 +11,7 @@ class Commands {
 What a game on -lib helix does before it has an hxml, or outside one. Its builds are hxml files (the starter's hxml/), whose build steps are
 macros in helix.tool: Build's steps (shaders packed, the page, assets, the zip), Watchers, WebServer (BUILDING.md).
 
-  init DIRECTORY                 a starter game in DIRECTORY (empty or not yet there): src/Main.hx and src/Game.hx (a window title, a rectangle
+  init DIRECTORY                 a starter game in DIRECTORY (new, empty, or a repository just made; . is this one): src/Main.hx and src/Game.hx (a window title, a rectangle
                               and a greeting), hxml/ (common.hxml and web.hxml; build.web, build.native and build.dist; dev, the dev loop; and
                               serve.dist), assets/, favicon.svg (the page's icon, to replace), .gitignore and a README
   init DIRECTORY --example NAME  the library's example NAME as a game in DIRECTORY, the starter around it: its App in src/, the examples'
@@ -47,7 +47,10 @@ HELIX_GLSLANG and HELIX_SPIRV_CROSS name programs of your own instead.";
 						return usage("init: name one directory");
 					var directory = options.positional[0],
 						example = options.values["--example"];
-					var written = Starter.write(root, directory, example);
+					var wrote = Starter.write(root, directory, example),
+						written = wrote.written;
+					if (wrote.kept.length > 0)
+						Sys.println('init: $directory: kept as they were: ${wrote.kept.join(", ")}');
 					if (example == null)
 						Sys.println('init: $directory: ' + written.join(", "));
 					else {

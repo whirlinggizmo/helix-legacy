@@ -129,12 +129,34 @@ class Commands(unittest.TestCase):
             self.assertIn('build the release first', refusal(tool('autopilot', 'assets/autopilot/run.json', '--no-build', cwd=game)))
             self.assertIn("isn't a file", refusal(tool('autopilot', 'autopilot/run.json', '--browser', 'no-such-chromium', cwd=game)))
 
-    def test_init_refuses_a_directory_in_use(self):
+    def test_init_refuses_a_game(self):
         with tempfile.TemporaryDirectory() as directory:
-            (Path(directory) / 'something.txt').write_text('x', encoding='utf-8')
-            self.assertIn('not empty', refusal(tool('init', '.', cwd=directory)))
+            (Path(directory) / 'src').mkdir()
+            self.assertIn('already has src', refusal(tool('init', '.', cwd=directory)))
             (Path(directory) / 'file.txt').write_text('x', encoding='utf-8')
-            self.assertIn('not empty', refusal(tool('init', 'file.txt', cwd=directory)))
+            self.assertIn('is a file', refusal(tool('init', 'file.txt', cwd=directory)))
+
+    def test_init_here_in_a_new_repository(self):
+        # A repository just made (git init, or cloned from a new GitHub one): the game goes in it, named after it.
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory) / 'gamejams-rolling'
+            (repo / '.git').mkdir(parents=True)
+            (repo / 'README.md').write_text('# gamejams-rolling\n', encoding='utf-8')
+            (repo / 'LICENSE').write_text('MIT', encoding='utf-8')
+            (repo / '.gitignore').write_text('node_modules/\nout/', encoding='utf-8')
+            said = done(tool('init', '.', cwd=repo))
+            self.assertIn('init: .:', said)
+            self.assertIn('options.product = "gamejams-rolling"', (repo / 'src/Main.hx').read_text(encoding='utf-8'))
+            readme = (repo / 'README.md').read_text(encoding='utf-8')
+            self.assertTrue(readme.startswith('# gamejams-rolling\n\n# Gamejams Rolling\n'), readme[:80])
+            self.assertEqual((repo / '.gitignore').read_text(encoding='utf-8'), 'node_modules/\nout/\n.haxelib/\ntls/*.pem\n')
+            self.assertEqual((repo / 'LICENSE').read_text(encoding='utf-8'), 'MIT')
+            # A file of the starter's already there is the game's: kept, and said.
+            other = Path(directory) / 'other'
+            (other / '.vscode').mkdir(parents=True)
+            (other / '.vscode/settings.json').write_text('{}', encoding='utf-8')
+            self.assertIn('kept as they were: .vscode/settings.json', done(tool('init', 'other', cwd=directory)))
+            self.assertEqual((other / '.vscode/settings.json').read_text(encoding='utf-8'), '{}')
 
     def test_init_example(self):
         with tempfile.TemporaryDirectory() as directory:

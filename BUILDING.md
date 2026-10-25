@@ -111,7 +111,7 @@ A build's steps are macros an hxml lists (`--macro helix.tool.<Class>.<step>(...
 `haxelib run helix <command>` runs what a game needs before it has an hxml, or outside one (`Run.hx`, `haxelib.json`'s `main`: haxelib starts it in the library's directory and appends the directory the command was given from, which the command works in; `helix.tool.setup.Commands`, run by Haxe's interpreter). `haxelib run helix --help` lists them; from a checkout, `haxe -cp src --run Run <command>` works in the current directory.
 
 ```console
-haxelib run helix init my-game     # a starter game in my-game/ (new or empty): src/Main.hx, src/Game.hx, hxml/, assets/, favicon.svg, .gitignore, README.md
+haxelib run helix init my-game     # a starter game in my-game/ (new, empty, or a repository just made; . for this directory): src/Main.hx, src/Game.hx, hxml/, assets/, favicon.svg, .gitignore, README.md
 haxelib run helix init racer --example scene-file   # one of the library's examples as a game, the starter around it
 haxelib run helix setup            # the shader tools fetched ahead and listed (version, where, size); --sdl-gpu adds SDL_GPU's
 ```
