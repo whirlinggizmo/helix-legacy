@@ -193,38 +193,49 @@ class InputTests {
 		Sys.println(haxe.Json.stringify({passed: true, checks: checks}));
 	}
 
-	// The device's tilt: asked for through the router to the platform, read from level (the first reading), turned with the screen, held to
-	// -1..1; calibrated anew; refused, no longer wanted.
+	// The device's tilt: asked for through the router to the platform, read from level (held steady at the start, after a turn, after
+	// calibrating), turned with the screen, held to -1..1; refused, no longer wanted.
 	static function tilt():Void {
-		var source = new Source(),
-			router = new InputRouter(),
-			input:InputState = cast router.input;
+		var source = new Source(), router = new InputRouter(), input:InputState = cast router.input, time = 0.;
+		@:privateAccess input.now = () -> time;
+		// A reading at the time now, then the clock moved on.
+		function read(beta:Float, gamma:Float, angle:Float, later = 0.):Void {
+			source.report = e -> e.tilt(beta, gamma, angle);
+			router.poll(source);
+			time += later;
+		}
 		source.start(router);
 		router.poll(source);
 		check(input.tiltState == Off && !source.tiltWanted, "Off until asked");
 		input.requestTilt();
 		router.poll(source);
 		check(source.tiltWanted && input.tiltState == Waiting, "Asked: the platform told, waiting");
-		source.report = e -> e.tilt(60, 0, 0);
-		router.poll(source);
-		check(input.tiltState == On && input.tiltX == 0 && input.tiltY == 0, "The first reading is level");
-		source.report = e -> e.tilt(45, 15, 0);
-		router.poll(source);
-		check(input.tiltX == .5 && input.tiltY == -.5, "Right side down half across; the top tipped away half up");
-		source.report = e -> e.tilt(0, 90, 0);
-		router.poll(source);
+		read(40, 0, 0, .3);
+		read(60, 0, 0, .3);
+		read(61, 1, 0, .3);
+		check(input.tiltState == Calibrating && input.tiltX == 0 && input.tiltY == 0,
+			"Reading, calibrating and 0 until held steady: a hand moving puts level off");
+		read(60, 0, 0);
+		read(45, 15, 0);
+		check(input.tiltState == On && input.tiltX == .5 && input.tiltY == -.5, "On: right side down half across; the top tipped away half up");
+		read(0, 90, 0);
 		check(input.tiltX == 1 && input.tiltY == -1, "Past the range: held to -1..1");
-		// The screen turned 90 degrees counterclockwise (a phone on its side): the device's forward is across the screen.
-		source.report = e -> e.tilt(75, 0, 90);
-		router.poll(source);
+		// The screen turned 90 degrees counterclockwise (a phone on its side): level taken anew, the device's forward across the screen.
+		read(60, 0, 90, .5);
+		check(input.tiltState == Calibrating && input.tiltX == 0 && input.tiltY == 0, "Turned: calibrating, 0 until held steady");
+		read(60, 0, 90);
+		read(75, 0, 90);
 		check(input.tiltX == .5 && input.tiltY == 0, "On its side: tipping the device's top toward the player is right on screen");
-		source.report = e -> e.tilt(60, -15, 270);
-		router.poll(source);
+		read(60, 0, 270, .5);
+		read(60, 0, 270);
+		read(60, -15, 270);
 		check(input.tiltX == 0 && input.tiltY == -.5, "On its other side: the device's left side down is up on screen");
 		input.calibrateTilt();
-		source.report = e -> e.tilt(30, 10, 0);
-		router.poll(source);
-		check(input.tiltX == 0 && input.tiltY == 0, "Calibrated: level as it's held now");
+		check(input.tiltState == Calibrating && input.tiltX == 0 && input.tiltY == 0, "Calibrating: 0 at once");
+		read(30, 10, 270, .5);
+		read(31, 10, 270);
+		read(31, 10, 270);
+		check(input.tiltX == 0 && input.tiltY == 0 && @:privateAccess input.levelBeta == 31, "Calibrated: level as it's held steady");
 		source.report = e -> e.tiltState(Refused);
 		router.poll(source);
 		router.poll(source);

@@ -134,6 +134,7 @@ var size(default, null):Float
 var color:Int
 var margin:Float
 var hovered(default, null):Bool
+function covers(x:Float, y:Float):Bool
 ```
 
 - `new`: An icon size stage units across (18 unless given), in color (0xAARRGGBB, a light gray unless given).
@@ -141,6 +142,7 @@ var hovered(default, null):Bool
 - `color`: Its color, 0xAARRGGBB; drawn opaque under the pointer.
 - `margin`: How far in from the visible area's top-right corner it sits, the stage's units: 10 to start.
 - `hovered`: Whether the pointer is over it, as of the last frame drawn: a game skips its own click there.
+- `covers`: Whether stage point x, y is on the icon, as it was last placed: for a game's own controls to leave it be (a touch stick's touchStickBlocked, say).
 
 ## Handle
 
@@ -595,7 +597,7 @@ var changed(default, null):Bool
 
 *class* in [`src/helix/ui/TouchStick2D.hx`](../../src/helix/ui/TouchStick2D.hx), `import helix.ui.TouchStick2D;`
 
-A touch stick drawn while it's held (Binding.TouchStick): a ring where the finger landed, its radius the stick's, and a knob under the finger, kept within the ring. Draws nothing while no finger holds it, so it shows only on a touch screen in use. It needs no Ui and runs itself: add it to the stage, over the game: Stage.addChild(new TouchStick2D(actions, "moveX")), naming an action bound to the stick. With hint on, a faint ring and knob say where a thumb goes while no finger holds it: the bottom left for the whole screen or the left half, the bottom right for the right half, a region's center.
+A touch stick drawn while it's held (Binding.TouchStick): a ring where the finger landed, its radius the stick's, and a knob under the finger, kept within the ring. Draws nothing while no finger holds it, so it shows only on a touch screen in use. It needs no Ui and runs itself: add it to the stage, over the game: Stage.addChild(new TouchStick2D(actions, "moveX")), naming an action bound to the stick. With hint on, a faint ring and knob say where a thumb goes while no finger holds it: the bottom left for the whole screen or the left half, the bottom right for the right half, a region's center, or at hintCorner when it's set.
 
 ```haxe
 function new(actions:Actions, action:String, ?color:Int = 0x80e8e8e8)
@@ -604,6 +606,7 @@ var action:String
 var color:Int
 var hint:Bool
 var hintMargin:Float
+var hintCorner:Null<Anchor>
 ```
 
 - `new`: The stick of action in actions drawn (its first touch stick binding that's held), in color (0xAARRGGBB: a light gray, half seen, unless given).
@@ -612,6 +615,7 @@ var hintMargin:Float
 - `color`: Its color, 0xAARRGGBB: the ring's, and the knob's a little more opaque.
 - `hint`: Whether to draw the idle hint while no finger holds it: off to start (a game turns it on once it has seen a touch, say).
 - `hintMargin`: How far in from the visible area's corner the hint's ring sits, the stage's units: 40 to start.
+- `hintCorner`: Where the hint's ring sits on the visible area, in from it by hintMargin (BottomRight for a stick on the whole screen that's held by the right thumb, say), or null to start: the place its area gives.
 
 ## Ui
 

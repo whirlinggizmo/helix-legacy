@@ -33,6 +33,14 @@ class FullscreenButton2D extends Drawing2D {
 	/** Whether the pointer is over it, as of the last frame drawn: a game skips its own click there. */
 	public var hovered(default, null):Bool = false;
 
+	/** Whether stage point x, y is on the icon, as it was last placed: for a game's own controls to leave it be (a touch stick's
+		touchStickBlocked, say). */
+	public function covers(x:Float, y:Float):Bool {
+		var left = Screen.visibleX + Screen.visibleWidth - margin - size,
+			top = Screen.visibleY + margin;
+		return x >= left && x <= left + size && y >= top && y <= top + size;
+	}
+
 	// The frame it was last placed and drawn at: once a frame, however many views show its tree.
 	var refreshedAt = Math.NaN;
 

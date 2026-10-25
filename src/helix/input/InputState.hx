@@ -418,6 +418,12 @@ class InputState implements IInput {
 	/** Degrees of tilt that read as all the way (tiltX, tiltY at 1). */
 	public static inline var TILT_RANGE = 30.;
 
+	/** How long the device is held steady before that's taken as level (seconds). */
+	public static inline var TILT_STEADY_SECONDS = .5;
+
+	/** How far the device may move while it's held steady (degrees). */
+	public static inline var TILT_STEADY_DEGREES = 3.;
+
 	public var tiltX(get, never):Float;
 
 	function get_tiltX():Float
@@ -435,35 +441,67 @@ class InputState implements IInput {
 
 	var tilted = [0., 0.];
 	var tiltIs:TiltState = Off;
-	// Whether the tilt is wanted (the router tells the platform as it changes), and the reading taken as level (NaN until the first).
+	// Whether the tilt is wanted (the router tells the platform as it changes), and the reading taken as level (NaN until it's taken).
 	@:allow(helix.input)
 	var tiltWanted = false;
 	var levelBeta = Math.NaN;
 	var levelGamma = Math.NaN;
+	// The screen's turn, in quarters, when level was taken.
+	var levelQuarter = 0;
+	// While level is being taken: the reading the device is held near, and since when (seconds; NaN before a reading).
+	var steadyBeta = 0.;
+	var steadyGamma = 0.;
+	var steadySince = Math.NaN;
+	// The clock steadiness is timed by (seconds), set by tests.
+	var now:Void->Float = haxe.Timer.stamp;
 
 	public function requestTilt():Void {
-		if (tiltIs == On || tiltIs == Unavailable || tiltIs == Waiting && tiltWanted)
+		if (tiltIs == On || tiltIs == Calibrating || tiltIs == Unavailable || tiltIs == Waiting && tiltWanted)
 			return;
 		tiltWanted = true;
 		tiltIs = Waiting;
 	}
 
-	public function calibrateTilt():Void
-		levelBeta = levelGamma = Math.NaN;
+	public function calibrateTilt():Void {
+		levelBeta = levelGamma = steadySince = Math.NaN;
+		tilted[0] = tilted[1] = 0;
+		if (tiltIs == On)
+			tiltIs = Calibrating;
+	}
 
-	/** A reading of the device's tilt (IInputEvents.tilt): its change from level (the first reading, or the one after calibrateTilt), turned
-		from the device's way up to the screen's, over TILT_RANGE degrees and held to -1..1. */
+	/** A reading of the device's tilt (IInputEvents.tilt): its change from level, turned from the device's way up to the screen's, over
+		TILT_RANGE degrees and held to -1..1. Level is taken once the device is held steady (within TILT_STEADY_DEGREES for
+		TILT_STEADY_SECONDS): at the start, after calibrateTilt, and after the screen turns (the player holds the device anew). The tilt reads
+		0 until then, the state Calibrating. */
 	@:noCompletion
 	public function tiltEvent(beta:Float, gamma:Float, screenAngle:Float):Void {
-		tiltIs = On;
+		var quarter = Math.round(((screenAngle % 360) + 360) % 360 / 90) % 4;
+		if (quarter != levelQuarter) {
+			levelBeta = levelGamma = steadySince = Math.NaN;
+			levelQuarter = quarter;
+		}
 		if (Math.isNaN(levelBeta)) {
+			var time = now();
+			if (Math.isNaN(steadySince)
+				|| Math.abs(beta - steadyBeta) > TILT_STEADY_DEGREES
+				|| Math.abs(gamma - steadyGamma) > TILT_STEADY_DEGREES) {
+				steadyBeta = beta;
+				steadyGamma = gamma;
+				steadySince = time;
+			}
+			tilted[0] = tilted[1] = 0;
+			if (time - steadySince < TILT_STEADY_SECONDS) {
+				tiltIs = Calibrating;
+				return;
+			}
 			levelBeta = beta;
 			levelGamma = gamma;
 		}
+		tiltIs = On;
 		var forward = beta - levelBeta, across = gamma - levelGamma;
 		// The screen turned counterclockwise from the device's way up by screenAngle: its across and down in the device's terms.
 		var x = across, y = forward;
-		switch Math.round(((screenAngle % 360) + 360) % 360 / 90) % 4 {
+		switch quarter {
 			case 1:
 				x = forward;
 				y = -across;
@@ -483,14 +521,15 @@ class InputState implements IInput {
 		tilted[1] = held(y);
 	}
 
-	/** What came of asking for the tilt (IInputEvents.tiltState): reading stops being wanted once refused or unavailable. */
+	/** What came of asking for the tilt (IInputEvents.tiltState). Once refused, reading stops being wanted. Once unavailable, it's still
+		wanted: a reading that comes late (a phone's sensor starting after its prompt closes) turns the tilt On. */
 	@:noCompletion
 	public function tiltStateEvent(state:TiltState):Void {
 		tiltIs = state;
-		if (state == Refused || state == Unavailable) {
-			tiltWanted = false;
+		if (state == Refused || state == Unavailable)
 			tilted[0] = tilted[1] = 0;
-		}
+		if (state == Refused)
+			tiltWanted = false;
 	}
 
 	public function consume():Void {

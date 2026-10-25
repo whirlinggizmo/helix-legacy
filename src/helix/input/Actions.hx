@@ -533,10 +533,10 @@ class Actions implements IInputWatcher {
 
 	/** The touch stick of the action name, for drawing it (TouchStick2D), into out: [landedX, landedY, x, y, radius, homeX, homeY], where
 		its finger landed and where it is, its radius, and where a thumb goes to take it (a hint's place: its area's bottom corner, margin and
-		its radius in from the edges, or a region's center), in the game's units. True while held; false while not, only its radius and home
-		written (radius 0 for an action with no touch stick). */
+		its radius in from the edges, or a region's center; at corner, margin and its radius in, when given), in the game's units. True while
+		held; false while not, only its radius and home written (radius 0 for an action with no touch stick). */
 	@:allow(helix)
-	function heldStick(name:String, out:Array<Float>, margin = 40.):Bool {
+	function heldStick(name:String, out:Array<Float>, margin = 40., ?corner:Anchor):Bool {
 		var action = find(name), p = screen();
 		out[4] = 0;
 		if (action == null || p == null)
@@ -548,6 +548,14 @@ class Actions implements IInputWatcher {
 						out[4] = radius;
 						var inset = margin + radius;
 						switch area {
+							case _ if (corner != null):
+								var i = ANCHORS.indexOf(corner),
+									across = i % 3,
+									down = Std.int(i / 3);
+								out[5] = across == 0 ? p.visibleX + inset : across == 1 ? p.visibleX + p.visibleWidth / 2 : p.visibleX
+									+ p.visibleWidth
+									- inset;
+								out[6] = down == 0 ? p.visibleY + inset : down == 1 ? p.visibleY + p.visibleHeight / 2 : p.visibleY + p.visibleHeight - inset;
 							case Region(anchor, rx, ry, width, height):
 								var i = ANCHORS.indexOf(anchor);
 								out[5] = p.visibleX + p.visibleWidth * (i % 3) / 2 + rx + width / 2;

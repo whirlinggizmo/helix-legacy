@@ -107,8 +107,9 @@ class DomInputSourceAdapter implements IInputSource {
 	var tiltAsking:Null<Dynamic->Void>;
 
 	/** Listens to the device's orientation while on: where the browser asks for leave (DeviceOrientationEvent.requestPermission, iOS),
-		at the player's next tap, which shows its prompt (only a tap's own event may ask); a reading without numbers (a computer has no
-		sensor) is Unavailable. */
+		at the player's next tap, which shows its prompt (only a tap's own event may ask). Unavailable on a page that isn't secure (a browser
+		reads sensors only over HTTPS; the console says so), and when no reading with numbers comes within a second and a half of the page
+		having its focus (a computer), though it goes on listening: a phone's sensor may start late. */
 	public function setTiltWanted(on:Bool):Void {
 		var window:Dynamic = Browser.window;
 		if (!on) {
@@ -118,6 +119,13 @@ class DomInputSourceAdapter implements IInputSource {
 			stopAsking();
 			return;
 		}
+		// A browser reads motion sensors only on a secure page (HTTPS, or localhost): elsewhere there's nothing to read, and the console says
+		// why, as the game sees only Unavailable.
+		if (window.isSecureContext == false) {
+			trace("Tilt needs a secure page (HTTPS): this one isn't, so the browser gives no readings");
+			events.tiltState(Unavailable);
+			return;
+		}
 		if (window.DeviceOrientationEvent == null) {
 			events.tiltState(Unavailable);
 			return;
@@ -125,23 +133,47 @@ class DomInputSourceAdapter implements IInputSource {
 		var listen = () -> {
 			if (tiltListener != null)
 				return;
+			var read = false;
 			tiltListener = e -> {
-				if (e.beta == null || e.gamma == null) {
-					events.tiltState(Unavailable);
+				// A reading without numbers (a sensor starting, or none) is passed over.
+				if (e.beta == null || e.gamma == null)
 					return;
-				}
+				read = true;
 				var angle:Float = js.Syntax.code("(screen.orientation && screen.orientation.angle) || window.orientation || 0");
 				events.tilt(e.beta, e.gamma, angle);
 			};
 			window.addEventListener("deviceorientation", tiltListener);
+			// No reading with numbers within a second and a half: there's no sensor (a computer). Chrome gives no readings while the page
+			// hasn't its focus, and its prompt takes it until the player's next tap: the time is counted from then, and it's Waiting till.
+			var count = () -> haxe.Timer.delay(() -> if (!read && tiltListener != null) events.tiltState(Unavailable), 1500);
+			if (Browser.document.hasFocus())
+				count();
+			else {
+				var focused:Dynamic->Void = null;
+				focused = _ -> {
+					window.removeEventListener("focus", focused);
+					count();
+				};
+				window.addEventListener("focus", focused);
+			}
 		};
 		if (!Std.isOfType(window.DeviceOrientationEvent.requestPermission, js.lib.Function)) {
 			listen();
 			return;
 		}
-		// Asked inside the next tap's own event, the only place the browser lets it be asked.
+		askTiltAtNextTap(listen);
+	}
+
+	// Asks for the tilt inside the next tap's own event, the only place the browser lets it be asked. An event whose press is already spent
+	// (going fullscreen on the same tap spends it) is passed over: asked there, Chrome answers "denied" without asking the player. A
+	// failed ask asks again at the next tap.
+	function askTiltAtNextTap(listen:Void->Void):Void {
+		var window:Dynamic = Browser.window;
 		stopAsking();
 		tiltAsking = _ -> {
+			var activation:Dynamic = js.Syntax.code("navigator.userActivation");
+			if (activation != null && !activation.isActive)
+				return;
 			stopAsking();
 			(window.DeviceOrientationEvent.requestPermission() : js.lib.Promise<String>).then(answer -> {
 				if (answer == "granted")
@@ -150,7 +182,7 @@ class DomInputSourceAdapter implements IInputSource {
 					events.tiltState(Refused);
 				return null;
 			}, _ -> {
-				events.tiltState(Refused);
+				askTiltAtNextTap(listen);
 				return null;
 			});
 		};

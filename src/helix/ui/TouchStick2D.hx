@@ -1,6 +1,7 @@
 package helix.ui;
 
 import helix.input.Actions;
+import helix.input.Anchor;
 import helix.render2d.Batch2D;
 import helix.render2d.Camera2D;
 import helix.render2d.Drawing2D;
@@ -9,7 +10,7 @@ import helix.render2d.Drawing2D;
 	finger, kept within the ring. Draws nothing while no finger holds it, so it shows only on a touch screen in use. It needs no Ui and runs
 	itself: add it to the stage, over the game: Stage.addChild(new TouchStick2D(actions, "moveX")), naming an action bound to the stick.
 	With hint on, a faint ring and knob say where a thumb goes while no finger holds it: the bottom left for the whole screen or the left
-	half, the bottom right for the right half, a region's center. */
+	half, the bottom right for the right half, a region's center, or at hintCorner when it's set. */
 class TouchStick2D extends Drawing2D {
 	/** The stick of action in actions drawn (its first touch stick binding that's held), in color (0xAARRGGBB: a light gray, half seen,
 		unless given). */
@@ -36,6 +37,10 @@ class TouchStick2D extends Drawing2D {
 	/** How far in from the visible area's corner the hint's ring sits, the stage's units: 40 to start. */
 	public var hintMargin:Float = 40;
 
+	/** Where the hint's ring sits on the visible area, in from it by hintMargin (BottomRight for a stick on the whole screen that's held by
+		the right thumb, say), or null to start: the place its area gives. */
+	public var hintCorner:Null<Anchor> = null;
+
 	// The frame it was last drawn at: once a frame, however many views show its tree.
 	var refreshedAt = Math.NaN;
 	var held = [0., 0., 0., 0., 0., 0., 0.];
@@ -54,7 +59,7 @@ class TouchStick2D extends Drawing2D {
 		clear();
 		if (actions == null)
 			return;
-		if (!actions.heldStick(action, held, hintMargin)) {
+		if (!actions.heldStick(action, held, hintMargin, hintCorner)) {
 			var radius = held[4];
 			if (hint && radius > 0) {
 				var faint = (Std.int((color >>> 24) * .4) << 24) | (color & 0xffffff), x = held[5], y = held[6];

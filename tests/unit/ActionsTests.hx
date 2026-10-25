@@ -351,12 +351,28 @@ class ActionsTests {
 
 	// Tilt as a binding: the input's tiltX and tiltY, read as an axis like a stick's; saved and read back; described.
 	static function tilting():Void {
-		var input = new InputState(), actions = new Actions(input);
+		var input = new InputState(), actions = new Actions(input), time = 0.;
+		@:privateAccess input.now = () -> time;
 		check(actions.bind("rollX", Tilt(X)) && actions.bind("rollY", Tilt(Y)), "Bound across and down");
 		check(actions.axis("rollX") == 0, "0 before any reading");
+		// Level is taken once the device is held steady for half a second: a hand still moving puts it off.
+		input.tiltEvent(40, 0, 0);
+		time = .3;
+		input.tiltEvent(60, 0, 0);
+		time = .6;
+		input.tiltEvent(61, 1, 0);
+		check(@:privateAccess Math.isNaN(input.levelBeta), "No level while the hand moved within the half second");
+		time = .9;
 		input.tiltEvent(60, 0, 0);
 		input.tiltEvent(45, 15, 0);
 		check(actions.axis("rollX") == .5 && actions.axis("rollY") == -.5, "Tilted half right and half away");
+		// Turned to landscape: level taken anew, as held steady there.
+		input.tiltEvent(0, -40, 90);
+		check(actions.axis("rollX") == 0 && actions.axis("rollY") == 0, "0 after the turn, until held steady");
+		time = 1.5;
+		input.tiltEvent(0, -40, 90);
+		input.tiltEvent(15, -40, 90);
+		check(actions.axis("rollX") == .5 && actions.axis("rollY") == 0, "Turned with the screen");
 		check(@:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(Tilt(Y))))
 			.equals(Tilt(Y)) && Actions.describe(Tilt(X)) == "Tilt X" && !actions.bind("a", Tilt(null)),
 			"Saved and read back; described; an axis needed");

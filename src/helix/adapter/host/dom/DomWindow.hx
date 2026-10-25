@@ -142,14 +142,46 @@ class DomWindow implements IWindow {
 				done();
 			return null;
 		};
-		// The browser's promise of the change, granted or refused.
-		var asked:Dynamic = enabled
-			&& !this.fullscreen ? canvas.requestFullscreen() : !enabled && this.fullscreen ? Browser.document.exitFullscreen() : null;
-		if (asked != null)
-			asked.then(granted, refused);
+		var ask = () -> {
+			// The browser's promise of the change, granted or refused.
+			var asked:Dynamic = enabled
+				&& !this.fullscreen ? canvas.requestFullscreen() : !enabled && this.fullscreen ? Browser.document.exitFullscreen() : null;
+			if (asked != null)
+				asked.then(granted, refused);
+			else
+				granted(null);
+		};
+		// Going fullscreen wants a fresh press, and a phone's tap counts only as its finger lifts: asked from a frame (a game's update) as
+		// the finger lands, it would be refused. With no fresh press now, it's asked inside the player's next lift, click or key.
+		var activation:Dynamic = js.Syntax.code("navigator.userActivation");
+		if (enabled && activation != null && !activation.isActive)
+			askAtNextPress(ask);
 		else
-			granted(null);
+			ask();
 		return true;
+	}
+
+	// What's waiting to be asked at the next press (askAtNextPress), and the listener that asks it.
+	var waitingAsk:Null<Void->Void>;
+	var pressListener:Null<Dynamic->Void>;
+
+	// Asks once, inside the next lift, click or key: the events a browser counts as a press. A later ask replaces one still waiting.
+	function askAtNextPress(ask:Void->Void):Void {
+		waitingAsk = ask;
+		if (pressListener != null)
+			return;
+		var window:Dynamic = Browser.window;
+		pressListener = _ -> {
+			for (name in ["pointerup", "touchend", "click", "keydown"])
+				window.removeEventListener(name, pressListener, true);
+			pressListener = null;
+			var then = waitingAsk;
+			waitingAsk = null;
+			if (then != null)
+				then();
+		};
+		for (name in ["pointerup", "touchend", "click", "keydown"])
+			window.addEventListener(name, pressListener, true);
 	}
 
 	public var visible(get, never):Bool;

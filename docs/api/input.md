@@ -235,11 +235,11 @@ function consume():Void
 - `isPadDown`: Any connected pad.
 - `isPadPressed`: A connected pad's button went down: a counted tick edge, as a key's.
 - `getPadAxis`: The first connected pad's axis, past the dead zone as Gamepad.getAxis gives it.
-- `tiltX`: How the device is tilted across, -1 to 1 (right down positive): from how it was held at the first reading (or calibrateTilt), TILT_RANGE degrees all the way, turned with the screen so it's across the screen as the player sees it. 0 until reading (tiltState On).
+- `tiltX`: How the device is tilted across, -1 to 1 (right down positive), from level: how the player held it steady at the start, after the screen turned, or after calibrateTilt. TILT_RANGE degrees is all the way. It's turned with the screen, so it's across the screen as the player sees it. 0 unless tiltState is On.
 - `tiltY`: How the device is tilted up and down the screen, -1 to 1: the top tipped away negative (rolling a ball up the screen), toward the player positive. As tiltX.
-- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, On, Refused, Unavailable (TiltState).
+- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, Calibrating, On, Refused, Unavailable (TiltState).
 - `requestTilt`: Starts reading the device's tilt (tiltX, tiltY). In a browser that wants a tap for it (iOS), it's asked for at the player's next tap, which shows the browser's prompt: call it on a title screen, say, before the tap that starts play. Again after Refused asks again.
-- `calibrateTilt`: Takes how the device is held now as level: tiltX and tiltY 0 there, from the next reading.
+- `calibrateTilt`: Takes level anew: tiltX and tiltY read 0 until the player holds the device steady for half a second, and that's level. Call it from a "Level" button, say, or as a round starts.
 - `consume`: Call after each simulation tick: takes one of each counted tick edge and clears the pads' tick edges.
 
 ## Input
@@ -333,11 +333,11 @@ static function consume():Void
 - `isPadDown`: Any connected pad.
 - `isPadPressed`: A connected pad's button went down: a counted tick edge, as a key's.
 - `getPadAxis`: The first connected pad's axis, past the dead zone as Gamepad.getAxis gives it.
-- `tiltX`: How the device is tilted across, -1 to 1 (right down positive): from how it was held at the first reading (or calibrateTilt), TILT_RANGE degrees all the way, turned with the screen so it's across the screen as the player sees it. 0 until reading (tiltState On).
+- `tiltX`: How the device is tilted across, -1 to 1 (right down positive), from level: how the player held it steady at the start, after the screen turned, or after calibrateTilt. TILT_RANGE degrees is all the way. It's turned with the screen, so it's across the screen as the player sees it. 0 unless tiltState is On.
 - `tiltY`: How the device is tilted up and down the screen, -1 to 1: the top tipped away negative (rolling a ball up the screen), toward the player positive. As tiltX.
-- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, On, Refused, Unavailable (TiltState).
+- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, Calibrating, On, Refused, Unavailable (TiltState).
 - `requestTilt`: Starts reading the device's tilt (tiltX, tiltY). In a browser that wants a tap for it (iOS), it's asked for at the player's next tap, which shows the browser's prompt: call it on a title screen, say, before the tap that starts play. Again after Refused asks again.
-- `calibrateTilt`: Takes how the device is held now as level: tiltX and tiltY 0 there, from the next reading.
+- `calibrateTilt`: Takes level anew: tiltX and tiltY read 0 until the player holds the device steady for half a second, and that's level. Call it from a "Level" button, say, or as a round starts.
 - `consume`: Call after each simulation tick: takes one of each counted tick edge and clears the pads' tick edges.
 
 ## InputState
@@ -349,6 +349,8 @@ The input an app reads, as edges and state: fed by the InputRouter from a platfo
 ```haxe
 function new()
 static inline var TILT_RANGE:Float
+static inline var TILT_STEADY_SECONDS:Float
+static inline var TILT_STEADY_DEGREES:Float
 function isDown(key:Key):Bool
 function isPressed(key:Key):Bool
 function isReleased(key:Key):Bool
@@ -407,6 +409,8 @@ function endFrame():Void
 
 - `new`: Nothing down, nothing pressed, no pad connected, not activated.
 - `TILT_RANGE`: Degrees of tilt that read as all the way (tiltX, tiltY at 1).
+- `TILT_STEADY_SECONDS`: How long the device is held steady before that's taken as level (seconds).
+- `TILT_STEADY_DEGREES`: How far the device may move while it's held steady (degrees).
 - `keyEvent`: A key down (true) or up (false); only a change of state counts an edge, so key repeat doesn't. A down activates (activated).
 - `padEvent`: Pad 0's button or axis, connecting it: for replay and tests.
 - `axisEvent`: Pad 0's axis, connecting it: for replay and tests.
@@ -562,13 +566,14 @@ Which way of a touch stick (Binding.TouchStick) an action reads, as a pad's stic
 
 *abstract* in [`src/helix/input/TiltState.hx`](../../src/helix/input/TiltState.hx), `import helix.input.TiltState;`
 
-Where reading the device's tilt is (Input.tiltState): not asked for, waiting (for the player's tap that grants it, or its first reading), reading, refused by the player, or not there to read (a computer, natively).
+Where reading the device's tilt is (Input.tiltState): not asked for, waiting (for the player's tap that grants it, or its first reading), calibrating (waiting for the device to be held steady), reading, refused by the player, or not there to read (a computer, natively).
 
 - `TiltState.Off`: Not asked for: requestTilt starts it.
-- `TiltState.Waiting`: Asked for: waiting for the player's next tap (iOS asks then) or the first reading.
+- `TiltState.Waiting`: Asked for: waiting for the player's next tap or the first reading. A browser shows its prompt at a tap, and after the prompt, Chrome reads nothing until the player taps the page again: a game can say "tap to start" while it waits.
+- `TiltState.Calibrating`: Reading, and taking level: tiltX and tiltY read 0 until the player holds the device steady for half a second, which becomes level. It comes at the first reading, after the screen turns, and after calibrateTilt. A game can say "hold steady" while it lasts.
 - `TiltState.On`: Reading: tiltX and tiltY follow the device.
 - `TiltState.Refused`: The player refused it.
-- `TiltState.Unavailable`: Nothing to read: no motion sensor (a computer), or natively.
+- `TiltState.Unavailable`: Nothing to read yet: no reading came soon after asking (a computer has no motion sensor), or natively. A reading that comes later still turns it On.
 
 ```haxe
 function toString():String
