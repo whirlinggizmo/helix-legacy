@@ -42,9 +42,11 @@ class App extends helix.App {
 			report("grow", Window.requestSize(Std.int(width * 1.1), Std.int(height * 1.1)));
 		if (Input.isFramePressed(Key.Minus))
 			report("shrink", Window.requestSize(Std.int(width / 1.1), Std.int(height / 1.1)));
-		// A request: fullscreen() answers on a later frame.
+		// A request: fullscreen answers on a later frame, and the request says whether it was granted (the browser refuses one with no
+		// recent press).
 		if (Input.isFramePressed(Key.F)) {
-			status = "fullscreen: " + (Window.requestFullscreen(!Window.fullscreen) ? "asked for" : "not supported here");
+			var asked = Window.requestFullscreen(!Window.fullscreen, () -> status = "fullscreen: granted", reason -> status = 'fullscreen: refused ($reason)');
+			status = "fullscreen: " + (asked ? "asked for" : "not supported here");
 		}
 		if (Input.isFramePressed(Key.H)) {
 			Window.requestVisible(false);

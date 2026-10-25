@@ -85,8 +85,11 @@ class NativeWindow implements IWindow {
 	function get_fullscreen():Bool
 		return WindowBridge.fullscreen() != 0;
 
-	public function requestFullscreen(enabled:Bool):Bool {
+	public function requestFullscreen(enabled:Bool, ?done:Void->Void, ?failed:String->Void):Bool {
+		// Natively it's granted: the window changes as the platform next answers.
 		WindowBridge.requestFullscreen(enabled ? 1 : 0);
+		if (done != null)
+			done();
 		return true;
 	}
 

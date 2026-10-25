@@ -50,9 +50,11 @@ interface IWindow {
 	/** Whether the window is fullscreen now (the canvas, on the web). */
 	var fullscreen(get, never):Bool;
 
-	/** Asks for fullscreen or a window; fullscreen answers on a later frame. False where it can't ask (canFullscreen). On the web the browser
-		grants it only soon after a key press or click. */
-	function requestFullscreen(enabled:Bool):Bool;
+	/** Asks for fullscreen (enabled) or a window; fullscreen answers on a later frame, and done is called once it's granted. On the web the
+		browser grants it only soon after a key press, click or tap: refused (none was recent, or the page may not), failed is called with
+		its reason, or without failed it's traced, and the page stays as it was; natively it's granted. False, calling neither, where it can't
+		ask (canFullscreen). */
+	function requestFullscreen(enabled:Bool, ?done:Void->Void, ?failed:String->Void):Bool;
 
 	/** Whether the window is shown (the canvas, on the web). */
 	var visible(get, never):Bool;

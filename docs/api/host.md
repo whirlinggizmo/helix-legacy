@@ -176,7 +176,7 @@ static var y(get, never):Int
 static function requestPosition(x:Int, y:Int):Bool
 static function canFullscreen():Bool
 static var fullscreen(get, never):Bool
-static function requestFullscreen(enabled:Bool):Bool
+static function requestFullscreen(enabled:Bool, ?done:() -> Void, ?failed:String -> Void):Bool
 static var visible(get, never):Bool
 static function requestVisible(visible:Bool):Bool
 static var monitorCount(get, never):Int
@@ -203,7 +203,7 @@ static function getMonitorHeight(index:Int):Int
 - `requestPosition`: Asks for the window's left and top edges on the desktop in logical pixels; x and y answer on a later frame, with what the window manager gave. False, asking nothing, where the window can't move (canMove).
 - `canFullscreen`: Whether requestFullscreen can ask: always natively; on the web, where the page may go fullscreen.
 - `fullscreen`: Whether the window is fullscreen now (the canvas, on the web).
-- `requestFullscreen`: Asks for fullscreen or a window; fullscreen answers on a later frame. False where it can't ask (canFullscreen). On the web the browser grants it only soon after a key press or click.
+- `requestFullscreen`: Asks for fullscreen (enabled) or a window; fullscreen answers on a later frame, and done is called once it's granted. On the web the browser grants it only soon after a key press, click or tap: refused (none was recent, or the page may not), failed is called with its reason, or without failed it's traced, and the page stays as it was; natively it's granted. False, calling neither, where it can't ask (canFullscreen).
 - `visible`: Whether the window is shown (the canvas, on the web).
 - `requestVisible`: Asks to show or hide the window (the canvas, on the web); visible answers on a later frame (natively, once the window manager has shown it). Always asks: true.
 - `monitorCount`: How many monitors there are, at least 1; the web sees one screen.

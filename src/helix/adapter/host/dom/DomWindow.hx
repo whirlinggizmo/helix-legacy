@@ -93,14 +93,30 @@ class DomWindow implements IWindow {
 	function get_fullscreen():Bool
 		return Browser.document.fullscreenElement != null;
 
-	public function requestFullscreen(enabled:Bool):Bool {
+	public function requestFullscreen(enabled:Bool, ?done:Void->Void, ?failed:String->Void):Bool {
 		if (!canFullscreen())
 			return false;
-		// The browser may refuse (no recent key press or click): the page stays as it was, and fullscreen says so.
-		if (enabled && !this.fullscreen)
-			canvas.requestFullscreen().catchError(_ -> null);
-		else if (!enabled && this.fullscreen)
-			Browser.document.exitFullscreen().catchError(_ -> null);
+		// The browser may refuse (no recent key press or click): the page stays as it was, and failed says why.
+		var refused = (error:Dynamic) -> {
+			var reason = error != null && error.message != null ? Std.string(error.message) : Std.string(error);
+			if (failed != null)
+				failed(reason);
+			else
+				trace('Fullscreen refused: $reason');
+			return null;
+		};
+		var granted = (_:Dynamic) -> {
+			if (done != null)
+				done();
+			return null;
+		};
+		// The browser's promise of the change, granted or refused.
+		var asked:Dynamic = enabled
+			&& !this.fullscreen ? canvas.requestFullscreen() : !enabled && this.fullscreen ? Browser.document.exitFullscreen() : null;
+		if (asked != null)
+			asked.then(granted, refused);
+		else
+			granted(null);
 		return true;
 	}
 
