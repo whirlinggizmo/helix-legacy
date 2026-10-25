@@ -314,6 +314,7 @@ class Actions implements IInputWatcher {
 			case Mouse(button): MOUSE_NAMES[button] + " mouse";
 			case TouchRegion(_, _, _, _, _): "Touch";
 			case TouchStick(_, _, axis): axis == X ? "Touch stick X" : "Touch stick Y";
+			case Tilt(axis): axis == X ? "Tilt X" : "Tilt Y";
 		}
 
 	/** Writes every action's bindings as the save named key (Saves, kept apart from the asset cache, so clearing it keeps them), as JSON: {"version":1,"actions":{"jump":[{"key":"Space"},{"padButton":"South"}]}},
@@ -456,6 +457,7 @@ class Actions implements IInputWatcher {
 					if (t.down && isInRegion(binding, t.x, t.y))
 						found = true;
 				found ? 1 : 0;
+			case Tilt(axis): axis == X ? input.tiltX : input.tiltY;
 			case TouchStick(_, _, axis):
 				var push = [0., 0.];
 				stickPush(binding, push) ? push[axis == X ? 0 : 1] : 0;
@@ -592,7 +594,7 @@ class Actions implements IInputWatcher {
 			case KeyboardPair(negative, positive): key(negative) || key(positive);
 			case Pad(b): button(b);
 			case PadPair(negative, positive): button(negative) || button(positive);
-			case Axis(_, _, _) | TouchStick(_, _, _): false;
+			case Axis(_, _, _) | TouchStick(_, _, _) | Tilt(_): false;
 			case Mouse(b):
 				frame ? (pressing ? input.isMouseFramePressed(b) : input.isMouseFrameReleased(b)) : (pressing ? input.isMousePressed(b) : input.isMouseReleased(b));
 			case TouchRegion(_, _, _, _, _):
@@ -638,6 +640,7 @@ class Actions implements IInputWatcher {
 			return false;
 		return switch binding {
 			case Axis(_, side, threshold): (side == -1 || side == 0 || side == 1) && threshold >= 0 && threshold <= 1;
+			case Tilt(axis): axis != null;
 			case TouchStick(area, radius, axis): area != null && axis != null && radius > 0 && Math.isFinite(radius) && switch area {
 					case Region(anchor, x, y, width, height): isValid(TouchRegion(anchor, x, y, width, height));
 					case _: true;
@@ -654,13 +657,14 @@ class Actions implements IInputWatcher {
 		}
 	}
 
-	// The device a binding is of: the keyboard (0), a pad (1), the mouse (2), the touch screen (3). A capture replaces its own device's.
+	// The device a binding is of: the keyboard (0), a pad (1), the mouse (2), the touch screen (3), the device's tilt (4). A capture replaces its own device's.
 	static function device(binding:Binding):Int
 		return switch binding {
 			case Keyboard(_) | KeyboardPair(_, _): 0;
 			case Pad(_) | PadPair(_, _) | Axis(_, _, _): 1;
 			case Mouse(_): 2;
 			case TouchRegion(_, _, _, _, _) | TouchStick(_, _, _): 3;
+			case Tilt(_): 4;
 		}
 
 	// Each action's bindings as they stand, for those without defaults yet.
@@ -835,6 +839,7 @@ class Actions implements IInputWatcher {
 			case Mouse(button): '{"mouseButton":${text(MOUSE_NAMES[button])}}';
 			case TouchRegion(anchor, x, y, width, height):
 				'{"touch":${text(ANCHOR_NAMES[ANCHORS.indexOf(anchor)])},"x":${number(x)},"y":${number(y)},"width":${number(width)},"height":${number(height)}}';
+			case Tilt(axis): '{"tilt":${text(axis == X ? "X" : "Y")}}';
 			case TouchStick(area, radius, axis):
 				var tail = '"radius":${number(radius)},"axis":${text(axis == X ? "X" : "Y")}}';
 				switch area {
@@ -947,6 +952,8 @@ class Actions implements IInputWatcher {
 		}
 		if (Reflect.hasField(entry, "mouseButton"))
 			return Mouse(cast named(MOUSE_NAMES, text("mouseButton"), "mouse button"));
+		if (Reflect.hasField(entry, "tilt"))
+			return Tilt(named(["X", "Y"], text("tilt"), "tilt axis") == 0 ? X : Y);
 		if (Reflect.hasField(entry, "touchStick"))
 			return TouchStick(switch named(["Anywhere", "LeftHalf", "RightHalf", "Region"], text("touchStick"), "stick area") {
 				case 0: Anywhere;

@@ -24,6 +24,11 @@ abstract class NativeInputSource implements IInputSource {
 	/** Nothing unless the source overrides it: a sokol window sends a typed character whenever a key makes one. */
 	public function setTextEntry(on:Bool):Void {}
 
+	/** No motion sensor is read natively: asked for, it's Unavailable. */
+	public function setTiltWanted(on:Bool):Void
+		if (on)
+			events.tiltState(Unavailable);
+
 	public function poll():Void {
 		pollSource();
 		while (InputQueueBridge.next() != 0) {

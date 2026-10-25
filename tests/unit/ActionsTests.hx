@@ -95,6 +95,7 @@ class ActionsTests {
 		mouseAndTouch();
 		refusals();
 		sticks();
+		tilting();
 		captures();
 		texts();
 		saving();
@@ -346,6 +347,19 @@ class ActionsTests {
 			&& !actions.bind("a", TouchStick(null, 5, X))
 			&& !actions.bind("a", TouchStick(Region(Center, 0, 0, 10, 0), 5, X)),
 			"A stick with no radius, axis or area, or a region with no area, is refused");
+	}
+
+	// Tilt as a binding: the input's tiltX and tiltY, read as an axis like a stick's; saved and read back; described.
+	static function tilting():Void {
+		var input = new InputState(), actions = new Actions(input);
+		check(actions.bind("rollX", Tilt(X)) && actions.bind("rollY", Tilt(Y)), "Bound across and down");
+		check(actions.axis("rollX") == 0, "0 before any reading");
+		input.tiltEvent(60, 0, 0);
+		input.tiltEvent(45, 15, 0);
+		check(actions.axis("rollX") == .5 && actions.axis("rollY") == -.5, "Tilted half right and half away");
+		check(@:privateAccess Actions.decode(haxe.Json.parse(@:privateAccess Actions.encodeBinding(Tilt(Y))))
+			.equals(Tilt(Y)) && Actions.describe(Tilt(X)) == "Tilt X" && !actions.bind("a", Tilt(null)),
+			"Saved and read back; described; an axis needed");
 	}
 
 	static function refusals():Void {

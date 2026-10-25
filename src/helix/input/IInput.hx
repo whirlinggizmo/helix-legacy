@@ -129,6 +129,24 @@ interface IInput {
 	/** The first connected pad's axis, past the dead zone as Gamepad.getAxis gives it. */
 	public function getPadAxis(axis:PadAxis):Float;
 
+	/** How the device is tilted across, -1 to 1 (right down positive): from how it was held at the first reading (or calibrateTilt), TILT_RANGE
+		degrees all the way, turned with the screen so it's across the screen as the player sees it. 0 until reading (tiltState On). */
+	var tiltX(get, never):Float;
+
+	/** How the device is tilted up and down the screen, -1 to 1: the top tipped away negative (rolling a ball up the screen), toward the
+		player positive. As tiltX. */
+	var tiltY(get, never):Float;
+
+	/** Where reading the tilt is: Off until requestTilt, Waiting, On, Refused, Unavailable (TiltState). */
+	var tiltState(get, never):TiltState;
+
+	/** Starts reading the device's tilt (tiltX, tiltY). In a browser that wants a tap for it (iOS), it's asked for at the player's next tap,
+		which shows the browser's prompt: call it on a title screen, say, before the tap that starts play. Again after Refused asks again. */
+	public function requestTilt():Void;
+
+	/** Takes how the device is held now as level: tiltX and tiltY 0 there, from the next reading. */
+	public function calibrateTilt():Void;
+
 	/** Call after each simulation tick: takes one of each counted tick edge and clears the pads' tick edges. */
 	public function consume():Void;
 

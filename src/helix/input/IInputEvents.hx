@@ -30,4 +30,11 @@ interface IInputEvents {
 	/** A connected gamepad's state at poll: its name, each PadButton's state by number and each PadAxis's value by number (sticks -1..1,
 		triggers 0..1). The arrays are read during the call only. */
 	public function pad(name:String, buttons:Array<Bool>, axes:Array<Float>):Void;
+
+	/** A reading of the device's tilt, in degrees as a browser gives it: beta front to back (0 lying flat, 90 upright), gamma side to side
+		(right side down positive), and the screen's turn from the device's natural way up (0, 90, 180 or 270, counterclockwise). */
+	public function tilt(beta:Float, gamma:Float, screenAngle:Float):Void;
+
+	/** What came of asking for the tilt: Waiting, On, Refused or Unavailable. */
+	public function tiltState(state:TiltState):Void;
 }

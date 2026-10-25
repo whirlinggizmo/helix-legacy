@@ -100,6 +100,7 @@ What drives an action (Actions), each giving a value from -1 to 1; the action is
 - `Mouse(button:MouseButton)`: A mouse button: 1 while it is down.
 - `TouchRegion(anchor:Anchor, x:Float, y:Float, width:Float, height:Float)`: A touch region: 1 while a finger is down in it. In the game's units (Screen's): the anchor's point on the visible area, then x, y from it to the region's top left, width x height across and down; so it scales with the design and follows the visible area's edges.
 - `TouchStick(area:StickArea, radius:Float, axis:StickAxis)`: A floating stick for a thumb, in area (the whole screen, a half of it, or a region). A finger landing in it holds the stick, centered where it landed, and its offset from there, radius units for all the way, is the stick's push, clamped to a circle and 0 within Actions.touchStickDeadZone of the middle. Another finger landing in it takes it over, centered where it lands; the holding finger lifting hands it to one still down in it, centered where that one is (so what it steers doesn't lurch). A finger landing where Actions.touchStickBlocked says (a button) doesn't take it, nor one holding another stick. The action reads its axis (X right, Y down, as a pad's stick); an action bound to X and one bound to Y of the same area and radius read one stick: actions.bind("moveX", TouchStick(Anywhere, 80, X)), or for two sticks LeftHalf and RightHalf.
+- `Tilt(axis:StickAxis)`: The device tilted (Input.tiltX, tiltY: -1 to 1, from level, turned with the screen): X across, Y up and down the screen. Read once the game asks for it (Input.requestTilt); 0 until then. A rolling ball: actions.bind("moveX", Tilt(X)).
 
 ## Gamepad
 
@@ -188,6 +189,11 @@ var anyFramePressed(get, never):Bool
 function isPadDown(button:PadButton):Bool
 function isPadPressed(button:PadButton):Bool
 function getPadAxis(axis:PadAxis):Float
+var tiltX(get, never):Float
+var tiltY(get, never):Float
+var tiltState(get, never):TiltState
+function requestTilt():Void
+function calibrateTilt():Void
 function consume():Void
 ```
 
@@ -229,6 +235,11 @@ function consume():Void
 - `isPadDown`: Any connected pad.
 - `isPadPressed`: A connected pad's button went down: a counted tick edge, as a key's.
 - `getPadAxis`: The first connected pad's axis, past the dead zone as Gamepad.getAxis gives it.
+- `tiltX`: How the device is tilted across, -1 to 1 (right down positive): from how it was held at the first reading (or calibrateTilt), TILT_RANGE degrees all the way, turned with the screen so it's across the screen as the player sees it. 0 until reading (tiltState On).
+- `tiltY`: How the device is tilted up and down the screen, -1 to 1: the top tipped away negative (rolling a ball up the screen), toward the player positive. As tiltX.
+- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, On, Refused, Unavailable (TiltState).
+- `requestTilt`: Starts reading the device's tilt (tiltX, tiltY). In a browser that wants a tap for it (iOS), it's asked for at the player's next tap, which shows the browser's prompt: call it on a title screen, say, before the tap that starts play. Again after Refused asks again.
+- `calibrateTilt`: Takes how the device is held now as level: tiltX and tiltY 0 there, from the next reading.
 - `consume`: Call after each simulation tick: takes one of each counted tick edge and clears the pads' tick edges.
 
 ## Input
@@ -276,6 +287,11 @@ static var anyFramePressed(get, never):Bool
 static function isPadDown(button:PadButton):Bool
 static function isPadPressed(button:PadButton):Bool
 static function getPadAxis(axis:PadAxis):Float
+static var tiltX(get, never):Float
+static var tiltY(get, never):Float
+static var tiltState(get, never):TiltState
+static function requestTilt():Void
+static function calibrateTilt():Void
 static function consume():Void
 ```
 
@@ -317,6 +333,11 @@ static function consume():Void
 - `isPadDown`: Any connected pad.
 - `isPadPressed`: A connected pad's button went down: a counted tick edge, as a key's.
 - `getPadAxis`: The first connected pad's axis, past the dead zone as Gamepad.getAxis gives it.
+- `tiltX`: How the device is tilted across, -1 to 1 (right down positive): from how it was held at the first reading (or calibrateTilt), TILT_RANGE degrees all the way, turned with the screen so it's across the screen as the player sees it. 0 until reading (tiltState On).
+- `tiltY`: How the device is tilted up and down the screen, -1 to 1: the top tipped away negative (rolling a ball up the screen), toward the player positive. As tiltX.
+- `tiltState`: Where reading the tilt is: Off until requestTilt, Waiting, On, Refused, Unavailable (TiltState).
+- `requestTilt`: Starts reading the device's tilt (tiltX, tiltY). In a browser that wants a tap for it (iOS), it's asked for at the player's next tap, which shows the browser's prompt: call it on a title screen, say, before the tap that starts play. Again after Refused asks again.
+- `calibrateTilt`: Takes how the device is held now as level: tiltX and tiltY 0 there, from the next reading.
 - `consume`: Call after each simulation tick: takes one of each counted tick edge and clears the pads' tick edges.
 
 ## InputState
@@ -327,6 +348,7 @@ The input an app reads, as edges and state: fed by the InputRouter from a platfo
 
 ```haxe
 function new()
+static inline var TILT_RANGE:Float
 function isDown(key:Key):Bool
 function isPressed(key:Key):Bool
 function isReleased(key:Key):Bool
@@ -374,11 +396,17 @@ function getTouchGesturePanY(?perTick:Bool = false):Float
 function getTouchGestureScale(?perTick:Bool = false):Float
 function getTouchGestureRotation(?perTick:Bool = false):Float
 function clear():Void
+var tiltX(get, never):Float
+var tiltY(get, never):Float
+var tiltState(get, never):TiltState
+function requestTilt():Void
+function calibrateTilt():Void
 function consume():Void
 function endFrame():Void
 ```
 
 - `new`: Nothing down, nothing pressed, no pad connected, not activated.
+- `TILT_RANGE`: Degrees of tilt that read as all the way (tiltX, tiltY at 1).
 - `keyEvent`: A key down (true) or up (false); only a change of state counts an edge, so key repeat doesn't. A down activates (activated).
 - `padEvent`: Pad 0's button or axis, connecting it: for replay and tests.
 - `axisEvent`: Pad 0's axis, connecting it: for replay and tests.
@@ -529,6 +557,24 @@ Which way of a touch stick (Binding.TouchStick) an action reads, as a pad's stic
 
 - `X`: Across: -1 at the left, 1 at the right.
 - `Y`: Up and down: -1 at the top, 1 at the bottom.
+
+## TiltState
+
+*abstract* in [`src/helix/input/TiltState.hx`](../../src/helix/input/TiltState.hx), `import helix.input.TiltState;`
+
+Where reading the device's tilt is (Input.tiltState): not asked for, waiting (for the player's tap that grants it, or its first reading), reading, refused by the player, or not there to read (a computer, natively).
+
+- `TiltState.Off`: Not asked for: requestTilt starts it.
+- `TiltState.Waiting`: Asked for: waiting for the player's next tap (iOS asks then) or the first reading.
+- `TiltState.On`: Reading: tiltX and tiltY follow the device.
+- `TiltState.Refused`: The player refused it.
+- `TiltState.Unavailable`: Nothing to read: no motion sensor (a computer), or natively.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
 
 ## Touch
 

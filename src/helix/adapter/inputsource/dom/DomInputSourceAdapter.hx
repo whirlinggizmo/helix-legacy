@@ -102,6 +102,71 @@ class DomInputSourceAdapter implements IInputSource {
 		a game typing on one. */
 	public function setTextEntry(on:Bool):Void {}
 
+	// Reading the device's orientation (deviceorientation), and waiting for a tap to ask for it where the browser wants one (iOS).
+	var tiltListener:Null<Dynamic->Void>;
+	var tiltAsking:Null<Dynamic->Void>;
+
+	/** Listens to the device's orientation while on: where the browser asks for leave (DeviceOrientationEvent.requestPermission, iOS),
+		at the player's next tap, which shows its prompt (only a tap's own event may ask); a reading without numbers (a computer has no
+		sensor) is Unavailable. */
+	public function setTiltWanted(on:Bool):Void {
+		var window:Dynamic = Browser.window;
+		if (!on) {
+			if (tiltListener != null)
+				window.removeEventListener("deviceorientation", tiltListener);
+			tiltListener = null;
+			stopAsking();
+			return;
+		}
+		if (window.DeviceOrientationEvent == null) {
+			events.tiltState(Unavailable);
+			return;
+		}
+		var listen = () -> {
+			if (tiltListener != null)
+				return;
+			tiltListener = e -> {
+				if (e.beta == null || e.gamma == null) {
+					events.tiltState(Unavailable);
+					return;
+				}
+				var angle:Float = js.Syntax.code("(screen.orientation && screen.orientation.angle) || window.orientation || 0");
+				events.tilt(e.beta, e.gamma, angle);
+			};
+			window.addEventListener("deviceorientation", tiltListener);
+		};
+		if (!Std.isOfType(window.DeviceOrientationEvent.requestPermission, js.lib.Function)) {
+			listen();
+			return;
+		}
+		// Asked inside the next tap's own event, the only place the browser lets it be asked.
+		stopAsking();
+		tiltAsking = _ -> {
+			stopAsking();
+			(window.DeviceOrientationEvent.requestPermission() : js.lib.Promise<String>).then(answer -> {
+				if (answer == "granted")
+					listen();
+				else
+					events.tiltState(Refused);
+				return null;
+			}, _ -> {
+				events.tiltState(Refused);
+				return null;
+			});
+		};
+		for (name in ["touchend", "click"])
+			window.addEventListener(name, tiltAsking, true);
+	}
+
+	function stopAsking():Void {
+		if (tiltAsking == null)
+			return;
+		var window:Dynamic = Browser.window;
+		for (name in ["touchend", "click"])
+			window.removeEventListener(name, tiltAsking, true);
+		tiltAsking = null;
+	}
+
 	/** Reports the first pads the page sees (a page sees a pad only after a button press on it), each in the W3C standard layout. */
 	public function poll():Void {
 		var list:Dynamic = Browser.navigator.getGamepads();

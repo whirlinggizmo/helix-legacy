@@ -153,6 +153,7 @@ class InputTests {
 		ticker.advance(.25, () -> ticks++);
 		check(ticks == 7, "Accumulates");
 		router();
+		tilt();
 		// Double taps, read per frame: two quick taps near each other pair, a third starts over, a slow or distant second doesn't pair.
 		var pad = new InputState(), gestures = new PointerGestures();
 		var clock = 0.;
@@ -190,6 +191,48 @@ class InputTests {
 		ticked.consume();
 		check(perTick.doubleTapped, "The second tick the second, a double tap");
 		Sys.println(haxe.Json.stringify({passed: true, checks: checks}));
+	}
+
+	// The device's tilt: asked for through the router to the platform, read from level (the first reading), turned with the screen, held to
+	// -1..1; calibrated anew; refused, no longer wanted.
+	static function tilt():Void {
+		var source = new Source(),
+			router = new InputRouter(),
+			input:InputState = cast router.input;
+		source.start(router);
+		router.poll(source);
+		check(input.tiltState == Off && !source.tiltWanted, "Off until asked");
+		input.requestTilt();
+		router.poll(source);
+		check(source.tiltWanted && input.tiltState == Waiting, "Asked: the platform told, waiting");
+		source.report = e -> e.tilt(60, 0, 0);
+		router.poll(source);
+		check(input.tiltState == On && input.tiltX == 0 && input.tiltY == 0, "The first reading is level");
+		source.report = e -> e.tilt(45, 15, 0);
+		router.poll(source);
+		check(input.tiltX == .5 && input.tiltY == -.5, "Right side down half across; the top tipped away half up");
+		source.report = e -> e.tilt(0, 90, 0);
+		router.poll(source);
+		check(input.tiltX == 1 && input.tiltY == -1, "Past the range: held to -1..1");
+		// The screen turned 90 degrees counterclockwise (a phone on its side): the device's forward is across the screen.
+		source.report = e -> e.tilt(75, 0, 90);
+		router.poll(source);
+		check(input.tiltX == .5 && input.tiltY == 0, "On its side: tipping the device's top toward the player is right on screen");
+		source.report = e -> e.tilt(60, -15, 270);
+		router.poll(source);
+		check(input.tiltX == 0 && input.tiltY == -.5, "On its other side: the device's left side down is up on screen");
+		input.calibrateTilt();
+		source.report = e -> e.tilt(30, 10, 0);
+		router.poll(source);
+		check(input.tiltX == 0 && input.tiltY == 0, "Calibrated: level as it's held now");
+		source.report = e -> e.tiltState(Refused);
+		router.poll(source);
+		router.poll(source);
+		check(input.tiltState == Refused && input.tiltX == 0 && !source.tiltWanted, "Refused: zero, and no longer wanted");
+		source.report = _ -> {};
+		input.requestTilt();
+		router.poll(source);
+		check(source.tiltWanted && input.tiltState == Waiting, "Asked again after a refusal");
 	}
 
 	// The router's policies: the pointer from the left button or the first finger, focus, text under a shortcut modifier, pad slots.
@@ -273,6 +316,11 @@ class Source implements IInputSource {
 
 	public function setTextEntry(on:Bool):Void
 		textEntry = on;
+
+	public var tiltWanted = false;
+
+	public function setTiltWanted(on:Bool):Void
+		tiltWanted = on;
 
 	public var report:IInputEvents->Void = _ -> {};
 

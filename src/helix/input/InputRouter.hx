@@ -15,6 +15,7 @@ class InputRouter implements IInputEvents {
 	var gesture = false;
 	var padSlot = 0;
 	var textEntryTold = false;
+	var tiltTold = false;
 
 	/** Focused, with nothing held. */
 	public function new() {}
@@ -28,6 +29,10 @@ class InputRouter implements IInputEvents {
 	/** Before the app's frame: tells source when the app's text entry changed, has it report what arrived, then empties the pad slots no
 		connected pad reported into. */
 	public function poll(source:IInputSource):Void {
+		if (state.tiltWanted != tiltTold) {
+			tiltTold = state.tiltWanted;
+			source.setTiltWanted(tiltTold);
+		}
 		if (state.textEntry != textEntryTold) {
 			textEntryTold = state.textEntry;
 			source.setTextEntry(textEntryTold);
@@ -115,6 +120,12 @@ class InputRouter implements IInputEvents {
 			gesture = false;
 		}
 	}
+
+	public function tilt(beta:Float, gamma:Float, screenAngle:Float):Void
+		state.tiltEvent(beta, gamma, screenAngle);
+
+	public function tiltState(value:helix.input.TiltState):Void
+		state.tiltStateEvent(value);
 
 	public function pad(name:String, buttons:Array<Bool>, axes:Array<Float>):Void {
 		if (padSlot >= state.padCount)

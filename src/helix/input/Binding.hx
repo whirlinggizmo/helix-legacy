@@ -34,4 +34,8 @@ enum Binding {
 		as a pad's stick); an action bound to X and one bound to Y of the same area and radius read one stick:
 		actions.bind("moveX", TouchStick(Anywhere, 80, X)), or for two sticks LeftHalf and RightHalf. */
 	TouchStick(area:StickArea, radius:Float, axis:StickAxis);
+
+	/** The device tilted (Input.tiltX, tiltY: -1 to 1, from level, turned with the screen): X across, Y up and down the screen. Read once
+		the game asks for it (Input.requestTilt); 0 until then. A rolling ball: actions.bind("moveX", Tilt(X)). */
+	Tilt(axis:StickAxis);
 }
