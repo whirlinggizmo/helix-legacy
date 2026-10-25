@@ -44,7 +44,7 @@ import helix.input.InputState;
 	`click` with `"at"` (and `"part"`) presses and lets go of the pointer there instead of using the widget by name.
 
 	With a program's input bound (under the runner), while it plays, that input (Input) is the script's: a Ui, a pointer looking at the stage and the screens that
-	run themselves (Splash, Loading, a Transition) play it as they read Input, with nothing handed to them; the program's own input is back
+	run themselves (SplashScreen, LoadingScreen, a Transition) play it as they read Input, with nothing handed to them; the program's own input is back
 	once every command has finished. */
 class Autopilot {
 	var ticks = 0;

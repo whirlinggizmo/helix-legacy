@@ -9,13 +9,18 @@ import helix.scene.transition.Transition;
 import helix.texture.Texture2D;
 import helix.ui.Theme;
 
-/** The built-in splash (docs/DISPLAY_MODEL.md): a logo (or none) centered on the theme's panel color, shown on the stage (show) for at least
-	its seconds, then taken off through its transition (a half-second fade unless given), then called at the transition's middle: put the
-	next screen on the stage there. It leaves once the user has pressed a key, a button or a finger (IInput.activated: a browser lets audio
-	start and fullscreen be asked for only after that; the same rule everywhere), or after maxWait's seconds without one: "press any key"
-	shows until then, or, where a press came already, nothing. A pad's press doesn't count (a browser can't unlock with one), so the line
-	stays for a tap. It runs itself; quick (the run option quick=1) skips its wait. theme for its colors and font, prompt for the line. */
-class Splash {
+/** A splash screen: your logo, centered on the theme's background, before the game starts.
+
+	Create one and call show(next). It stays up for at least `seconds`, and also until the player presses a key, clicks or taps, showing
+	`prompt` ("press any key") meanwhile. Then it fades out (or uses the transition you gave) and calls next at the transition's middle; put
+	your title screen on the stage there.
+
+	Why wait for a press: a browser plays no sound and allows no fullscreen until the player has pressed something. A gamepad press doesn't
+	count, because browsers ignore it for that.
+
+	To go on without a press, set maxWait to a number of seconds. The splash runs itself; you don't update it. The run option quick=1 skips
+	its wait. theme sets its colors and font (docs/DISPLAY_MODEL.md). */
+class SplashScreen {
 	var logo:Null<Texture2D>;
 	var seconds:Float;
 	var transition:Transition;

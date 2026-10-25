@@ -1,6 +1,6 @@
 package helix.scene;
 
-/** What runs the screens that run themselves (a Transition, Loading, Splash) while they're on the stage: each a step called once a frame,
+/** What runs the screens that run themselves (a Transition, LoadingScreen, SplashScreen) while they're on the stage: each a step called once a frame,
 	after the app's update and before the frame is drawn, with the frames' seconds (not the game's clock: a paused game still transitions),
 	until it says it's done. Installed by the first one (an optional part, helix.host.Part). A completion's lifetime: each step dies with
 	its screen (decision 123). */

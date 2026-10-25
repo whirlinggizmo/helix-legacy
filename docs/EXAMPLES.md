@@ -18,7 +18,7 @@ The catalog follows the earlier C frameworks' example names. Each example matche
 | `audio-music` | streamed music and decoded clips, with play state; the music bus faded, a crossfade to a second track, pitch and pan, and natively with `HELIX_ASSET_HOST` the music played as it downloads |
 | `asset-fetch` | assets from a host, the cache, and asking whether a host answers |
 | `asset-force-fetch` | ensure with a source and past the cache |
-| `scenes` | a game's flow as what's on the stage (decision 145): the built-in `Splash` ("press any key" until a press unlocks audio), a title, a level loading behind the built-in `Loading` screen, a pause menu over the level paused by `paused`, `Fade`s between, the app's update holding which screen is up; its autopilot runs the flow on both targets |
+| `scenes` | a game's flow as what's on the stage (decision 145): the built-in `SplashScreen` ("press any key" until a press unlocks audio), a title, a level loading behind the built-in `LoadingScreen`, a pause menu over the level paused by `paused`, `Fade`s between, the app's update holding which screen is up; its autopilot runs the flow on both targets |
 | `transitions` | the transitions between two screens (helix.scene.transition.Transition): `Fade`, `Slide` (eight directions, on across or back the way it came), `Iris` and `Diamond` closing on a clicked point, and `Noise` in squares of a chosen size; each can wait (`delay`), stay covered at the middle (`hold`) and ease each half (`coverEase`, `uncoverEase`) |
 | `quit` | quitting mid-load: shutdown runs after the frame |
 | `hello3d` | an orbiting 3D camera, depth-tested shapes and lines, a 2D overlay |

@@ -11,8 +11,8 @@ import helix.render2d.Stage;
 import helix.texture.Texture2D;
 import helix.texture.Textures;
 import helix.scene.Loader;
-import helix.scene.Loading;
-import helix.scene.Splash;
+import helix.scene.LoadingScreen;
+import helix.scene.SplashScreen;
 import helix.scene.transition.Transition;
 import helix.scene.transition.Fade;
 import helix.time.Time;
@@ -23,10 +23,10 @@ import helix.host.ScreenShape;
 	the stage, the app's update holds the logic, and a small state says which screen is up. Swapping screens is taking one off the stage
 	and putting the next on, at the middle of a transition (Fade.run, Fade.swap); the built-in screens put themselves on the stage and call
 	back as they leave. The flow:
-	- the built-in Splash (Splash.show), faded in: the logo, "press any key" until a press unlocks audio, or three seconds for the impatient;
+	- the built-in SplashScreen (SplashScreen.show), faded in: the logo, "press any key" until a press unlocks audio, or three seconds for the impatient;
 	  it calls back at the middle of its fade out, where the title goes on the stage
 	- a title: Enter or a tap fades to the level
-	- the level's files load behind the built-in Loading screen (Loading.show, put up at the fade's middle), which holds once loaded until a
+	- the level's files load behind the built-in LoadingScreen (LoadingScreen.show, put up at the fade's middle), which holds once loaded until a
 	  press ("loaded, go"), then calls back, where the level goes on the stage
 	- a pause menu (Escape) added over the level, which is paused under it (Node2D.paused); Escape takes the menu off and resumes the level,
 	  T goes back to the title
@@ -46,7 +46,7 @@ class App extends helix.App {
 	var title:Page;
 	var pause:Page;
 	var play:Null<Play>;
-	var loading:Null<Loading>;
+	var loading:Null<LoadingScreen>;
 	// The transition running, if any: no screen takes keys while one does.
 	var transition:Null<Transition>;
 
@@ -70,7 +70,7 @@ class App extends helix.App {
 
 	// The splash, faded in, showing logo (or nothing, when it didn't load), then the title at the middle of its fade out.
 	function showSplash(logo:Null<Texture2D>):Void {
-		var shown = new Splash(logo, Host.getOptionFloat("splashSeconds", 1));
+		var shown = new SplashScreen(logo, Host.getOptionFloat("splashSeconds", 1));
 		shown.maxWait = Host.getOptionFloat("splashMaxWait", 0);
 		state = "Splash";
 		fade(new Fade(.8), () -> shown.show(() -> {
@@ -96,7 +96,7 @@ class App extends helix.App {
 	function startPlay():Void {
 		var level = new Play();
 		play = level;
-		var screen = new Loading(level.loader);
+		var screen = new LoadingScreen(level.loader);
 		screen.holdForPress = Host.getOptionBool("clickToContinue", true);
 		screen.text = "Loading the field";
 		screen.tip = Host.getOption("tip", "");

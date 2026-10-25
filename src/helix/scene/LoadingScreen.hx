@@ -12,7 +12,7 @@ import helix.ui.Theme;
 	the bottom (tip), and what failed in the disabled text color. Shown on the stage (show) over what's there until its loader is done, then
 	taken off and then called: put the level on the stage there. With holdForPress it stays once loaded, saying so, until a press (the
 	"loaded, go" screen of a movie-like opening). It runs itself; quick (the run option quick=1) doesn't hold. */
-class Loading {
+class LoadingScreen {
 	var cover = true;
 	var drawing = new Drawing2D();
 

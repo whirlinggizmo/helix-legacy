@@ -10,8 +10,8 @@ import helix.render2d.Node2D;
 import helix.render2d.Stage;
 import helix.render2d.StageService;
 import helix.scene.Loader;
-import helix.scene.Loading;
-import helix.scene.Splash;
+import helix.scene.LoadingScreen;
+import helix.scene.SplashScreen;
 import helix.scene.transition.Transition;
 import helix.scene.transition.Fade;
 import helix.time.Time;
@@ -137,7 +137,7 @@ class SceneTests {
 		var loader = new Loader();
 		loader.loadAsset("a.txt", _ -> {});
 		loader.loadAsset("b.txt", _ -> {});
-		var loading = new Loading(loader), started = false;
+		var loading = new LoadingScreen(loader), started = false;
 		check(loading.show(() -> started = true) && loading.shown && !loading.show(() -> {}), "Shown, once");
 		frame(1 / 60);
 		check(!started && Stage.childCount == 2, "Waiting, on the stage over the level");
@@ -149,7 +149,7 @@ class SceneTests {
 		check(started && !loading.shown && Stage.childCount == 1, "Done: off the stage, then called");
 
 		// Held for a press once loaded.
-		var holding = new Loading(new Loader()), went = false;
+		var holding = new LoadingScreen(new Loader()), went = false;
 		holding.holdForPress = true;
 		holding.show(() -> went = true);
 		frame(1 / 60);
@@ -161,7 +161,7 @@ class SceneTests {
 		input.keyEvent(Space, false);
 
 		// The splash: at least its seconds, and a press (already come above); or its most wait without one.
-		var splash = new Splash(null, 1, new Fade(.5)), next = false;
+		var splash = new SplashScreen(null, 1, new Fade(.5)), next = false;
 		check(splash.show(() -> next = true) && !splash.show(() -> {}), "Shown, once");
 		frame(.5);
 		check(!next && splash.elapsed == .5, "Before its seconds");
@@ -171,7 +171,7 @@ class SceneTests {
 		frame(1);
 		check(Stage.childCount == 1, "Gone from the stage, its cover too");
 		@:privateAccess Input.bind(new InputState());
-		var patient = new Splash(null, .1), onward = false;
+		var patient = new SplashScreen(null, .1), onward = false;
 		patient.maxWait = 2;
 		patient.show(() -> onward = true);
 		frame(1);

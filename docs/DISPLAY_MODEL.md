@@ -84,8 +84,8 @@ inside another tree. Its behaviors start with it. 2D maps come from Tiled (`heli
 ### Screens
 
 A screen is what's on the stage: a game swaps screens by removing one node and adding another, and pauses by setting `paused` on its
-level and adding a menu over it (the level's `pickable` off too, or the menu covering it, so clicks don't reach it). `helix.scene.transition` (`Fade`, `Slide`, `Iris`, `Diamond`, `Noise`) covers the swap; `Splash` and
-`Loading` are ready-made screens.
+level and adding a menu over it (the level's `pickable` off too, or the menu covering it, so clicks don't reach it). `helix.scene.transition` (`Fade`, `Slide`, `Iris`, `Diamond`, `Noise`) covers the swap; `SplashScreen` and
+`LoadingScreen` are ready-made screens.
 
 ### Input: asked, not delivered
 
