@@ -1,0 +1,6 @@
+# out/dist/ over HTTPS, as hxml/serve.dist.hxml serves it over HTTP, for another device on the network (a phone, say): haxe
+# hxml/serve.dist.https.hxml, then open https://<this machine>:8495/ there. nginx in Docker (docker-compose.yml's dist,
+# tls/dist.conf), with the certificate TLS_CERT and TLS_KEY name (tls/cert.pem and tls/key.pem unless set). Build out/dist/ first
+# (haxe hxml/build.dist.hxml). Ctrl+C stops it.
+--cmd echo starting https://localhost:8495/ - Ctrl+C stops it
+--cmd docker compose --progress quiet run --rm --quiet-pull dist

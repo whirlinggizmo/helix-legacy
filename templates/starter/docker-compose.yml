@@ -1,0 +1,59 @@
+# HTTPS for another device on the network (a phone, say), which needs it for things like tilt, the gamepad and fullscreen, with the
+# certificate TLS_CERT and TLS_KEY name (tls/cert.pem and tls/key.pem unless set; the README says how to make them); the device must
+# trust its CA. Needs Docker. Each service runs in the
+# foreground and stops when its input closes, which is when what started it goes, however it goes:
+# - dev: https://<this machine>:8443/ in front of the dev loop's http://localhost:8064/, started and stopped with it (the sidecar
+#   line in hxml/dev.hxml)
+# - dist: https://<this machine>:8495/ serving out/dist/, the release build (haxe hxml/serve.dist.https.hxml); Ctrl+C stops it
+x-https: &https
+  image: nginx:1.29-alpine
+  network_mode: host # the dev server is 127.0.0.1:8064 on this machine
+  stdin_open: true
+  # its URLs said first, by this machine's name and its addresses on the network (Docker's own bridges left out): HTTPS_PORT is
+  # the port its tls/*.conf listens on, HTTPS_SERVES what it serves. ($$: a $ the shell gets, not Compose)
+  command:
+    - sh
+    - -c
+    - |
+      urls="https://$$(hostname):$$HTTPS_PORT/"
+      for address in $$(ip -4 -o addr show scope global | grep -v -E ' (docker[0-9]*|br-[0-9a-f]+|veth[^ ]*|virbr[0-9]*) ' | sed -E 's/.* inet ([0-9.]+).*/\1/'); do
+        urls="$$urls, https://$$address:$$HTTPS_PORT/"
+      done
+      echo "https: $$urls ($$HTTPS_SERVES)"
+      nginx -g 'daemon off;' & cat > /dev/null; nginx -s stop 2> /dev/null
+
+# (a missing certificate, or out/dist, is an error, not a directory made in its place)
+x-certificate:
+  - &cert
+    type: bind
+    source: ${TLS_CERT:-./tls/cert.pem}
+    target: /certs/cert.pem
+    read_only: true
+    bind:
+      create_host_path: false
+  - &key
+    type: bind
+    source: ${TLS_KEY:-./tls/key.pem}
+    target: /certs/privkey.pem
+    read_only: true
+    bind:
+      create_host_path: false
+
+services:
+  dev:
+    <<: *https
+    environment: {HTTPS_PORT: 8443, HTTPS_SERVES: "proxy to http://localhost:8064/"}
+    volumes:
+      - *cert
+      - *key
+      - {type: bind, source: ./tls/nginx.conf, target: /etc/nginx/nginx.conf, read_only: true}
+      - {type: bind, source: ./tls/dev.conf, target: /etc/nginx/conf.d/default.conf, read_only: true}
+  dist:
+    <<: *https
+    environment: {HTTPS_PORT: 8495, HTTPS_SERVES: "out/dist/"}
+    volumes:
+      - *cert
+      - *key
+      - {type: bind, source: ./tls/nginx.conf, target: /etc/nginx/nginx.conf, read_only: true}
+      - {type: bind, source: ./tls/dist.conf, target: /etc/nginx/conf.d/default.conf, read_only: true}
+      - {type: bind, source: ./out/dist, target: /site, read_only: true, bind: {create_host_path: false}}

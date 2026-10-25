@@ -180,16 +180,17 @@ class Starter(unittest.TestCase):
     def test_files_and_builds(self):
         with tempfile.TemporaryDirectory() as directory:
             game = starter(directory, 'my-jam-game')
-            names = ('build.web', 'build.native', 'build.dist', 'dev', 'serve.dist')
+            names = ('build.web', 'build.native', 'build.dist', 'dev', 'serve.dist', 'serve.dist.https')
             hxml = ['hxml/common.hxml', 'hxml/web.hxml'] + [f'hxml/{name}.hxml' for name in names]
-            for relative in ['src/Main.hx', 'src/Game.hx', *hxml, 'favicon.svg', '.gitignore', '.vscode/settings.json', 'README.md']:
+            for relative in ['src/Main.hx', 'src/Game.hx', *hxml, 'favicon.svg', '.gitignore', '.vscode/settings.json', 'README.md',
+                             'docker-compose.yml', 'tls/nginx.conf', 'tls/dev.conf', 'tls/dist.conf']:
                 self.assertTrue((game / relative).is_file(), relative)
             self.assertEqual(json.loads((game / '.vscode/settings.json').read_text(encoding='utf-8')), {'haxe.configurations': [['hxml/build.web.hxml']]})
             self.assertEqual(list((game / 'assets').iterdir()), [])
             self.assertIn('options.product = "my-jam-game"', (game / 'src/Main.hx').read_text(encoding='utf-8'))
             self.assertIn('Window.title = "My Jam Game"', (game / 'src/Game.hx').read_text(encoding='utf-8'))
             self.assertIn('out/my-jam-game-web.zip', (game / 'hxml/build.dist.hxml').read_text(encoding='utf-8'))
-            self.assertEqual((game / '.gitignore').read_text(encoding='utf-8'), 'out/\n.haxelib/\n')
+            self.assertEqual((game / '.gitignore').read_text(encoding='utf-8'), 'out/\n.haxelib/\ntls/*.pem\n')
             readme = (game / 'README.md').read_text(encoding='utf-8')
             for relative in hxml[2:]:
                 self.assertIn(f'haxe {relative}', readme)

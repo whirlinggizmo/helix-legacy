@@ -2,8 +2,11 @@
 # on save into out/dev/, which no other build writes, and swaps the code into the running page, assets/ served at /assets (a server this
 # game left on the port stopped first); the game's shaders/<name>.glsl are packed into assets/shaders/<name>.hxshader as they change,
 # which the page reloads. Ctrl+C stops both.
+# To play it on a phone over the network (HTTPS at https://<this machine>:8443/), use the commented serve line instead of the one above
+# it: the README's "On a phone" says what it needs.
 -lib hotreload-hx
 -lib helix
 -D hotreload-port=8064
 --macro hotreload.DevServer.serve(["hxml/web.hxml", "-js", "out/dev/app.js"], {mounts: {"/assets": "assets"}, restart: true})
+# --macro hotreload.DevServer.serve(["hxml/web.hxml", "-js", "out/dev/app.js"], {mounts: {"/assets": "assets"}, restart: true, sidecars: [["docker", "compose", "--progress", "quiet", "run", "--rm", "--quiet-pull", "dev"]]})
 --macro helix.tool.Watchers.watchShaders()
