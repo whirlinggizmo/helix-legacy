@@ -107,7 +107,7 @@ class Commands(unittest.TestCase):
         result = run_hx('init', '--bogus')
         self.assertEqual(result.returncode, 2)
         self.assertIn('--bogus', result.stderr)
-        for command in ('init', 'setup'):
+        for command in ('init', 'autopilot', 'setup'):
             result = run_hx(command, '--help')
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -117,6 +117,17 @@ class Commands(unittest.TestCase):
             done(run_hx('init', 'here', directory, env=dict(os.environ, HAXELIB_RUN='1')))
             self.assertTrue((Path(directory) / 'here/src/Main.hx').is_file())
             self.assertFalse((ROOT / 'here').exists())
+
+    def test_autopilot_refusals(self):
+        # What autopilot refuses before it builds or runs anything (a run itself needs Node and a browser: CI's examples job has them).
+        with tempfile.TemporaryDirectory() as directory:
+            game = starter(directory)
+            self.assertEqual(tool('autopilot', cwd=game).returncode, 2)
+            self.assertIn('no script assets/autopilot/run.json', refusal(tool('autopilot', 'autopilot/run.json', cwd=game)))
+            (game / 'assets/autopilot').mkdir()
+            (game / 'assets/autopilot/run.json').write_text('{"version": 1, "commands": []}', encoding='utf-8')
+            self.assertIn('build the release first', refusal(tool('autopilot', 'assets/autopilot/run.json', '--no-build', cwd=game)))
+            self.assertIn("isn't a file", refusal(tool('autopilot', 'autopilot/run.json', '--browser', 'no-such-chromium', cwd=game)))
 
     def test_init_refuses_a_directory_in_use(self):
         with tempfile.TemporaryDirectory() as directory:

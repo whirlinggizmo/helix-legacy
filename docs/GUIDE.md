@@ -323,6 +323,11 @@ A failed `assert` or `wait` is published as `{failed: ...}`. Commands: `press`, 
 `helix.debug.Autopilot` says each. Wait on state, never on time, so a slow load doesn't change the run. `autopilot.seed` seeds the game's
 random numbers.
 
+To run one from the game's directory, `haxelib run helix autopilot autopilot/run.json`. It builds the release, serves it, plays the
+script in a headless Chromium and prints what the game published, or says which command failed and exits 1. It needs Node.js. The first
+time, it fetches Playwright and its Chromium into HeliX's cache (`--browser` names a Chromium of your own instead). `--no-build` plays
+the last release build, with the script as it is now.
+
 ## Building and shipping
 
 ```console

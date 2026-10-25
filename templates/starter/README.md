@@ -16,6 +16,7 @@ haxe hxml/build.web.hxml          # the browser build alone, out/web/, without a
 haxe hxml/build.dist.hxml         # the release build for hosting: out/dist/, zipped as out/{name}-web.zip (itch.io)
 haxe hxml/serve.dist.hxml         # out/dist/ served at http://localhost:8095/, to try before uploading
 haxe hxml/serve.dist.https.hxml   # out/dist/ served at https://<this machine>:8495/, to try on a phone (see "On a phone")
+haxelib run helix autopilot autopilot/run.json   # plays assets/autopilot/run.json on the release build in a headless browser (the guide's "Playing a script"; needs Node.js)
 haxe hxml/build.native.hxml       # the native build (hxcpp), out/native/Main; it reads assets/ beside itself: copy (or link) the directory to out/native/assets
 ```
 

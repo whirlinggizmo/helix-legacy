@@ -221,7 +221,7 @@ take. A module, which the others import, says so when it's run. `tools/check_too
 | `tools/services.py` | the async service tests against a local HTTP server, in the browser and natively |
 | `tools/remote_windows.py` | build and check this checkout on a Windows machine over ssh, leaving nothing behind |
 | `tools/sdl3.py` | SDL3 for the SDL3 backends, found or made into `build/deps` |
-| `tools/autopilot.cjs` | an example's autopilot in a headless browser (run by `example.py autopilot`) |
+| `tools/autopilot.cjs` | an autopilot script in a headless browser: an example's (run by `example.py autopilot`), or a game's built release (run by `haxelib run helix autopilot`, serving it) |
 | `tools/check_cache.cjs` | one visit of `check_cache.py`'s |
 | `tools/pages_shots.cjs` | the site's thumbnails (run by `pages.py`) |
 | `tools/service_browser.cjs` | the browser's half of `services.py` |

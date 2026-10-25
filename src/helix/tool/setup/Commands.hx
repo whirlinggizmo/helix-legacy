@@ -16,6 +16,11 @@ macros in helix.tool: Build's steps (shaders packed, the page, assets, the zip),
                               serve.dist), assets/, favicon.svg (the page's icon, to replace), .gitignore and a README
   init DIRECTORY --example NAME  the library's example NAME as a game in DIRECTORY, the starter around it: its App in src/, the examples'
                               assets and its own in assets/, its shaders/ and config.json; an unknown NAME lists the examples
+  autopilot SCRIPT [--no-build] [--browser CHROMIUM]
+                              plays the autopilot script SCRIPT (under assets/: assets/autopilot/run.json) in a headless Chromium: builds
+                              the release (hxml/build.dist.hxml; not with --no-build), serves out/dist/, opens it with the script, and
+                              prints what the game published; exits 1 when the script fails, saying why. Needs Node.js; Playwright and
+                              its Chromium are fetched into the user's cache the first time (npm), or --browser names a Chromium
   setup [--sdl-gpu]           the tools packing shaders needs, made ready ahead of its first use (before going offline, or for a CI's
                               cache), and listed: sokol-shdc, and with --sdl-gpu glslang and SPIRV-Cross (built by hxcpp, with the system's
                               C++ compiler)
@@ -26,7 +31,7 @@ HELIX_GLSLANG and HELIX_SPIRV_CROSS name programs of your own instead.";
 	/** Runs the command args name for the game in the current directory, the library being at root; returns the exit code. */
 	public static function run(args:Array<String>, root:String):Int {
 		if (args.length == 0)
-			return usage("a command is needed: init or setup");
+			return usage("a command is needed: init, autopilot or setup");
 		var command = args[0], rest = args.slice(1);
 		if (command == "--help" || command == "-h") {
 			Sys.println(HELP);
@@ -51,6 +56,14 @@ HELIX_GLSLANG and HELIX_SPIRV_CROSS name programs of your own instead.";
 							+ written.filter(file -> !StringTools.startsWith(file, "assets/")).join(", ")
 							+ ', and ${assets.length} files in assets/');
 					}
+				case "autopilot":
+					var options = new Options(rest, ["--no-build"], ["--browser"]);
+					if (options.help)
+						return
+							help("autopilot SCRIPT [--no-build] [--browser CHROMIUM]: the autopilot script SCRIPT (under assets/) played on the release build in a headless Chromium");
+					if (options.positional.length != 1)
+						return usage("autopilot: name one script (under assets/)");
+					return AutopilotTool.run(root, options.positional[0], options.flags.indexOf("--no-build") < 0, options.values["--browser"]);
 				case "setup":
 					var options = new Options(rest, ["--sdl-gpu"], []);
 					if (options.help)
@@ -59,7 +72,7 @@ HELIX_GLSLANG and HELIX_SPIRV_CROSS name programs of your own instead.";
 						return usage('setup: unexpected ${options.positional[0]}');
 					ToolCache.run(root, options.flags.indexOf("--sdl-gpu") >= 0);
 				default:
-					return usage('unknown command $command: init or setup');
+					return usage('unknown command $command: init, autopilot or setup');
 			}
 		} catch (error:OptionError) {
 			return usage('$command: ${error.message}');
