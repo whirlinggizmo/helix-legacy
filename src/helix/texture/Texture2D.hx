@@ -60,13 +60,14 @@ class Texture2D {
 		this.sampling = sampling;
 	}
 
-	/** Uploads width x height RGBA8 pixels, rows top first, sampled linear (smooth) or nearest (sharp, for pixel art); whiteX, whiteY name an
+	/** Uploads width x height RGBA8 pixels, rows top first, filtered by filter (Linear smooth, Nearest sharp for pixel art); whiteX, whiteY name an
 		opaque white texel for untextured shapes, -1 for none. mipmaps adds a chain (Mipmaps.build), so it can be drawn smaller than itself without
 		shimmering. On gpu, the program's (Graphics) when not given. The caller destroys it. */
-	public static function fromRgba(width:Int, height:Int, rgba:Bytes, linear = false, whiteX = -1, whiteY = -1, mipmaps = false, ?gpu:IGraphics):Texture2D {
+	public static function fromRgba(width:Int, height:Int, rgba:Bytes, filter:Filter = Nearest, whiteX = -1, whiteY = -1, mipmaps = false,
+			?gpu:IGraphics):Texture2D {
 		gpu = gpu != null ? gpu : helix.graphics.Graphics.instance;
 		var levels = mipmaps ? helix.texture.Mipmaps.build(width, height, rgba) : [rgba];
-		var texture = new Texture2D(gpu.createTexture(width, height, levels), width, height, Rgba8, levels.length, new Sampling(linear));
+		var texture = new Texture2D(gpu.createTexture(width, height, levels), width, height, Rgba8, levels.length, new Sampling(filter));
 		if (whiteX >= 0) {
 			texture.whiteU = (whiteX + .5) / width;
 			texture.whiteV = (whiteY + .5) / height;
@@ -82,12 +83,12 @@ class Texture2D {
 	}
 
 	/** A render target width x height of format: a texture drawn into by target passes (IGraphics.beginTargetPass with its handle), sampled
-		linear (smooth) or nearest (sharp: a low-resolution view shown larger); with depth a depth buffer and the screen's multisampling, without
+		Linear (smooth) or Nearest (sharp: a low-resolution view shown larger); with depth a depth buffer and the screen's multisampling, without
 		neither (IGraphics.createRenderTarget). Throws for a format the GPU can't draw into (IGraphics.canRender). On gpu, the program's (Graphics)
 		when not given. The caller destroys it. */
-	public static function renderTarget(width:Int, height:Int, linear = true, format:TextureFormat = Rgba8, depth = true, ?gpu:IGraphics):Texture2D {
+	public static function renderTarget(width:Int, height:Int, filter:Filter = Linear, format:TextureFormat = Rgba8, depth = true, ?gpu:IGraphics):Texture2D {
 		gpu = gpu != null ? gpu : helix.graphics.Graphics.instance;
-		return new Texture2D(gpu.createRenderTarget(width, height, format, depth), width, height, format, 1, new Sampling(linear));
+		return new Texture2D(gpu.createRenderTarget(width, height, format, depth), width, height, format, 1, new Sampling(filter));
 	}
 
 	/** A new image in place of this one (a hot reload): the same object and sampling, a new GPU texture of levels. */

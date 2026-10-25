@@ -619,10 +619,10 @@ class Render2DTests {
 		batch.end();
 		check(vertexColor(0).join(",") == "255,0,0,0", "Outlined: flat");
 		// Sampling: its bits round-trip, and a change of a texture's sampling splits the batch's run, each part sampled as it was then.
-		var sampling = new Sampling(true, Repeat, Mirror);
-		check(sampling.linear && sampling.wrapU == Repeat && sampling.wrapV == Mirror && (sampling : Int) < Sampling.COUNT,
+		var sampling = new Sampling(Linear, Repeat, Mirror);
+		check(sampling.filter == Linear && sampling.wrapU == Repeat && sampling.wrapV == Mirror && (sampling : Int) < Sampling.COUNT,
 			"Sampling keeps its filter and wraps");
-		check(!sampling.withLinear(false).linear && sampling.withWrap(Clamp, Clamp).wrapV == Clamp, "with* change one part");
+		check(sampling.withFilter(Nearest).filter == Nearest && sampling.withWrap(Clamp, Clamp).wrapV == Clamp, "with* change one part");
 		gpu.beginFrame(400, 300, 0);
 		batch.begin(camera);
 		texture.sampling = Sampling.LINEAR;
@@ -631,7 +631,10 @@ class Render2DTests {
 		batch.image(texture, 4, 0, 4, 4);
 		batch.image(texture, 8, 0, 4, 4);
 		batch.end();
-		check(gpu.draws.length == 2 && gpu.draws[0].sampling.linear && !gpu.draws[1].sampling.linear && gpu.draws[1].vertices == 12,
+		check(gpu.draws.length == 2
+			&& gpu.draws[0].sampling.filter == Linear
+			&& gpu.draws[1].sampling.filter == Nearest
+			&& gpu.draws[1].vertices == 12,
 			"A texture drawn smooth then sharp is two runs, sampled as each was drawn");
 
 		// KTX 1: a 5 x 3 ASTC 4x4 file with its mipmaps (2 x 1, 1 x 1): one block a level.
@@ -830,16 +833,16 @@ class Render2DTests {
 			decoding = new helix.graphics.ImageDecoding(images),
 			shared = new helix.texture.TextureCache(heldAssets, decoding, gpu);
 		var got:Array<Texture2D> = [];
-		shared.load("a.png", true, texture -> got.push(texture));
-		var given = shared.load("a.png", true, texture -> got.push(texture));
-		shared.load("a.png", true, texture -> got.push(texture));
+		shared.load("a.png", Linear, texture -> got.push(texture));
+		var given = shared.load("a.png", Linear, texture -> got.push(texture));
+		shared.load("a.png", Linear, texture -> got.push(texture));
 		given.cancel();
 		heldAssets.flush();
 		decoding.poll();
 		check(heldAssets.loads == 1 && images.decodes == 1 && got.length == 2 && got[0] == got[1], "Loads under way of one file share one fetch and texture");
-		shared.load("a.png", true, texture -> got.push(texture));
+		shared.load("a.png", Linear, texture -> got.push(texture));
 		check(heldAssets.loads == 1 && got.length == 3 && got[2] == got[0], "A later load of it is given the same texture");
-		shared.load("a.png", false, texture -> got.push(texture));
+		shared.load("a.png", Nearest, texture -> got.push(texture));
 		heldAssets.flush();
 		decoding.poll();
 		check(heldAssets.loads == 2 && got.length == 4 && got[3] != got[0], "Another filter is another texture");

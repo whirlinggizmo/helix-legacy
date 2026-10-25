@@ -43,8 +43,8 @@ class App extends helix.App {
 		if (!quitting && Time.time >= quitAt) {
 			quitting = true;
 			// Only in flight at the quit: loads begun and never used.
-			Textures.load("sprites/logo/wg-logo-white-alpha.png", true, _ -> {});
-			Textures.load("textures/tiles.png", false, _ -> {});
+			Textures.load("sprites/logo/wg-logo-white-alpha.png", Linear, _ -> {});
+			Textures.load("textures/tiles.png", Nearest, _ -> {});
 			Audio.loadStream("audio/music/a_hero_is_born.mp3", _ -> {});
 			// A long synchronous frame.
 			var busyUntil = Time.time + .5;

@@ -235,7 +235,7 @@ class ModelFile3D {
 			byKey[key] = out.length;
 			out.push({
 				source: source,
-				sampling: new Sampling(mag != 9728, wrap(field(sampler, "wrapS")), wrap(field(sampler, "wrapT"))),
+				sampling: new Sampling(mag != 9728 ? Linear : Nearest, wrap(field(sampler, "wrapS")), wrap(field(sampler, "wrapT"))),
 				set: [set]
 			});
 		}

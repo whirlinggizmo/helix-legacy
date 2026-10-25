@@ -51,7 +51,7 @@ class Material3D {
 	public var lit:Bool = true;
 
 	/** The normal map (tangent space, green up), or null for none. Its colors are directions, read as they are, not decoded from sRGB.
-		Load it smooth, with mipmaps (Textures.load's linear true). */
+		Load it smooth, with mipmaps (Textures.load's Linear). */
 	public var normalTexture:Null<Texture2D>;
 
 	/** How strongly the normal map bends the surface: 1 as it is, 0 flat. 0 or more (under 0, or NaN, is 0). */

@@ -214,7 +214,7 @@ class PickTests {
 		check(hit.joint == knee, "Its joint there: the knee, which moves that triangle");
 		// A decal stuck there rides the knee, sized as asked whatever the knee's scale.
 		knee.setScale(2, 2, 2);
-		var hole = new helix.render3d.Decals3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), false, -1, -1, false, new CountingGraphics()),
+		var hole = new helix.render3d.Decals3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), Nearest, -1, -1, false, new CountingGraphics()),
 			4).placeOn(hit, 0, .5);
 		check(hole.parent == knee
 			&& near(hole.computeWorld().get(0) * hole.spriteWidth, .5), "A decal on it goes under the knee, its size the world's");

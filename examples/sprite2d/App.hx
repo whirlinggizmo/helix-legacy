@@ -175,8 +175,8 @@ class App extends helix.App {
 		sprites[4].effect = dissolve;
 		sprites[3].effect = flash;
 		sprites[5].effect = swap;
-		Textures.load(LOGO, true, texture -> useLogo(texture));
-		Textures.load(WHITE_LOGO, true, texture -> useWhiteLogo(texture));
+		Textures.load(LOGO, Linear, texture -> useLogo(texture));
+		Textures.load(WHITE_LOGO, Linear, texture -> useWhiteLogo(texture));
 		shaders = new Shaders();
 		shaders.load("shaders/wave.hxshader", shader -> useWave(shader));
 		Stage.addChild(drawing);

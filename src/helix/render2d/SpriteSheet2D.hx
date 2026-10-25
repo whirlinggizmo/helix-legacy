@@ -57,11 +57,12 @@ class SpriteSheet2D implements IReloadable {
 		return sheet;
 	}
 
-	/** Loads a TexturePacker or Aseprite JSON file at path and the image it names (its meta.image, beside it), sampled smoothly when linear, else
-		sharp for pixel art (TextureCache.load); a frame without its own duration shows for secondsPerFrame. The file reads again in place when it
+	/** Loads a TexturePacker or Aseprite JSON file at path and the image it names (its meta.image, beside it), filtered by filter (Linear smooth, Nearest
+		sharp for pixel art: TextureCache.load); a frame without its own duration shows for secondsPerFrame. The file reads again in place when it
 		changes during development, as the image does. One of loaded or failed runs once (failed, else the log, for a file that doesn't load or
 		read, or an image that doesn't), neither once the request is cancelled. destroy frees what it loaded. */
-	public static function load(path:String, loaded:SpriteSheet2D->Void, ?failed:String->Void, linear = false, secondsPerFrame = .1):IRequest {
+	public static function load(path:String, loaded:SpriteSheet2D->Void, ?failed:String->Void, filter:helix.texture.Filter = Nearest,
+			secondsPerFrame = .1):IRequest {
 		var step:Null<IRequest> = null, request:Request = null;
 		request = new Request(() -> if (step != null) step.cancel());
 		step = Assets.load(path, bytes -> {
@@ -75,7 +76,7 @@ class SpriteSheet2D implements IReloadable {
 					Failure.report(path, '$path: $e', failed);
 				return;
 			}
-			step = Textures.load(image, linear, texture -> {
+			step = Textures.load(image, filter, texture -> {
 				if (request.settled) {
 					Textures.release(texture);
 					return;

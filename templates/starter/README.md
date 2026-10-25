@@ -18,7 +18,7 @@ haxe hxml/serve.dist.hxml         # out/dist/ served at http://localhost:8095/, 
 haxe hxml/build.native.hxml       # the native build (hxcpp), out/native/Main; it reads assets/ beside itself: copy (or link) the directory to out/native/assets
 ```
 
-`assets/` holds the game's files, each loaded by its path from there (`Textures.load("player.png", false, ...)`, `Audio.loadClip("coin.wav", ...)`);
+`assets/` holds the game's files, each loaded by its path from there (`Textures.load("player.png", Nearest, ...)`, `Audio.loadClip("coin.wav", ...)`);
 the release build copies it beside the page. `common.hxml` holds what every build shares, `web.hxml` the browser build's settings (the
 dev loop and `build.web` each add where it's written); the build steps are macros in `helix.tool` (`Build`, `Watchers`, `WebServer`). `favicon.svg` is the page's icon: put
 the game's own there. A shader of the game's own goes in `shaders/<name>.glsl` (make the directory): every build packs it into `assets/shaders/<name>.hxshader`,

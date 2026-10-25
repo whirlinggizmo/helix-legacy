@@ -27,7 +27,7 @@ class Game extends helix.App {
 		var hello = new Text2D("Hello", 48, 0xff102030);
 		hello.setPosition(60, 90);
 		Stage.addChild(hello);
-		Textures.load("sprites/logo.png", true, texture -> {
+		Textures.load("sprites/logo.png", Linear, texture -> {
 			var logo = new Sprite2D(texture);
 			logo.setPosition(400, 300);
 			logo.setSize(64, 64);

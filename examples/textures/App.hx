@@ -63,7 +63,7 @@ class App extends helix.App {
 
 	function load(path:String):Slot {
 		var slot = new Slot(path, Time.time);
-		Textures.load(path, true, texture -> loaded(slot, texture), message -> failed(slot, message));
+		Textures.load(path, Linear, texture -> loaded(slot, texture), message -> failed(slot, message));
 		return slot;
 	}
 

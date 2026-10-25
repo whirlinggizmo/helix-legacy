@@ -49,7 +49,7 @@ var done(get, never):Bool
 var failures(get, never):Array<String>
 function wrap(name:String, complete:T -> Void, failed:T -> Null<String>):T -> Void
 function asset(path:String, loaded:haxe.io.Bytes -> Void, ?failed:String -> Void):IRequest
-function texture(path:String, linear:Bool, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
+function texture(path:String, filter:Filter, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
 function clip(path:String, loaded:AudioClip -> Void, ?failed:String -> Void):IRequest
 function stream(path:String, loaded:AudioStream -> Void, ?failed:String -> Void):IRequest
 function environment(path:String, loaded:EnvironmentMap3D -> Void, ?failed:String -> Void):IRequest
@@ -64,7 +64,7 @@ function model(path:String, loaded:ModelFile3D -> Void, ?failed:String -> Void, 
 - `failures`: What failed, each as its name and the reason.
 - `wrap`: Counts a load the game makes itself: wrap its completion, naming it; failed gives the reason for a result that failed, or null.
 - `asset`: An asset's bytes through Assets.
-- `texture`: A texture through Textures (linear: smooth, with mipmaps; otherwise nearest, for pixel art).
+- `texture`: A texture through Textures, filtered by filter (Linear smooth, with mipmaps; Nearest sharp, for pixel art).
 - `clip`: A sound clip through Audio.
 - `stream`: A sound stream through Audio.
 - `environment`: An environment through Environments3D (loaded once it's prepared).

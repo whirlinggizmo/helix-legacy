@@ -186,7 +186,7 @@ class SceneTests {
 		score.setPosition(700, 40);
 		Stage.addChild(score);
 		var before = Stage.childCount, got = [], finished = false;
-		var coins = new helix.scene.Collect2D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), false, -1, -1, false,
+		var coins = new helix.scene.Collect2D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), Nearest, -1, -1, false,
 			new Render2DTests.CountingGraphics()), 5);
 		check(coins.run(100, 500, score, i -> got.push(i), () -> finished = true)
 			&& coins.running

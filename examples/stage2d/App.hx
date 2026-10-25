@@ -70,7 +70,7 @@ class App extends helix.App {
 		sprite.setSize(64, 64);
 		sprite.setPosition(0, 110);
 		world.addChild(sprite);
-		Textures.load("textures/tiles.png", false, texture -> sprite.texture = texture);
+		Textures.load("textures/tiles.png", Nearest, texture -> sprite.texture = texture);
 		// A group: its children turn with it.
 		orbit = new Node2D();
 		orbit.setPosition(0, -110);
@@ -93,7 +93,7 @@ class App extends helix.App {
 		emitter.setColor(0xffffcb00, 0x00ff3c00);
 		sparks = new Particles2D(emitter);
 		world.addChild(sparks);
-		Textures.load("textures/particle.png", true, texture -> emitter.texture = texture);
+		Textures.load("textures/particle.png", Linear, texture -> emitter.texture = texture);
 
 		title = new Text2D("HeliX stage2d", 20, 0xfff5f5f5);
 		view = new View2D(world, worldCamera);

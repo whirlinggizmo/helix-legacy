@@ -55,9 +55,9 @@ class App extends helix.App {
 		Stage.addChild(logo);
 		Stage.addChild(coin);
 		Stage.addChild(drawing);
-		Textures.load("sprites/logo/wg-logo-white-alpha.png", true, texture -> logo.texture = texture);
+		Textures.load("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> logo.texture = texture);
 		// Pixel art: nearest, no smoothing.
-		Textures.load("textures/tiles.png", false, (texture:Texture2D) -> coin.texture = texture);
+		Textures.load("textures/tiles.png", Nearest, (texture:Texture2D) -> coin.texture = texture);
 	}
 
 	/** Scales and turns the logo about x, y, so the point under the fingers stays put. */

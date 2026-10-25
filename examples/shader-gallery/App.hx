@@ -301,8 +301,8 @@ class App extends helix.App {
 			rowSprites.push(sprite);
 			scene.addChild(sprite);
 		}
-		Textures.load(LOGO, true, texture -> useLogo(0, texture));
-		Textures.load(WHITE_LOGO, true, texture -> useLogo(1, texture));
+		Textures.load(LOGO, Linear, texture -> useLogo(0, texture));
+		Textures.load(WHITE_LOGO, Linear, texture -> useLogo(1, texture));
 
 		// The screen effects in the chain, each off until chosen; the sprite effects.
 		bloom = new Bloom();
@@ -311,7 +311,7 @@ class App extends helix.App {
 		fxaa = new Fxaa();
 		blur = new Blur(6);
 		vignette = new Vignette(.6);
-		grade = Texture2D.fromRgba(ColorLut.SIZE * ColorLut.SIZE, ColorLut.SIZE, tealAndOrange(), true);
+		grade = Texture2D.fromRgba(ColorLut.SIZE * ColorLut.SIZE, ColorLut.SIZE, tealAndOrange(), Linear);
 		colorLut = new ColorLut(grade);
 		crt = new Crt();
 		aberration = new ChromaticAberration(6);

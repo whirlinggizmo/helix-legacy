@@ -65,7 +65,7 @@ class App extends helix.App {
 			enter("Title", title);
 			return;
 		}
-		Textures.load("sprites/logo/wg-logo-white-alpha.png", true, logo -> showSplash(logo), _ -> showSplash(null));
+		Textures.load("sprites/logo/wg-logo-white-alpha.png", Linear, logo -> showSplash(logo), _ -> showSplash(null));
 	}
 
 	// The splash, faded in, showing logo (or nothing, when it didn't load), then the title at the middle of its fade out.
@@ -232,8 +232,8 @@ class Play extends Page {
 		tiles.setPivot(.5, .5);
 		addChild(logo);
 		addChild(tiles);
-		loader.texture("sprites/logo/wg-logo-white-alpha.png", true, texture -> logo.texture = texture);
-		loader.texture("textures/tiles.png", false, texture -> tiles.texture = texture);
+		loader.texture("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> logo.texture = texture);
+		loader.texture("textures/tiles.png", Nearest, texture -> tiles.texture = texture);
 	}
 
 	/** dt seconds of play. */

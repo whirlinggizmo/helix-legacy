@@ -507,7 +507,7 @@ class Emitter {
 				pixels.set(at + 2, 255);
 				pixels.set(at + 3, Std.int(alpha * 255 + .5));
 			}
-		texture = Texture2D.fromRgba(n, n, pixels, true, -1, -1, true, gpu);
+		texture = Texture2D.fromRgba(n, n, pixels, Linear, -1, -1, true, gpu);
 		dots.set(gpu, texture);
 		if (!freesDots && helix.host.Host.running)
 			helix.host.Host.installPart(runner -> {

@@ -219,7 +219,8 @@ class WebGL2GraphicsAdapter implements IGraphics {
 				WebGL2RenderingContext.REPEAT,
 				WebGL2RenderingContext.MIRRORED_REPEAT
 			];
-			var linear = sampling.linear, made = gl.createSampler();
+			var linear = sampling.filter == helix.texture.Filter.Linear,
+				made = gl.createSampler();
 			gl.samplerParameteri(made, WebGL2RenderingContext.TEXTURE_MIN_FILTER,
 				linear ? WebGL2RenderingContext.LINEAR_MIPMAP_LINEAR : WebGL2RenderingContext.NEAREST_MIPMAP_NEAREST);
 			gl.samplerParameteri(made, WebGL2RenderingContext.TEXTURE_MAG_FILTER, linear ? WebGL2RenderingContext.LINEAR : WebGL2RenderingContext.NEAREST);

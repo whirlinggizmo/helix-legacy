@@ -166,9 +166,9 @@ class App extends helix.App {
 		coin.facing = Ground;
 		coin.setPosition(-2, .02, 1.5);
 		coin.setAlphaMode(Mask);
-		Textures.load("sprites/logo/wg-logo-white-alpha.png", true, texture -> useLogo(texture));
-		Textures.load("textures/tiles.png", false, texture -> useTiles(texture));
-		Textures.load("textures/flame.png", true, texture -> light(texture));
+		Textures.load("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> useLogo(texture));
+		Textures.load("textures/tiles.png", Nearest, texture -> useTiles(texture));
+		Textures.load("textures/flame.png", Linear, texture -> light(texture));
 		logo.effect = flash;
 		shaders = new Shaders();
 		shaders.load("shaders/heat.hxshader", shader -> useHeat(shader));

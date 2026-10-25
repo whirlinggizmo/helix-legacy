@@ -65,7 +65,7 @@ label.setPosition(400, 30);
 Stage.addChild(label);
 label.text = "Score: 1";                              // change it any time
 
-Textures.load("player.png", false, texture -> {      // false: sharp (pixel art); true: smooth
+Textures.load("player.png", Nearest, texture -> {    // Nearest: sharp (pixel art); Linear: smooth, with mipmaps
 	var player = new Sprite2D(texture);
 	player.setPivot(.5, .5);                         // turned and placed about its middle (2D starts at the top left)
 	player.setPosition(400, 300);
@@ -91,7 +91,7 @@ Textures.load("player.png", false, texture -> {      // false: sharp (pixel art)
 import helix.render2d.SpriteAnimator2D;
 import helix.render2d.SpriteSheet2D;
 
-Textures.load("hero.png", false, texture -> {
+Textures.load("hero.png", Nearest, texture -> {
 	var sheet = SpriteSheet2D.grid(texture, 16, 16);  // cells of 16 x 16 texels, numbered 0.. left to right, then down
 	sheet.addAnimation("walk", [0, 1, 2, 3]);
 	var sprite = new Sprite2D(sheet.texture);
@@ -339,7 +339,7 @@ viewport to your design size (800 x 600 here), and tick the fullscreen button if
 
 - **Nothing happens on a key:** the page hasn't been clicked; or the `Actions` was made in a field, not in `init`.
 - **Something's missing on screen:** it's under something added later (layers), off the design area, or its load failed (the console
-  says; pass a `failed` callback to see it: `Textures.load(path, false, loaded, message -> trace(message))`).
+  says; pass a `failed` callback to see it: `Textures.load(path, Nearest, loaded, message -> trace(message))`).
 - **"Type not found":** import it by the line its reference page gives.
 - **A change didn't take in the dev loop:** a change to `init` shows after a refresh (it ran when the page started), or build it in
   `afterReload`. A static lost its value: a plain one starts over at each reload; keep it in a field, or mark it `@:hot`. A function passed

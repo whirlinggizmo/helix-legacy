@@ -271,7 +271,7 @@ class TiledMap2D implements IReloadable {
 		if (left == 0)
 			done();
 		for (w in wanted)
-			Textures.load(w.path, false, texture -> {
+			Textures.load(w.path, Nearest, texture -> {
 				w.use(texture);
 				if (--left == 0 && !broken)
 					done();

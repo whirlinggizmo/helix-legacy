@@ -389,7 +389,7 @@ class Render3DTests {
 			"A 3D batch past its room grows: 1000 line and 1500 triangle vertices, each in a buffer that holds them");
 
 		// Decals: a pool of flat sprites, the oldest put down again once full, those next to be taken up faded.
-		var decals = new helix.render3d.Decals3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), false, -1, -1, false,
+		var decals = new helix.render3d.Decals3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), Nearest, -1, -1, false,
 			new Render2DTests.CountingGraphics()), 4);
 		check(decals.count == 0 && decals.capacity == 4 && decals.fadeCount == 1, "An empty pool, a quarter of it fading");
 		var first = decals.place(1, 2, 3, Math.PI / 2, 0, 0x80ff0000);

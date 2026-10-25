@@ -138,7 +138,7 @@ class Font {
 			rgba.set(i * 4 + 2, 255);
 			rgba.set(i * 4 + 3, baked.field.get(i));
 		}
-		texture = Texture2D.fromRgba(width, height, rgba, true, width - 1, height - 1, true, gpu);
+		texture = Texture2D.fromRgba(width, height, rgba, Linear, width - 1, height - 1, true, gpu);
 		glyphs = [];
 		for (g in baked.glyphs) {
 			while (glyphs.length < g.code - 32)
@@ -176,7 +176,7 @@ class Font {
 			rgba.set(i * 4 + 2, 255);
 			rgba.set(i * 4 + 3, field.get(i));
 		}
-		var texture = Texture2D.fromRgba(width, height, rgba, true, GeneratedFont.whiteX, GeneratedFont.whiteY, true, gpu);
+		var texture = Texture2D.fromRgba(width, height, rgba, Linear, GeneratedFont.whiteX, GeneratedFont.whiteY, true, gpu);
 		var glyphs:Array<Null<Glyph>> = [];
 		for (n in 0...95) {
 			var g = GeneratedFont.glyphs, i = n * 6;
@@ -358,6 +358,6 @@ class Font {
 		}
 		for (k in 0...4)
 			bytes.set((63 * 128 + 127) * 4 + k, 255);
-		return Texture2D.fromRgba(128, 64, bytes, false, 127, 63, gpu);
+		return Texture2D.fromRgba(128, 64, bytes, Nearest, 127, 63, gpu);
 	}
 }

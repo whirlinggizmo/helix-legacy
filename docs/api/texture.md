@@ -2,29 +2,44 @@
 
 [Back to the index](README.md)
 
+## Filter
+
+*abstract* in [`src/helix/texture/Filter.hx`](../../src/helix/texture/Filter.hx), `import helix.texture.Filter;`
+
+How a texture is filtered as it's drawn at another size than its own: Linear blends its texels (smooth, and loaded with mipmaps, so it can be drawn smaller without shimmering), Nearest takes the nearest one (sharp: pixel art).
+
+- `Filter.Nearest`: The nearest texel: sharp, for pixel art.
+- `Filter.Linear`: Texels blended: smooth, through its mipmaps when it has them.
+
+```haxe
+function toString():String
+```
+
+- `toString`: The value's name, as written (Stopped, Playing): what Std.string, interpolation and trace show.
+
 ## Sampling
 
 *abstract* in [`src/helix/texture/Sampling.hx`](../../src/helix/texture/Sampling.hx), `import helix.texture.Sampling;`
 
-How a draw samples a texture: its filter (linear, smooth and through its mipmaps when it has them; or nearest, sharp, for pixel art) and how it wraps along u and v. A small value, passed with each texture a draw uses; adapters keep one sampler for each that is used.
+How a draw samples a texture: its filter (Linear, smooth and through its mipmaps when it has them; or Nearest, sharp, for pixel art) and how it wraps along u and v. A small value, passed with each texture a draw uses; adapters keep one sampler for each that is used.
 
 ```haxe
 static final NEAREST(default, null):Sampling
 static final LINEAR(default, null):Sampling
-var linear(get, never):Bool
+var filter(get, never):Filter
 var wrapU(get, never):Wrap
 var wrapV(get, never):Wrap
-function withLinear(value:Bool):Sampling
+function withFilter(filter:Filter):Sampling
 function withWrap(wrapU:Wrap, wrapV:Wrap):Sampling
 static inline var COUNT:Int
 ```
 
 - `NEAREST`: Nearest, clamped: pixel art.
 - `LINEAR`: Linear, clamped: smooth.
-- `linear`: Whether it filters linearly.
+- `filter`: How it filters: Linear or Nearest.
 - `wrapU`: How it wraps along u.
 - `wrapV`: How it wraps along v.
-- `withLinear`: The same with linear filtering or not.
+- `withFilter`: The same, filtered by filter.
 - `withWrap`: The same wrapping as wrapU and wrapV.
 - `COUNT`: Every value there is, 0 to COUNT - 1, for an adapter's table of samplers.
 
@@ -35,9 +50,9 @@ static inline var COUNT:Int
 A GPU texture with its size, its format and how it is sampled (Sampling: linear or nearest, and its wrap), which a draw reads when it takes the texture, so one texture can be drawn smooth and then sharp. whiteU/whiteV name an opaque white texel, -1 when it has none, for untextured shapes.
 
 ```haxe
-static function fromRgba(width:Int, height:Int, rgba:haxe.io.Bytes, ?linear:Bool = false, ?whiteX:Int = -1, ?whiteY:Int = -1, ?mipmaps:Bool = false, ?gpu:IGraphics):Texture2D
+static function fromRgba(width:Int, height:Int, rgba:haxe.io.Bytes, ?filter:Filter = Nearest, ?whiteX:Int = -1, ?whiteY:Int = -1, ?mipmaps:Bool = false, ?gpu:IGraphics):Texture2D
 static function fromLevels(width:Int, height:Int, levels:Array<haxe.io.Bytes>, format:TextureFormat, sampling:Sampling, ?gpu:IGraphics):Texture2D
-static function renderTarget(width:Int, height:Int, ?linear:Bool = true, ?format:TextureFormat = Rgba8, ?depth:Bool = true, ?gpu:IGraphics):Texture2D
+static function renderTarget(width:Int, height:Int, ?filter:Filter = Linear, ?format:TextureFormat = Rgba8, ?depth:Bool = true, ?gpu:IGraphics):Texture2D
 var handle(default, null):Int
 var width(default, null):Int
 var height(default, null):Int
@@ -50,9 +65,9 @@ var whiteV(default, null):Float
 function destroy(?gpu:IGraphics):Void
 ```
 
-- `fromRgba`: Uploads width x height RGBA8 pixels, rows top first, sampled linear (smooth) or nearest (sharp, for pixel art); whiteX, whiteY name an opaque white texel for untextured shapes, -1 for none. mipmaps adds a chain (Mipmaps.build), so it can be drawn smaller than itself without shimmering. On gpu, the program's (Graphics) when not given. The caller destroys it.
+- `fromRgba`: Uploads width x height RGBA8 pixels, rows top first, filtered by filter (Linear smooth, Nearest sharp for pixel art); whiteX, whiteY name an opaque white texel for untextured shapes, -1 for none. mipmaps adds a chain (Mipmaps.build), so it can be drawn smaller than itself without shimmering. On gpu, the program's (Graphics) when not given. The caller destroys it.
 - `fromLevels`: Uploads levels (the image and its mipmaps, each format.levelBytes of its size) of format, width x height, sampled as sampling says. Throws when the GPU can't sample format (IGraphics.canSample). On gpu, the program's (Graphics) when not given. The caller destroys it.
-- `renderTarget`: A render target width x height of format: a texture drawn into by target passes (IGraphics.beginTargetPass with its handle), sampled linear (smooth) or nearest (sharp: a low-resolution view shown larger); with depth a depth buffer and the screen's multisampling, without neither (IGraphics.createRenderTarget). Throws for a format the GPU can't draw into (IGraphics.canRender). On gpu, the program's (Graphics) when not given. The caller destroys it.
+- `renderTarget`: A render target width x height of format: a texture drawn into by target passes (IGraphics.beginTargetPass with its handle), sampled Linear (smooth) or Nearest (sharp: a low-resolution view shown larger); with depth a depth buffer and the screen's multisampling, without neither (IGraphics.createRenderTarget). Throws for a format the GPU can't draw into (IGraphics.canRender). On gpu, the program's (Graphics) when not given. The caller destroys it.
 - `handle`: The IGraphics handle, for draws.
 - `width`: Width in texels.
 - `height`: Height in texels.
@@ -93,14 +108,14 @@ Textures from image files, shared by path and reloading in place when a file cha
 ```haxe
 static function getCandidates(path:String):Array<String>
 static function getPath(texture:Texture2D):Null<String>
-static function load(path:String, linear:Bool, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
-static function decode(encoded:haxe.io.Bytes, linear:Bool, decoded:Texture2D -> Void, ?failed:String -> Void):IRequest
+static function load(path:String, filter:Filter, loaded:Texture2D -> Void, ?failed:String -> Void):IRequest
+static function decode(encoded:haxe.io.Bytes, filter:Filter, decoded:Texture2D -> Void, ?failed:String -> Void):IRequest
 static function release(texture:Texture2D):Void
 ```
 
 - `getCandidates`: The files path loads from, in order, the first that loads winning: a "name.ktx" this GPU's compressed variants then name.png; any other path itself.
 - `getPath`: The file texture was loaded from (for a "name.ktx", the one chosen), or null for one this service didn't load.
-- `load`: Loads path into a texture: linear samples it smoothly, with mipmaps so it can be drawn smaller without shimmering; otherwise nearest, for pixel art (Texture2D.sampling changes it later). A "name.ktx" loads this GPU's variant or else name.png (getCandidates). Loads of the same path and filter share one texture (a load under way is joined, not started again), so its sampling is theirs together; each load releases it once (release), and the last frees it. One of loaded or failed runs once on the host thread, and neither once the request is cancelled; failed (else the log, with the path) for a closed service, or when no candidate loads and decodes.
+- `load`: Loads path into a texture filtered by filter: Linear samples it smoothly, with mipmaps so it can be drawn smaller without shimmering; Nearest sharp, for pixel art (Texture2D.sampling changes it later). A "name.ktx" loads this GPU's variant or else name.png (getCandidates). Loads of the same path and filter share one texture (a load under way is joined, not started again), so its sampling is theirs together; each load releases it once (release), and the last frees it. One of loaded or failed runs once on the host thread, and neither once the request is cancelled; failed (else the log, with the path) for a closed service, or when no candidate loads and decodes.
 - `decode`: Decodes encoded image bytes (a file's contents already in memory, such as a model's embedded image) into a texture, as load does but with nothing to reload: the caller owns the texture and destroys it. One of decoded or failed runs once on the host thread, and neither once the request is cancelled; failed (else the log) for a closed service or bytes that don't decode.
 - `release`: Lets go of a texture this service loaded, once for each load that gave it: the last release frees it and stops reloading it.
 

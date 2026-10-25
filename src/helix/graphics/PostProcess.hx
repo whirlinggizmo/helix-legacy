@@ -113,7 +113,7 @@ class PostProcess {
 			scene = null;
 		}
 		if (scene == null)
-			scene = Texture2D.renderTarget(width, height, true, format, gpu);
+			scene = Texture2D.renderTarget(width, height, Linear, format, gpu);
 		if (hdr) {
 			var tonemap:Tonemap = cast steps[tonemapAt];
 			if (clearColor != hdrClearOf || (tonemap.mode : Int) != hdrClearMode) {
@@ -209,7 +209,7 @@ class PostProcess {
 			chain[format] = pair = [];
 		var i = pair.length > 0 && pair[0] == from ? 1 : 0;
 		if (pair[i] == null)
-			pair[i] = Texture2D.renderTarget(width, height, true, format, false, gpu);
+			pair[i] = Texture2D.renderTarget(width, height, Linear, format, false, gpu);
 		return pair[i];
 	}
 
@@ -225,7 +225,7 @@ class PostProcess {
 		if (current)
 			return have;
 		release(effect);
-		var textures = [for (s in sizes) Texture2D.renderTarget(s[0], s[1], true, format, false, gpu)];
+		var textures = [for (s in sizes) Texture2D.renderTarget(s[0], s[1], Linear, format, false, gpu)];
 		made.set(effect, textures);
 		return textures;
 	}

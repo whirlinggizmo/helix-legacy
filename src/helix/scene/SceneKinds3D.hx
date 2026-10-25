@@ -435,7 +435,7 @@ class SceneKinds3D {
 			set(null);
 			return;
 		}
-		var request = Textures.load(path, true, texture -> {
+		var request = Textures.load(path, Linear, texture -> {
 			if (instance != null && !instance.holdTexture(texture))
 				return;
 			set(texture);

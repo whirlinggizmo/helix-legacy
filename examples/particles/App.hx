@@ -153,8 +153,8 @@ class App extends helix.App {
 		Stage.addChild(text);
 		Stage.addChild(fps);
 
-		Textures.load("textures/particle.png", true, texture -> dot(texture));
-		Textures.load("textures/flame.png", true, texture -> flame.texture = texture);
+		Textures.load("textures/particle.png", Linear, texture -> dot(texture));
+		Textures.load("textures/flame.png", Linear, texture -> flame.texture = texture);
 	}
 
 	// The particle texture in: every emitter but the flame draws it, and a first burst of confetti shows it.

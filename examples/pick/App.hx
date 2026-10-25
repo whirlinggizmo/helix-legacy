@@ -95,7 +95,7 @@ class App extends helix.App {
 		label.pickable = true;
 		label.setPosition(1, 2.4, -2);
 		level.addChild(label);
-		Textures.load("sprites/logo/wg-logo-white-alpha.png", true, texture -> placeLogo(texture));
+		Textures.load("sprites/logo/wg-logo-white-alpha.png", Linear, texture -> placeLogo(texture));
 		Models3D.load("models/car-kit/sedan-sports.glb", file -> placeCar(file));
 		// The character: a skeleton and its clips, her outfit bound to it by joint name, walking in place.
 		var files = new Map<String, ModelFile3D>(),

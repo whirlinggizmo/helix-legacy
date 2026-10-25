@@ -573,7 +573,7 @@ A texture holding many pictures (an atlas), with where each one is (its frames) 
 ```haxe
 static function parse(texture:Texture2D, text:String, ?secondsPerFrame:Float = .1):SpriteSheet2D
 static function grid(texture:Texture2D, frameWidth:Int, frameHeight:Int, ?count:Int = 0, ?secondsPerFrame:Float = .1, ?margin:Int = 0, ?spacing:Int = 0):SpriteSheet2D
-static function load(path:String, loaded:SpriteSheet2D -> Void, ?failed:String -> Void, ?linear:Bool = false, ?secondsPerFrame:Float = .1):IRequest
+static function load(path:String, loaded:SpriteSheet2D -> Void, ?failed:String -> Void, ?filter:Filter = Nearest, ?secondsPerFrame:Float = .1):IRequest
 var texture(default, null):Texture2D
 var reloadCount(default, null):Int
 var frameCount(get, never):Int
@@ -588,7 +588,7 @@ function reloaded(path:String, bytes:haxe.io.Bytes):Void
 
 - `parse`: A sheet over texture from a TexturePacker or Aseprite JSON file's text; a frame without its own duration shows for secondsPerFrame. Throws, saying why, for text it can't read.
 - `grid`: A sheet over texture cut into cells of frameWidth x frameHeight texels, left to right then down, margin texels in from its edges and spacing texels apart: count of them (every whole cell for 0), named by number from "0", each shown for secondsPerFrame. It has no animations until given them (addAnimation).
-- `load`: Loads a TexturePacker or Aseprite JSON file at path and the image it names (its meta.image, beside it), sampled smoothly when linear, else sharp for pixel art (TextureCache.load); a frame without its own duration shows for secondsPerFrame. The file reads again in place when it changes during development, as the image does. One of loaded or failed runs once (failed, else the log, for a file that doesn't load or read, or an image that doesn't), neither once the request is cancelled. destroy frees what it loaded.
+- `load`: Loads a TexturePacker or Aseprite JSON file at path and the image it names (its meta.image, beside it), filtered by filter (Linear smooth, Nearest sharp for pixel art: TextureCache.load); a frame without its own duration shows for secondsPerFrame. The file reads again in place when it changes during development, as the image does. One of loaded or failed runs once (failed, else the log, for a file that doesn't load or read, or an image that doesn't), neither once the request is cancelled. destroy frees what it loaded.
 - `texture`: Its texture.
 - `reloadCount`: How many times its file has been read again (a hot reload): an animator playing it finds its animation again by name.
 - `frameCount`: How many frames it has.

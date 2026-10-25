@@ -90,7 +90,7 @@ class App extends helix.App {
 		Stage.addChild(view);
 		Stage.addChild(hud);
 		Stage.addChild(fps);
-		Textures.load("textures/tiles.png", false, loaded -> useTiles(loaded));
+		Textures.load("textures/tiles.png", Nearest, loaded -> useTiles(loaded));
 	}
 
 	// The tile sheet in: every sprite draws its cell of it, crisp.

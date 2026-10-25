@@ -330,10 +330,10 @@ class PostProcessTests {
 		check(@:privateAccess post.steps[1] == tonemap, "The tone mapping follows the bloom");
 
 		// Its steps by hand: what each reads.
-		var source = Texture2D.renderTarget(64, 64, true, Rgba16f, false, gpu);
+		var source = Texture2D.renderTarget(64, 64, Linear, Rgba16f, false, gpu);
 		var levels = [
 			for (f in bloom.intermediates)
-				Texture2D.renderTarget(Std.int(Math.max(1, Math.floor(64 * f))), Std.int(Math.max(1, Math.floor(64 * f))), true, Rgba16f, false, gpu)
+				Texture2D.renderTarget(Std.int(Math.max(1, Math.floor(64 * f))), Std.int(Math.max(1, Math.floor(64 * f))), Linear, Rgba16f, false, gpu)
 		];
 		check(levels.length == 2 * Bloom.LEVELS - 1
 			&& bloom.intermediates[Bloom.LEVELS] == .5, "Its intermediates: the levels down, then up");
@@ -357,7 +357,7 @@ class PostProcessTests {
 			&& near(drawn.uniforms[2].getFloat(8), 3),
 			"Its last pass adds the first level coming up to the frame");
 		check(near(drawn.uniforms[2].getFloat(20), 1 / Bloom.LEVELS), "Its intensity over the levels summed");
-		var flat = Texture2D.renderTarget(64, 64, true, Rgba8, false, gpu);
+		var flat = Texture2D.renderTarget(64, 64, Linear, Rgba8, false, gpu);
 		bloom.toneMappedThreshold = .7;
 		bloom.drawIntermediates(new ScreenFrame(flat, 64, 64, 1, levels));
 		check(near(gpu.screen.uniforms[2].getFloat(12), .7), "A tone-mapped frame is thresholded at toneMappedThreshold");
@@ -399,8 +399,8 @@ class PostProcessTests {
 		blur.resolution = 0;
 		blur.radius = 1000;
 		check(blur.intermediates[0] == 1 / 16 && blur.radius == 128, "Blur's fields held to their ranges");
-		var source = Texture2D.renderTarget(800, 600, true, Rgba8, false, gpu),
-			half = Texture2D.renderTarget(400, 300, true, Rgba8, false, gpu);
+		var source = Texture2D.renderTarget(800, 600, Linear, Rgba8, false, gpu),
+			half = Texture2D.renderTarget(400, 300, Linear, Rgba8, false, gpu);
 		blur.radius = 16;
 		var screenFrame = new ScreenFrame(source, 800, 600, 0, [half]);
 		blur.drawIntermediates(screenFrame);
@@ -452,7 +452,7 @@ class PostProcessTests {
 		var slot = grade.shader.getTextureSlot("lut_texture");
 		check(slot == 1 && grade.parameters.getTexture("lut_texture") == ShaderLibrary.getIdentityLut(gpu) && grade.lut == null,
 			"ColorLut grades through the library's identity until given a LUT, at slot 1");
-		var own = Texture2D.fromRgba(1024, 32, ColorLut.identity(), true, gpu);
+		var own = Texture2D.fromRgba(1024, 32, ColorLut.identity(), Linear, gpu);
 		grade.lut = own;
 		grade.amount = 2;
 		check(grade.parameters.getTexture("lut_texture") == own && grade.amount == 1 && written(grade, "amount", 0) == 1,

@@ -101,7 +101,7 @@ class App extends helix.App {
 		emissive.setEmissive(color(1, .35, .05));
 		bottom.push(sphere(ball, -SPACING, 0, emissive));
 		var tiles = pbr(color(.6, .6, .62), 0, .45);
-		Textures.load("textures/tiles_normal.png", true, texture -> tiles.normalTexture = texture);
+		Textures.load("textures/tiles_normal.png", Linear, texture -> tiles.normalTexture = texture);
 		bottom.push(sphere(ball, 0, 0, tiles));
 		bottom.push(sphere(ball, SPACING, 0, pbr(color(.3, .9, .5, .35), 0, .1)));
 		Stage.addChild(new View3D(level, camera));

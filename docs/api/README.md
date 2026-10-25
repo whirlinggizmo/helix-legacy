@@ -21,7 +21,7 @@ Generated from the code's doc comments by `tools/gen_apidoc.py` (the same source
 - [`helix.scene.transition`](scene-transition.md): Closing, Diamond, Fade, Iris, Noise, Slide, SlideDirection, Transition
 - [`helix.scene`](scene.md): Collect2D, Loader, Loading, Node, Pointer, SceneBehavior, SceneEnvironment3D, SceneFile3D, SceneFiles3D, SceneInstance3D, SceneMaterial3D, SceneMesh3D, SceneNode3D, SceneValue, Splash
 - [`helix.shader`](shader.md): Bloom, Blur, ChromaticAberration, ColorLut, Crt, Dissolve, Fxaa, HitFlash, LibraryScreenEffect, LibrarySurface, Outline, PaletteSwap, Pixelate, Rim, Silhouette, SpriteDissolve, SpriteFlash, SpriteOutline, SpriteRing, Tonemap, Toon, Unlit, Vignette, Water
-- [`helix.texture`](texture.md): Sampling, Texture2D, TextureFormat, Textures, Wrap
+- [`helix.texture`](texture.md): Filter, Sampling, Texture2D, TextureFormat, Textures, Wrap
 - [`helix.tiled`](tiled.md): TiledFrame2D, TiledInstance2D, TiledLayer2D, TiledLayerKind2D, TiledMap2D, TiledObject2D, TiledProperties2D, TiledShape2D, TiledTerrainKind2D, TiledTerrainSet2D, TiledTileLayer2D, TiledTileset2D
 - [`helix.time`](time.md): Clock, Ticker, Time, Timer, Timers
 - [`helix.tool`](tool.md): Build, Watchers, WebServer

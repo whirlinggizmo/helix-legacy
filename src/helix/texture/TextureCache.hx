@@ -70,13 +70,13 @@ class TextureCache implements IReloadable {
 		return null;
 	}
 
-	/** Loads path into a texture: linear samples it smoothly, with mipmaps so it can be drawn smaller without shimmering; otherwise nearest,
-		for pixel art (Texture2D.sampling changes it later). A "name.ktx" loads this GPU's variant or else name.png (getCandidates). Loads of the
+	/** Loads path into a texture filtered by filter: Linear samples it smoothly, with mipmaps so it can be drawn smaller without shimmering;
+		Nearest sharp, for pixel art (Texture2D.sampling changes it later). A "name.ktx" loads this GPU's variant or else name.png (getCandidates). Loads of the
 		same path and filter share one texture (a load under way is joined, not started again), so its sampling is theirs together; each load
 		releases it once (release), and the last frees it. One of loaded or failed runs once on the host thread, and neither once the request
 		is cancelled; failed (else the log, with the path) for a closed service, or when no candidate loads and decodes. */
-	public function load(path:String, linear:Bool, loaded:Texture2D->Void, ?failed:String->Void):IRequest {
-		var key = (linear ? "linear:" : "nearest:") + path, request:Request = null, waiter = null;
+	public function load(path:String, filter:Filter, loaded:Texture2D->Void, ?failed:String->Void):IRequest {
+		var key = Std.string(filter) + ":" + path, request:Request = null, waiter = null;
 		request = new Request(() -> {
 			// One load giving up: the shared one goes on while another still waits.
 			var shared = pending[key];
@@ -108,7 +108,7 @@ class TextureCache implements IReloadable {
 		}
 		shared = {request: null, waiting: [waiter]};
 		pending[key] = shared;
-		shared.request = fetch(path, linear, (file, texture, message) -> {
+		shared.request = fetch(path, filter, (file, texture, message) -> {
 			if (pending[key] != shared)
 				return;
 			pending.remove(key);
@@ -117,7 +117,7 @@ class TextureCache implements IReloadable {
 					path: file,
 					key: key,
 					texture: texture,
-					mipmaps: linear && texture.format == Rgba8,
+					mipmaps: filter == Linear && texture.format == Rgba8,
 					users: shared.waiting.length
 				});
 				assets.subscribe(file, this);
@@ -134,7 +134,7 @@ class TextureCache implements IReloadable {
 
 	// Loads path's first candidate that loads and decodes into a new texture; done gets the file it came from and the texture, or why none
 	// did. Cancelled, it gives up silently.
-	function fetch(path:String, linear:Bool, done:(String, Null<Texture2D>, Null<String>) -> Void):IRequest {
+	function fetch(path:String, filter:Filter, done:(String, Null<Texture2D>, Null<String>) -> Void):IRequest {
 		var child:IRequest = null, request:Request = null;
 		request = new Request(() -> if (child != null) child.cancel());
 		var candidates = getCandidates(path), errors = [];
@@ -155,7 +155,7 @@ class TextureCache implements IReloadable {
 				if (request.settled)
 					return;
 				if (StringTools.endsWith(file, ".ktx")) {
-					var texture = try fromKtx(bytes, linear) catch (e:Dynamic) {
+					var texture = try fromKtx(bytes, filter) catch (e:Dynamic) {
 						fail(Std.string(e));
 						return;
 					}
@@ -167,7 +167,7 @@ class TextureCache implements IReloadable {
 				}
 				child = images.decode(bytes, decoded -> switch decoded {
 					case Decoded(width, height, rgba):
-						if (request.finish()) done(file, Texture2D.fromRgba(width, height, rgba, linear, -1, -1, linear, gpu), null);
+						if (request.finish()) done(file, Texture2D.fromRgba(width, height, rgba, filter, -1, -1, filter == Linear, gpu), null);
 					case Failed(message):
 						if (!request.settled) fail(message);
 					case Cancelled:
@@ -180,17 +180,17 @@ class TextureCache implements IReloadable {
 		return request;
 	}
 
-	function fromKtx(bytes:Bytes, linear:Bool):Texture2D {
+	function fromKtx(bytes:Bytes, filter:Filter):Texture2D {
 		var ktx = Ktx.read(bytes);
 		if (!gpu.canSample(ktx.format))
 			throw "This GPU can't sample its format";
-		return Texture2D.fromLevels(ktx.width, ktx.height, ktx.levels, ktx.format, new Sampling(linear), gpu);
+		return Texture2D.fromLevels(ktx.width, ktx.height, ktx.levels, ktx.format, new Sampling(filter), gpu);
 	}
 
 	/** Decodes encoded image bytes (a file's contents already in memory, such as a model's embedded image) into a texture, as load does but
 		with nothing to reload: the caller owns the texture and destroys it. One of decoded or failed runs once on the host thread, and neither
 		once the request is cancelled; failed (else the log) for a closed service or bytes that don't decode. */
-	public function decode(encoded:Bytes, linear:Bool, decoded:Texture2D->Void, ?failed:String->Void):IRequest {
+	public function decode(encoded:Bytes, filter:Filter, decoded:Texture2D->Void, ?failed:String->Void):IRequest {
 		var child:IRequest = null, request:Request = null;
 		request = new Request(() -> if (child != null) child.cancel());
 		if (!live) {
@@ -200,7 +200,7 @@ class TextureCache implements IReloadable {
 		}
 		child = images.decode(encoded, result -> switch result {
 			case Decoded(width, height, rgba):
-				if (request.finish()) decoded(Texture2D.fromRgba(width, height, rgba, linear, -1, -1, linear, gpu));
+				if (request.finish()) decoded(Texture2D.fromRgba(width, height, rgba, filter, -1, -1, filter == Linear, gpu));
 			case Failed(message):
 				if (request.finish()) Failure.report("an image in memory", message, failed);
 			case Cancelled:

@@ -142,7 +142,7 @@ class App extends helix.App {
 
 		// The library's effects, in the chain's order; the example's own shader (Sepia) takes its place when it loads.
 		bloom = new Bloom();
-		grade = Texture2D.fromRgba(ColorLut.SIZE * ColorLut.SIZE, ColorLut.SIZE, tealAndOrange(), true);
+		grade = Texture2D.fromRgba(ColorLut.SIZE * ColorLut.SIZE, ColorLut.SIZE, tealAndOrange(), Linear);
 		colorLut = new ColorLut(grade);
 		var vignette = new Vignette(.5);
 		var chain:Array<{name:String, effect:ScreenEffect, key:Key}> = [

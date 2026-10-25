@@ -68,7 +68,7 @@ class App extends helix.App {
 		state = 'fetching $TEXTURE...';
 		var downloaded = false;
 		// Now cached: the texture reads it from there.
-		Assets.ensure(TEXTURE, _ -> Textures.load(TEXTURE, true, texture -> show(texture, downloaded), message -> fail(message)), message -> fail(message),
+		Assets.ensure(TEXTURE, _ -> Textures.load(TEXTURE, Linear, texture -> show(texture, downloaded), message -> fail(message)), message -> fail(message),
 			progress -> if (progress.phase == "downloading") downloaded = true);
 	}
 

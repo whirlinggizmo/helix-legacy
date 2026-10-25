@@ -97,7 +97,7 @@ class App extends helix.App {
 			sphere(ball, x, 1.35, color(1, .77, .34), 1, roughness);
 		}
 		var tiles = sphere(ball, -SPACING, 0, color(.6, .6, .62), 0, .35);
-		Textures.load("textures/tiles_normal.png", true, texture -> tiles.normalTexture = texture);
+		Textures.load("textures/tiles_normal.png", Linear, texture -> tiles.normalTexture = texture);
 		sphere(ball, -2 * SPACING, 0, color(.95, .95, .95), 1, .1);
 		var pearl = sphere(ball, 0, 0, color(.9, .88, .85), 0, .2);
 		shaders = new Shaders();

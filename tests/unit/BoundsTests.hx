@@ -87,7 +87,7 @@ class BoundsTests {
 		cube.visible = false;
 		check(root.computeBounds() == null, "A hidden model is left out");
 		cube.visible = true;
-		var sprite = new Sprite3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), false, -1, -1, false, new Render2DTests.CountingGraphics()));
+		var sprite = new Sprite3D(helix.texture.Texture2D.fromRgba(1, 1, haxe.io.Bytes.alloc(4), Nearest, -1, -1, false, new Render2DTests.CountingGraphics()));
 		sprite.setSpriteSize(2, 2);
 		sprite.setPosition(0, 5, 0);
 		root.addChild(sprite);

@@ -120,7 +120,7 @@ class App extends helix.App {
 				gearLayer.addChild(gear);
 			}
 		}, message -> failure = message);
-		Textures.load("textures/tiles.png", false, loaded -> {
+		Textures.load("textures/tiles.png", Nearest, loaded -> {
 			tiles = loaded;
 			lay(loaded);
 		}, message -> failure = message);

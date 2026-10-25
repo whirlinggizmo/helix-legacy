@@ -488,7 +488,7 @@ var blended(get, set):Bool
 - `metallic`: How metallic, 0..1. Clamped to 0..1 (NaN is 0).
 - `roughness`: How rough, 0..1. Clamped to 0..1 (NaN is 0).
 - `lit`: Whether lights shade it; unlit, it shows its color as it is.
-- `normalTexture`: The normal map (tangent space, green up), or null for none. Its colors are directions, read as they are, not decoded from sRGB. Load it smooth, with mipmaps (Textures.load's linear true).
+- `normalTexture`: The normal map (tangent space, green up), or null for none. Its colors are directions, read as they are, not decoded from sRGB. Load it smooth, with mipmaps (Textures.load's Linear).
 - `normalScale`: How strongly the normal map bends the surface: 1 as it is, 0 flat. 0 or more (under 0, or NaN, is 0).
 - `emissive`: The light it gives off, 0xAARRGGBB (sRGB, alpha ignored); black for none.
 - `emissiveStrength`: How bright its emissive light is: the color times this.

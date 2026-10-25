@@ -8,7 +8,7 @@ import helix.texture.TextureCache;
 import helix.render3d.ImageSource3D;
 
 /** Model files (glTF 2.0, GLB or .gltf) loaded through the assets into ModelFiles: the file read with the buffers it keeps beside it, its images
-	decoded or loaded into textures (base color sRGB, normal maps linear), then complete. All of it Haxe, the same on every target; images decode
+	decoded or loaded into textures (base color decoded from sRGB, normal maps read as they are), then complete. All of it Haxe, the same on every target; images decode
 	through a TextureCache. A file loads once and is shared: a path asked for again is the file already loaded (or its failure, remembered), and asking
 	while it loads joins the load. Each caller instantiates its own copy of the file's nodes, so copies share meshes, materials and textures. The runner's is what the Models3D static forwards to. */
 @:build(helix.macro.Facade.record())
@@ -191,18 +191,18 @@ class ModelCache3D {
 				@:privateAccess file.warn('an image failed to load: $message');
 				next();
 			}
-			var linear = image.sampling.linear;
+			var filter = image.sampling.filter;
 			switch image.source {
 				case InView(view):
-					children.push(textures.decode(gltf.viewBytes(view), linear, texture -> loaded(texture), message -> failed(message)));
+					children.push(textures.decode(gltf.viewBytes(view), filter, texture -> loaded(texture), message -> failed(message)));
 				case Inline(bytes):
-					children.push(textures.decode(bytes, linear, texture -> loaded(texture), message -> failed(message)));
+					children.push(textures.decode(bytes, filter, texture -> loaded(texture), message -> failed(message)));
 				case File(uri):
 					var resolved = helix.asset.AssetPath.resolve(path, uri);
 					if (resolved == null)
 						failed('its uri $uri isn\'t a file beside the model');
 					else
-						children.push(textures.load(resolved, linear, texture -> loaded(texture), message -> failed(message)));
+						children.push(textures.load(resolved, filter, texture -> loaded(texture), message -> failed(message)));
 			}
 		}
 	}
