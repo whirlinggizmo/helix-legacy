@@ -222,6 +222,22 @@ class SceneTests {
 			"Its entrance done; its iris exit closing on the logo");
 		frame(1);
 		check(went && Stage.childCount == 1, "Gone, next called");
+		// An iris following a node closes wherever the node is each frame, not where it was when set; setPoint fixes it again.
+		var aim = new helix.scene.transition.Iris(1),
+			marker = new helix.render2d.Node2D();
+		marker.setPosition(100, 50);
+		Stage.addChild(marker);
+		aim.follow(marker);
+		stage.draw(0);
+		check(@:privateAccess aim.centerX(0, 800) == 100 && @:privateAccess aim.centerY(0, 600) == 50, "Following: the node's place");
+		marker.setPosition(300, 200);
+		stage.draw(0);
+		check(@:privateAccess aim.centerX(0, 800) == 300 && @:privateAccess aim.centerY(0, 600) == 200, "The node moved (a resize): the point with it");
+		aim.setPoint(10, 20);
+		check(aim.followed == null && @:privateAccess aim.centerX(0, 800) == 10, "setPoint: fixed again");
+		aim.setPoint(Math.NaN, Math.NaN);
+		check(@:privateAccess aim.centerX(0, 800) == 400, "Neither: the middle");
+		Stage.removeChild(marker);
 
 		// Things collected: they burst, fly to the target one after another, each told on arrival, then all done and off the stage.
 		var score = new Node2D();

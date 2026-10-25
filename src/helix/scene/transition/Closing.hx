@@ -21,15 +21,32 @@ class Closing extends Transition {
 	/** The point's y; NaN for the middle. */
 	public var pointY:Float = Math.NaN;
 
-	/** Sets the point it closes on and opens from, in the stage's units. */
+	/** Sets the point it closes on and opens from, in the stage's units: fixed there, so set it just before it runs (or follow a node).
+		Stops following. */
 	public function setPoint(x:Float, y:Float):Void {
 		pointX = x;
 		pointY = y;
+		followed = null;
 	}
 
+	/** The node it closes on and opens from, or null (the start) for its point. */
+	public var followed(default, null):Null<helix.render2d.Node2D>;
+
+	/** Closes on and opens from node (one on the stage: the player, a logo), wherever node is each frame, as its last draw placed it, so a
+		resize (going fullscreen) or a move doesn't leave the point behind; the point is node's own 0, 0, its pivot's place. Null goes back
+		to its point. */
+	public function follow(node:Null<helix.render2d.Node2D>):Void
+		followed = node;
+
+	// Where it closes this frame: on the node it follows, else its point, else the middle of the visible area x, y, width x height.
+	function centerX(x:Float, width:Float):Float
+		return followed != null ? followed.toWorldX(0, 0) : Math.isNaN(pointX) ? x + width / 2 : pointX;
+
+	function centerY(y:Float, height:Float):Float
+		return followed != null ? followed.toWorldY(0, 0) : Math.isNaN(pointY) ? y + height / 2 : pointY;
+
 	override public function draw(cover:Drawing2D, x:Float, y:Float, width:Float, height:Float, progress:Float):Void {
-		var cx = Math.isNaN(pointX) ? x + width / 2 : pointX,
-			cy = Math.isNaN(pointY) ? y + height / 2 : pointY;
+		var cx = centerX(x, width), cy = centerY(y, height);
 		var reach = reachOf(cx - x, cy - y, x + width - cx, y + height - cy);
 		var size = reach * (progress < .5 ? 1 - progress * 2 : (progress - .5) * 2);
 		if (size < .5) {

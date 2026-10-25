@@ -13,13 +13,17 @@ var color:Int
 var pointX:Float
 var pointY:Float
 function setPoint(x:Float, y:Float):Void
+var followed(default, null):Null<Node2D>
+function follow(node:Null<Node2D>):Void
 function draw(cover:Drawing2D, x:Float, y:Float, width:Float, height:Float, progress:Float):Void
 ```
 
 - `color`: Its color, 0xAARRGGBB: set it any time.
 - `pointX`: The point it closes on and opens from, in the stage's units; NaN (the default) for the middle of the visible area.
 - `pointY`: The point's y; NaN for the middle.
-- `setPoint`: Sets the point it closes on and opens from, in the stage's units.
+- `setPoint`: Sets the point it closes on and opens from, in the stage's units: fixed there, so set it just before it runs (or follow a node). Stops following.
+- `followed`: The node it closes on and opens from, or null (the start) for its point.
+- `follow`: Closes on and opens from node (one on the stage: the player, a logo), wherever node is each frame, as its last draw placed it, so a resize (going fullscreen) or a move doesn't leave the point behind; the point is node's own 0, 0, its pivot's place. Null goes back to its point.
 
 ## Diamond
 

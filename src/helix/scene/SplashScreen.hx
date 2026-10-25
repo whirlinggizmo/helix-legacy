@@ -83,7 +83,7 @@ class SplashScreen {
 				left = true;
 				// An iris (or another closing) with no point of its own closes on the logo, where it is as the splash leaves.
 				var closing = Std.downcast(transition, helix.scene.transition.Closing);
-				if (closing != null && Math.isNaN(closing.pointX) && !Math.isNaN(logoX))
+				if (closing != null && Math.isNaN(closing.pointX) && closing.followed == null && !Math.isNaN(logoX))
 					closing.setPoint(logoX, logoY);
 				transition.run(() -> {
 					Stage.removeChild(drawing);
