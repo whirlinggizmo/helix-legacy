@@ -20,7 +20,7 @@ import haxe.macro.Expr;
 	  writing static hooks that find its object.
 	- `hotAppRouter()`, giving App the AppRouter over those statics, and `hotStart(identity, router)`, running the profile of the
 	  backend the build names with `-D helix-backend=` (BACKENDS); a build naming none, or one not in the list, fails here, naming the
-	  choices, and an `sdl3-gpu` build without `helix_sdl3_gpu` (the define the programs carry SDL_GPU's dialects under; `-lib helix`
+	  choices, and an `sdl3-gpu` build without `helix_sdl3_gpu` (the define the programs carry SDL_GPU's dialects under; `-lib helix-legacy`
 	  defines it from the backend, helix.macro.Haxelib, and the repository's builds pass it) too.
 
 	- In a subclass declaring probe (App.probe), `attachAutopilot()`, attaching helix.debug.AutopilotDriver, which plays a script the run
@@ -74,7 +74,7 @@ class AppBuild {
 		if (profile == null)
 			Context.error('helix.App: "$backend" is not a backend: $choices', pos);
 		if (backend == "sdl3-gpu" && !Context.defined("helix_sdl3_gpu"))
-			Context.error("helix.App: an sdl3-gpu build also defines helix_sdl3_gpu, so the programs carry SDL_GPU's dialects (-lib helix defines it from the backend)",
+			Context.error("helix.App: an sdl3-gpu build also defines helix_sdl3_gpu, so the programs carry SDL_GPU's dialects (-lib helix-legacy defines it from the backend)",
 				pos);
 		for (field in fields)
 			if (WRITTEN.contains(field.name))

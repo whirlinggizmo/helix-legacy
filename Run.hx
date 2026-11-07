@@ -1,7 +1,7 @@
 import haxe.io.Path;
 import sys.FileSystem;
 
-/** `haxelib run helix <command>`: the library's front door (haxelib.json's `main`), running a command (src/helix/tool/setup/Commands.hx) on the game
+/** `haxelib run helix-legacy <command>`: the library's front door (haxelib.json's `main`), running a command (src/helix/tool/setup/Commands.hx) on the game
 	in the directory it was given from: haxelib starts this in the library's directory and appends the caller's directory as the last argument (saying
 	so with HAXELIB_RUN=1); run as `haxe --run Run` it works in the current directory. Haxe's interpreter runs it, so the commands need nothing
 	but Haxe. Deliberately outside the framework's class path (src/), so no game compiles it. The commands: `--help`. */

@@ -7,7 +7,7 @@ import haxe.macro.Context;
 import sys.io.Process;
 #end
 
-/** What a build on `-lib helix` needs beyond the library's class path, run by the library's extraParams.hxml
+/** What a build on `-lib helix-legacy` needs beyond the library's class path, run by the library's extraParams.hxml
 	(`--macro helix.macro.Haxelib.configure()`), so a game's hxml carries nothing of the library's layout:
 
 	- the generated code's class paths, `generated/shaders` and `generated/fonts` at the library's root (the framework's programs, the

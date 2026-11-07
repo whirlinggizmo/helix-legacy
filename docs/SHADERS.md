@@ -39,7 +39,7 @@ A game keeps its shaders in a `shaders/` directory beside `src/` and `assets/` (
 SDL_GPU's dialects too when the build names the `sdl3-gpu` backend. Without a `shaders/` directory it does nothing. `hxml/dev.hxml` runs
 `helix.tool.Watchers.watchShaders()` beside the dev server: it packs them once, then again as each is saved and as new ones appear, and the
 running page reloads the changed `.hxshader` as an asset. The first pack fetches sokol-shdc, the shader compiler, into the user's cache;
-`haxelib run helix setup` fetches it ahead (BUILDING.md). The library's examples are packed by `tools/example.py` instead, into the build's
+`haxelib run helix-legacy setup` fetches it ahead (BUILDING.md). The library's examples are packed by `tools/example.py` instead, into the build's
 shared assets under the same `shaders/<name>.hxshader` path, so they load the same way.
 
 The game loads a packed shader through the assets and wraps it in what its kind is used through:

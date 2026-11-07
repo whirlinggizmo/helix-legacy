@@ -61,7 +61,7 @@ def source(name):
 def hxml(name,build):
     """The example's build arguments for build (a variants.Build), written to build/<build>/<name>.hxml, where the dev server and haxe
     read them."""
-    # The generated code's class paths listed, as src/helix/macro/Haxelib.hx lists them for a game on -lib helix: the dev server watches a
+    # The generated code's class paths listed, as src/helix/macro/Haxelib.hx lists them for a game on -lib helix-legacy: the dev server watches a
     # listed one, so a repacked library shader reloads.
     lines=['-cp src',f'-cp {source(name)}','-cp examples/shared/launch',f'-D helix-backend={build.backend}','-cp generated/shaders','-cp generated/fonts','-main Main',f'-D example={name}']
     # release: what ships; debug: Haxe's debug build (natively hxcpp's, its null checks on), the standard DCE, no optimizer.

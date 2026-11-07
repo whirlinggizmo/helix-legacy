@@ -1,8 +1,8 @@
 # {title}
 
-A game on [HeliX](https://github.com/whirlinggizmo/helix) (`-lib helix`). `src/Game.hx` is the game, `src/Main.hx` starts it.
+A game on [HeliX](https://github.com/whirlinggizmo/helix-legacy) (`-lib helix-legacy`). `src/Game.hx` is the game, `src/Main.hx` starts it.
 
-- How to make one, piece by piece: [the guide](https://github.com/whirlinggizmo/helix/blob/main/docs/GUIDE.md) (`docs/GUIDE.md` in HeliX;
+- How to make one, piece by piece: [the guide](https://github.com/whirlinggizmo/helix-legacy/blob/main/docs/GUIDE.md) (`docs/GUIDE.md` in HeliX;
   with the game's own libraries, `.haxelib/helix/git/docs/GUIDE.md`).
 - Every type: [the API reference](https://whirlinggizmo.github.io/helix/api/) (`docs/api/` beside the guide).
 - In VS Code with the Haxe extension, completion and errors come from the browser build (`.vscode/settings.json` names
@@ -16,7 +16,7 @@ haxe hxml/build.web.hxml          # the browser build alone, out/web/, without a
 haxe hxml/build.dist.hxml         # the release build for hosting: out/dist/, zipped as out/{name}-web.zip (itch.io)
 haxe hxml/serve.dist.hxml         # out/dist/ served at http://localhost:8095/, to try before uploading
 haxe hxml/serve.dist.https.hxml   # out/dist/ served at https://<this machine>:8495/, to try on a phone (see "On a phone")
-haxelib run helix autopilot autopilot/run.json   # plays assets/autopilot/run.json on the release build in a headless browser (the guide's "Playing a script"; needs Node.js)
+haxelib run helix-legacy autopilot autopilot/run.json   # plays assets/autopilot/run.json on the release build in a headless browser (the guide's "Playing a script"; needs Node.js)
 haxe hxml/build.native.hxml       # the native build (hxcpp), out/native/Main; it reads assets/ beside itself: copy (or link) the directory to out/native/assets
 ```
 
@@ -25,7 +25,7 @@ the release build copies it beside the page. `common.hxml` holds what every buil
 dev loop and `build.web` each add where it's written); the build steps are macros in `helix.tool` (`Build`, `Watchers`, `WebServer`). `favicon.svg` is the page's icon: put
 the game's own there. A shader of the game's own goes in `shaders/<name>.glsl` (make the directory): every build packs it into `assets/shaders/<name>.hxshader`,
 the dev loop again as it changes, and the game loads it with `new Shaders().load("shaders/<name>.hxshader", ...)`; HeliX's
-`docs/SHADERS.md` says how one is written. The shader compiler is fetched the first time a shader is packed; `haxelib run helix setup` fetches it ahead,
+`docs/SHADERS.md` says how one is written. The shader compiler is fetched the first time a shader is packed; `haxelib run helix-legacy setup` fetches it ahead,
 before going offline say.
 
 ## On a phone
@@ -57,11 +57,11 @@ directory:
 
 ```console
 haxelib newrepo                                                            # .haxelib/, used only by builds run from here
-haxelib git helix https://github.com/whirlinggizmo/helix                   # a clone as it is now
+haxelib git helix-legacy https://github.com/whirlinggizmo/helix-legacy                   # a clone as it is now
 haxelib git hotreload-hx https://github.com/whirlinggizmo/hotreload-hx     # the dev loop's
 ```
 
-The hxml files don't change (`-lib helix` finds the game's own). A local repository doesn't fall back to the machine's, so every library the
+The hxml files don't change (`-lib helix-legacy` finds the game's own). A local repository doesn't fall back to the machine's, so every library the
 game uses goes in it (hxcpp too, for a native build: `haxelib install hxcpp`). `.haxelib/` isn't committed (.gitignore): these commands
 remake it, and `git -C .haxelib/helix/git log -1` says which HeliX it holds. `haxelib deleterepo` goes back to the machine's.
 
@@ -69,7 +69,7 @@ To keep the game on one HeliX (a tag or a commit), say so in `hxml/common.hxml`,
 command line: `haxelib update` moves a library installed with `haxelib git ... <tag>` back to the branch's latest.
 
 ```hxml
--lib helix:git:https://github.com/whirlinggizmo/helix#jam-2026-10-23        # in hxml/common.hxml, for -lib helix
+-lib helix-legacy:git:https://github.com/whirlinggizmo/helix-legacy#jam-2026-10-23        # in hxml/common.hxml, for -lib helix-legacy
 ```
 
 ```console

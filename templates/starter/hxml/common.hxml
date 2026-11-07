@@ -1,7 +1,7 @@
 # What every build of the game shares: HeliX, the game's sources, its entry point, and its shaders/*.glsl packed into assets/shaders
 # when changed (helix.tool.Build). Each hxml is run from the game's directory, as haxe hxml/<file>.hxml; the paths in them are read
 # from there.
--lib helix
+-lib helix-legacy
 -cp src
 -main Main
 --macro helix.tool.Build.packShaders()

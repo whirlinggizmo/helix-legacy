@@ -18,7 +18,7 @@ katawami's source. Then the arms are compared on what GOALS.md cares about.
 | Pixi | Pixi, plus anything from npm | the spec |
 | OpenFL | OpenFL with Lime, in Haxe | the spec |
 | Godot | Godot 4, GDScript, exported for the web | the spec and the Godot binary with its export templates |
-| HeliX | `-lib helix`, from a `haxelib git` install | the spec, plus HeliX's public docs (the README, the guide, docs/api) |
+| HeliX | `-lib helix-legacy`, from a `haxelib git` install | the spec, plus HeliX's public docs (the README, the guide, docs/api) |
 
 An optional seventh arm is HeliX with no docs, told only "use HeliX". It isn't expected to finish. The names it guesses are data for the
 naming question: what an agent expects HeliX's API to be.

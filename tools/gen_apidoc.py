@@ -309,7 +309,7 @@ def generate(check=False):
     # leaves out what's @:noCompletion itself.
     # Each type's View Source on GitHub, at the commit described, so the code linked is the code documented.
     commit=subprocess.run(['git','rev-parse','HEAD'],cwd=ROOT,capture_output=True,text=True,check=True).stdout.strip()
-    subprocess.run(['haxelib','run','dox','-i',str(OUT/'xml/js.xml'),'-o',str(OUT),'-in','^helix','-D','source-path',f'https://github.com/whirlinggizmo/helix/blob/{commit}/src/',
+    subprocess.run(['haxelib','run','dox','-i',str(OUT/'xml/js.xml'),'-o',str(OUT),'-in','^helix','-D','source-path',f'https://github.com/whirlinggizmo/helix-legacy/blob/{commit}/src/',
         '--title','HeliX API','-D','description','HeliX: a Haxe game framework. '+TARGETS],cwd=ROOT,env=env,check=True)
     print('API reference:',OUT/'index.html','and',DOCS)
 

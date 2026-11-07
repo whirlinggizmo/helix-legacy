@@ -1,7 +1,7 @@
 package helix.adapter.audiodecoder.libsndfile.internal;
 
 /** Built with the app by hxcpp: libsndfile: HELIX_CODEC_LIBRARY when a build names it (tools/native_build.py: the system's on Linux, the pinned release on
-	Windows, Homebrew's on macOS); else, on Linux, the system's by soname, so a game built with only -lib helix links it. */
+	Windows, Homebrew's on macOS); else, on Linux, the system's by soname, so a game built with only -lib helix-legacy links it. */
 @:buildXml('<set name="HELIX_ROOT" value="${haxelib:helix}" unless="HELIX_ROOT"/>
 <files id="helix-codec-libsndfile" dir="${HELIX_ROOT}/src/helix/adapter">
  <compilerflag value="-I${HELIX_ROOT}/vendor"/><compilerflag value="-I${HELIX_ROOT}/src/helix/adapter/shared"/><compilerflag value="-I${HELIX_ROOT}/src/helix/adapter/audiodecoder/libsndfile/internal"/>

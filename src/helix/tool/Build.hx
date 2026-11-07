@@ -24,7 +24,7 @@ import sys.io.File;
 	- `generateWebPage(?directory)`: the page a browser build runs in, beside its JavaScript: `index.html` generated from the library's
 	  template (titled with the game directory's name, loading the build's file, told of `config.json` when the game has one), and
 	  `favicon.svg` (the game's, or the library's) copied, each when it isn't there (one there is the game's, and kept); the game's
-	  `config.json` copied each build. Every browser build on `-lib helix` runs it (helix.macro.Haxelib), so the dev loop has a page.
+	  `config.json` copied each build. Every browser build on `-lib helix-legacy` runs it (helix.macro.Haxelib), so the dev loop has a page.
 	- `copyAssets(?directory)`: the game's `assets/` copied into directory as `assets/`, beside the page or the program, where both read
 	  it.
 	- `copyProgram(directory)`: the native program (the main class's, `-debug` in a debug build) and the libraries beside it copied

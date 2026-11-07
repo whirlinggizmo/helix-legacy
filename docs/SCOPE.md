@@ -64,7 +64,7 @@ Large, with their own formats and lifecycles. A game that doesn't use them shoul
 | `WebServer` (serving a build to try) | none | drop: any static server does this |
 | The release zip for itch.io | none | drop, or a line in the README |
 | Docker and nginx HTTPS for a phone (the starter's `docker-compose.yml`, `tls/`) | none | drop from the starter; a guide section instead |
-| The autopilot (driver, `tools/autopilot.cjs`, `haxelib run helix autopilot`, Playwright fetched) | verification | keep the driver in the engine; the runner is a separate tool, used by HeliX's own CI |
+| The autopilot (driver, `tools/autopilot.cjs`, `haxelib run helix-legacy autopilot`, Playwright fetched) | verification | keep the driver in the engine; the runner is a separate tool, used by HeliX's own CI |
 | `tools/` (37 Python scripts: checks, generators, examples, pages, CI) | HeliX's development | fine: not shipped to games |
 
 ## Questions for review

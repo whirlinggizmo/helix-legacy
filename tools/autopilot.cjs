@@ -5,7 +5,7 @@
 // usable WebGL2. The autopilot compares games, not pixels, so either serves; the output says which ran, and why it fell back. A script that
 // fails publishes {failed} (Autopilot.failure): printed as any result, then its message on stderr, exiting 1.
 // BROWSER is a Chromium to run, or "" for Playwright's own. With SITE (a directory), it's served on a free port of this machine and URL is
-// the page's path and query on it (a game's `haxelib run helix autopilot`). Playwright is the repository's (build/tools), or the one
+// the page's path and query on it (a game's `haxelib run helix-legacy autopilot`). Playwright is the repository's (build/tools), or the one
 // HELIX_PLAYWRIGHT names (the directory of its module).
 const [browserPath,url,site]=require('./cli.cjs').args(__filename,['browser','url','site...']);
 const path=require('path');

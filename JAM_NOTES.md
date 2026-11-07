@@ -3,7 +3,7 @@
 The full list is the game's: `gamejams/katawami/docs/issues/FRICTION.md` (each entry with its workaround and fix; everything
 below is in it too, under "From HeliX's jam notes"). Work from that; these are the notes as they were taken.
 
-- **`init .`**: let init write into the current directory (`haxelib run helix init .`), e.g. a freshly cloned
+- **`init .`**: let init write into the current directory (`haxelib run helix-legacy init .`), e.g. a freshly cloned
   `gamejams-<name>` repo. Today it refuses any directory with something in it (a clone has `.git/`, maybe a README or
   LICENSE), and the game's name comes from the directory's path, which for `.` needs to be the current directory's
   name, not ".". Decide what existing files it tolerates (`.git/`, README/LICENSE/.gitignore: keep or merge?).

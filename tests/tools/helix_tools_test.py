@@ -1,9 +1,9 @@
-"""Checks of helix.tool, what a game on -lib helix builds with (src/helix/tool, run in the compiler and Haxe's interpreter):
+"""Checks of helix.tool, what a game on -lib helix-legacy builds with (src/helix/tool, run in the compiler and Haxe's interpreter):
 
-- `haxelib run helix` (Run.hx, helix.tool.setup.Commands): its arguments (no command, --help naming the commands, an unknown command or
+- `haxelib run helix-legacy` (Run.hx, helix.tool.setup.Commands): its arguments (no command, --help naming the commands, an unknown command or
   option); the caller's directory haxelib appends (HAXELIB_RUN=1); init's files and its refusal of a directory with anything in it; init --example copying an example as a game, refusing one it hasn't; setup making
   sokol-shdc ready and listing the tools, a program HELIX_SHDC names in place of the cache's and its refusal of one that isn't there.
-- The starter's hxml files built on `-lib helix` (a haxelib path holding only this checkout as helix): build.web with its page beside it
+- The starter's hxml files built on `-lib helix-legacy` (a haxelib path holding only this checkout as helix): build.web with its page beside it
   (and a page of the game's kept), build.dist (cleaned, the page, assets/, the zip with index.html at its root).
 - Build's steps on a game of their own: the page's title, script, config and icon (the game's, or the library's); cleanOutput's removal of
   what an earlier build left and its refusals; packShaders packing a small screen effect (sokol-shdc, fetched when missing) before the
@@ -45,10 +45,10 @@ void main() {
 @end
 '''
 
-# A haxelib path holding only this checkout, as helix (a dev library): what a game's -lib helix finds.
+# A haxelib path holding only this checkout, as helix (a dev library): what a game's -lib helix-legacy finds.
 HAXELIB = Path(tempfile.mkdtemp(prefix='helix-haxelib-'))
-(HAXELIB / 'helix').mkdir()
-(HAXELIB / 'helix/.dev').write_text(str(ROOT), encoding='utf-8')
+(HAXELIB / 'helix-legacy').mkdir()
+(HAXELIB / 'helix-legacy/.dev').write_text(str(ROOT), encoding='utf-8')
 LIBRARY_ENV = dict(os.environ, HAXELIB_PATH=str(HAXELIB))
 
 
@@ -64,12 +64,12 @@ def run_hx(*args, cwd=None, env=None):
 
 
 def tool(*args, cwd):
-    """`haxelib run helix` run in the directory cwd."""
+    """`haxelib run helix-legacy` run in the directory cwd."""
     return run_hx(*args, str(cwd), env=dict(os.environ, HAXELIB_RUN='1'))
 
 
 def haxe(game, *args):
-    """haxe run in the game's directory with args (an hxml, say), on -lib helix."""
+    """haxe run in the game's directory with args (an hxml, say), on -lib helix-legacy."""
     return subprocess.run(['haxe', *args], cwd=game, env=LIBRARY_ENV, capture_output=True, text=True, encoding='utf-8')
 
 
@@ -98,7 +98,7 @@ class Commands(unittest.TestCase):
         self.assertIn('command', result.stderr)
         result = run_hx('--help')
         self.assertEqual(result.returncode, 0, result.stderr)
-        for word in ('init', 'setup', 'haxelib run helix', 'helix.tool'):
+        for word in ('init', 'setup', 'haxelib run helix-legacy', 'helix.tool'):
             self.assertIn(word, result.stdout)
         for gone in ('site', 'shader', 'bogus'):
             result = run_hx(gone)
@@ -328,7 +328,7 @@ class Running(unittest.TestCase):
             game = starter(directory)
             (game / 'shaders').mkdir()
             (game / 'shaders/glow.glsl').write_text(EFFECT, encoding='utf-8')
-            watcher = subprocess.Popen(['haxe', '-lib', 'helix', '--macro', 'helix.tool.Watchers.watchShaders()'], cwd=game, env=LIBRARY_ENV, stdout=subprocess.PIPE,
+            watcher = subprocess.Popen(['haxe', '-lib', 'helix-legacy', '--macro', 'helix.tool.Watchers.watchShaders()'], cwd=game, env=LIBRARY_ENV, stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT, text=True)
             try:
                 packed = game / 'assets/shaders/glow.hxshader'
@@ -362,7 +362,7 @@ class Running(unittest.TestCase):
                     return None, None, b''
 
             def serve():
-                return subprocess.Popen(['haxe', '-lib', 'helix', '--macro', f'helix.tool.WebServer.serveDirectory("site", {port})'], cwd=directory,
+                return subprocess.Popen(['haxe', '-lib', 'helix-legacy', '--macro', f'helix.tool.WebServer.serveDirectory("site", {port})'], cwd=directory,
                                         env=LIBRARY_ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
             server = serve()

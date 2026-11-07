@@ -2,13 +2,13 @@ package helix.tool.setup;
 
 import helix.tool.shared.CommandError;
 
-/** `haxelib run helix <command>`'s commands, read from the command line and run on the game in the current directory; Run.hx calls it. A
+/** `haxelib run helix-legacy <command>`'s commands, read from the command line and run on the game in the current directory; Run.hx calls it. A
 	refusal (CommandError) is said on the standard error and exits with 1; a command line it can't read, with 2. */
 class Commands {
 	/** What `--help` says. */
-	public static final HELP = "usage: haxelib run helix <command> [options]
+	public static final HELP = "usage: haxelib run helix-legacy <command> [options]
 
-What a game on -lib helix does before it has an hxml, or outside one. Its builds are hxml files (the starter's hxml/), whose build steps are
+What a game on -lib helix-legacy does before it has an hxml, or outside one. Its builds are hxml files (the starter's hxml/), whose build steps are
 macros in helix.tool: Build's steps (shaders packed, the page, assets, the zip), Watchers, WebServer (BUILDING.md).
 
   init DIRECTORY                 a starter game in DIRECTORY (new, empty, or a repository just made; . is this one): src/Main.hx and src/Game.hx (a window title, a rectangle
@@ -87,12 +87,12 @@ HELIX_GLSLANG and HELIX_SPIRV_CROSS name programs of your own instead.";
 	}
 
 	static function help(line:String):Int {
-		Sys.println("usage: haxelib run helix " + line);
+		Sys.println("usage: haxelib run helix-legacy " + line);
 		return 0;
 	}
 
 	static function usage(message:String):Int {
-		Sys.stderr().writeString('usage: haxelib run helix <command> [options] (--help lists them)\nhelix: $message\n');
+		Sys.stderr().writeString('usage: haxelib run helix-legacy <command> [options] (--help lists them)\nhelix: $message\n');
 		return 2;
 	}
 }

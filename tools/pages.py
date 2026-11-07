@@ -39,7 +39,7 @@ GROUPS=[
 # longer where it prepares more (environment's lighting bake takes most of a minute on CI's software renderer, SwiftShader).
 WAIT=30000
 WAITS={'environment':120000,'scene-file':120000}
-SOURCE='https://github.com/whirlinggizmo/helix/tree/main/examples/'
+SOURCE='https://github.com/whirlinggizmo/helix-legacy/tree/main/examples/'
 
 def names():
     """Every example, by name."""

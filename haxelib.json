@@ -1,6 +1,6 @@
 {
-	"name": "helix",
-	"url": "https://github.com/whirlinggizmo/helix",
+	"name": "helix-legacy",
+	"url": "https://github.com/whirlinggizmo/helix-legacy",
 	"license": "MIT",
 	"tags": ["game", "2d", "3d", "js", "cpp", "sokol", "sdl3"],
 	"description": "HeliX: a Haxe game framework for the browser (WebGL2) and native (hxcpp with sokol or SDL3). A browser build needs Haxe alone; a native build hxcpp 4.3.2; the dev loop hotreload-hx; a game's own shaders sokol-shdc (BUILDING.md).",

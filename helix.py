@@ -1,6 +1,6 @@
 """HeliX's front door for the tests and the services checks. Python owns external tools; HXML owns Haxe settings.
 
-Examples have their own: tools/example.py; a game on -lib helix its own: hxml files whose build steps are helix.tool macros, and `haxelib run helix` (Run.hx) for init and setup."""
+Examples have their own: tools/example.py; a game on -lib helix-legacy its own: hxml files whose build steps are helix.tool macros, and `haxelib run helix-legacy` (Run.hx) for init and setup."""
 import argparse
 import json
 import os

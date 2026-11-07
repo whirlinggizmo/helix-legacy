@@ -1,4 +1,4 @@
 # out/dist/ served as a host serves it, to try before uploading: haxe hxml/serve.dist.hxml, then open http://localhost:8095/. Ctrl+C
 # stops it.
--lib helix
+-lib helix-legacy
 --macro helix.tool.WebServer.serveDirectory("out/dist", 8095)

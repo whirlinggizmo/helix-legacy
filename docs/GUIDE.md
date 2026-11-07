@@ -4,7 +4,7 @@ The pieces of a 2D game, each a recipe you can copy, with its imports. Every cal
 them. For everything a type can do, its page in the [API reference](api/README.md) (online: https://whirlinggizmo.github.io/helix/api/)
 lists it; the reference prints each type's `import` line.
 
-Start with `haxelib run helix init my-game` (README.md, "Try it"): `src/Game.hx` is the game, `haxe hxml/dev.hxml` runs it at
+Start with `haxelib run helix-legacy init my-game` (README.md, "Try it"): `src/Game.hx` is the game, `haxe hxml/dev.hxml` runs it at
 http://localhost:8064/ and takes your changes as you save, keeping the running game: what's on the stage, the fields' values (a new
 field starts from its initializer). `init` ran when the page started, so a change to it shows after a refresh, or override
 `afterReload`, which runs after each reload, to build what an edit added. Keep the game's state in `Game`'s fields: a plain static starts
@@ -392,7 +392,7 @@ A failed `assert` or `wait` is published as `{failed: ...}`. Commands: `press`, 
 `helix.debug.Autopilot` says each. Wait on state, never on time, so a slow load doesn't change the run. `autopilot.seed` seeds the game's
 random numbers.
 
-To run one from the game's directory, `haxelib run helix autopilot autopilot/run.json`. It builds the release, serves it, plays the
+To run one from the game's directory, `haxelib run helix-legacy autopilot autopilot/run.json`. It builds the release, serves it, plays the
 script in a headless Chromium and prints what the game published, or says which command failed and exits 1. It needs Node.js. The first
 time, it fetches Playwright and its Chromium into HeliX's cache (`--browser` names a Chromium of your own instead). `--no-build` plays
 the last release build, with the script as it is now.

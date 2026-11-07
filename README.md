@@ -4,16 +4,16 @@ HeliX is a Haxe game framework. One Haxe program runs in the browser (Haxe → J
 
 > **Work in progress: caveat emptor.** HeliX is not yet stable, and backward compatibility is not a consideration. Any API, name or file layout may change in any commit, with every caller in this repository changed alongside and no deprecation period. There are no releases or versions to pin yet. If you build on it, pin a commit and expect to update your code when you move.
 
-**Status:** milestones 1–13 are done (the platform, 2D and services; 3D through skinning and animation; scene and pick; UI; Windows, macOS and CI; SDL3 as a second native profile, its graphics on GL or SDL_GPU (Vulkan, Direct3D 12, Metal); the small utilities; scenes and flow; the scene file and behaviors; input actions, audio buses and native streaming; the shader library, screen effects and the UI's widgets), and the API reworked in Haxe's own terms (properties, kinds as classes, services as static classes). Milestone 14, HeliX as a haxelib a game takes with `-lib helix`, is under way ([docs/ROADMAP.md](docs/ROADMAP.md)). Every example runs in the browser and natively on Linux/X11, and builds natively on Windows and macOS; on Windows both games have run in a window. macOS is built for in full; beyond CI's builds and unit tests, only CI's virtual Mac has run it (both games under SDL_GPU on Metal), not a real one; iOS waits for a Mac that can run it. CI checks all three. Mobile has not run.
+**Status:** milestones 1–13 are done (the platform, 2D and services; 3D through skinning and animation; scene and pick; UI; Windows, macOS and CI; SDL3 as a second native profile, its graphics on GL or SDL_GPU (Vulkan, Direct3D 12, Metal); the small utilities; scenes and flow; the scene file and behaviors; input actions, audio buses and native streaming; the shader library, screen effects and the UI's widgets), and the API reworked in Haxe's own terms (properties, kinds as classes, services as static classes). Milestone 14, HeliX as a haxelib a game takes with `-lib helix-legacy`, is under way ([docs/ROADMAP.md](docs/ROADMAP.md)). Every example runs in the browser and natively on Linux/X11, and builds natively on Windows and macOS; on Windows both games have run in a window. macOS is built for in full; beyond CI's builds and unit tests, only CI's virtual Mac has run it (both games under SDL_GPU on Metal), not a real one; iOS waits for a Mac that can run it. CI checks all three. Mobile has not run.
 
 ## Try it
 
 In the browser: **[the examples](https://whirlinggizmo.github.io/helix/)**, each running on WebGL2, and **[the API reference](https://whirlinggizmo.github.io/helix/api/)**.
 
-A game of your own, with Haxe 4.3.7 and HeliX as a haxelib (BUILDING.md, "A game on `-lib helix`"):
+A game of your own, with Haxe 4.3.7 and HeliX as a haxelib (BUILDING.md, "A game on `-lib helix-legacy`"):
 
 ```console
-haxelib run helix init my-game && cd my-game
+haxelib run helix-legacy init my-game && cd my-game
 haxe hxml/dev.hxml                      # http://localhost:8064/, hot reload as you edit (hotreload-hx), shaders packed as they change
 haxe hxml/build.dist.hxml               # the release build for hosting, out/dist/ and a zip for itch.io
 ```
